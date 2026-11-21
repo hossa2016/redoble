@@ -178,8 +178,8 @@ object Player {
     }
 
     private fun artBitmap(ctx: Context, src: Bitmap?, accent: Int): Bitmap {
-        val s = dp(ctx, 64f).toInt()
-        val r = dp(ctx, 10f)
+        val s = dp(ctx, 56f).toInt()
+        val r = dp(ctx, 9f)
         val out = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888)
         val c = Canvas(out)
         val rect = RectF(0f, 0f, s.toFloat(), s.toFloat())
@@ -209,11 +209,11 @@ object Player {
     }
 
     private fun playBitmap(ctx: Context, playing: Boolean, accent: Int): Bitmap {
-        val s = dp(ctx, 60f).toInt()
+        val s = dp(ctx, 52f).toInt()
         val b = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888)
         val c = Canvas(b)
         c.drawCircle(s / 2f, s / 2f, s / 2f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = accent })
-        val icon = iconBitmap(ctx, if (playing) "pause" else "play", 0xFFFFFFFF.toInt(), if (playing) 24 else 26)
+        val icon = iconBitmap(ctx, if (playing) "pause" else "play", 0xFFFFFFFF.toInt(), if (playing) 22 else 24)
         c.drawBitmap(icon, (s - icon.width) / 2f, (s - icon.height) / 2f, null)
         return b
     }
