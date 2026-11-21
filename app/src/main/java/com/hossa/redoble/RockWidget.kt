@@ -8,8 +8,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
+import android.os.Bundle
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.graphics.ColorUtils
 import java.util.Calendar
 
 class RockWidget : AppWidgetProvider() {
@@ -20,12 +22,14 @@ class RockWidget : AppWidgetProvider() {
         WeatherWorker.schedule(ctx)
     }
 
+    override fun onAppWidgetOptionsChanged(ctx: Context, mgr: AppWidgetManager, id: Int, opts: Bundle) {
+        update(ctx, mgr, id)
+    }
+
     override fun onReceive(ctx: Context, intent: Intent) {
         super.onReceive(ctx, intent)
         when (intent.action) {
-            ACTION_REFRESH,
-            Intent.ACTION_TIME_CHANGED,
-            Intent.ACTION_TIMEZONE_CHANGED -> {
+            ACTION_REFRESH, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> {
                 updateAll(ctx)
                 scheduleMidnight(ctx)
             }
@@ -35,91 +39,103 @@ class RockWidget : AppWidgetProvider() {
     companion object {
         const val ACTION_REFRESH = "com.hossa.redoble.REFRESH"
 
-        private val DAYS = arrayOf(
-            "DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"
-        )
+        val DAYS = arrayOf("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado")
 
-        private val ROW_IDS = intArrayOf(R.id.app0, R.id.app1, R.id.app2, R.id.app3, R.id.app4, R.id.app5)
-        private val ICON_IDS = intArrayOf(R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5)
-        private val LABEL_IDS = intArrayOf(R.id.label0, R.id.label1, R.id.label2, R.id.label3, R.id.label4, R.id.label5)
+        private val TRACKS = intArrayOf(R.id.track0, R.id.track1, R.id.track2, R.id.track3, R.id.track4, R.id.track5)
+        private val NUMS = intArrayOf(R.id.num0, R.id.num1, R.id.num2, R.id.num3, R.id.num4, R.id.num5)
+        private val ICONS = intArrayOf(R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5)
+        private val LABELS = intArrayOf(R.id.label0, R.id.label1, R.id.label2, R.id.label3, R.id.label4, R.id.label5)
+
+        fun hasWidgets(ctx: Context): Boolean =
+            AppWidgetManager.getInstance(ctx)
+                .getAppWidgetIds(ComponentName(ctx, RockWidget::class.java)).isNotEmpty()
 
         fun updateAll(ctx: Context) {
             val mgr = AppWidgetManager.getInstance(ctx)
-            val ids = mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))
-            for (id in ids) update(ctx, mgr, id)
+            for (id in mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))) {
+                try { update(ctx, mgr, id) } catch (e: Exception) { }
+            }
         }
 
         fun update(ctx: Context, mgr: AppWidgetManager, widgetId: Int) {
-            val views = RemoteViews(ctx.packageName, R.layout.widget_rock)
+            val v = RemoteViews(ctx.packageName, R.layout.widget_rock)
             val accent = Prefs.accent(ctx)
 
-            // Día en vertical
+            // Alto real del widget para el bitmap del día
+            val opts = mgr.getAppWidgetOptions(widgetId)
+            var hDp = opts?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0) ?: 0
+            if (hDp < 200) hDp = 452
             val day = DAYS[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1]
-            views.setImageViewBitmap(R.id.day, Graphics.verticalDay(ctx, day, Prefs.LIGHT))
+            v.setImageViewBitmap(R.id.day_img, Graphics.dayBitmap(ctx, day, accent, hDp))
 
-            // Hora y acento
-            views.setTextColor(R.id.clock, accent)
-            views.setInt(R.id.divider, "setColorFilter", accent)
+            v.setTextColor(R.id.colon, accent)
 
-            // Clima y batería
+            // Clima
+            val now = Prefs.weatherNow(ctx)
+            val tomorrow = Prefs.weatherTomorrow(ctx)
+            v.setTextViewText(R.id.wx_now, now.ifBlank { if (Prefs.city(ctx).isBlank()) "Elige tu ciudad" else "Cargando clima…" })
+            v.setTextViewText(R.id.wx_tomorrow, tomorrow)
+            v.setViewVisibility(R.id.wx_tomorrow, if (tomorrow.isBlank()) View.GONE else View.VISIBLE)
+
+            // Batería
             val bm = ctx.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-            val battery = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-            val lines = mutableListOf<String>()
-            val weather = Prefs.weather(ctx)
-            if (weather.isNotBlank()) lines.add(weather)
-            if (battery in 0..100) lines.add("Batería $battery%")
-            views.setTextViewText(R.id.info, lines.joinToString("\n"))
+            val level = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY).coerceIn(0, 100)
+            v.setImageViewBitmap(R.id.leds_img, Graphics.ledBitmap(ctx, level, accent))
+            if (level <= 15) {
+                v.setTextViewText(R.id.batt_txt, "Batería baja, $level %")
+                v.setTextColor(R.id.batt_txt, Graphics.ALERT)
+            } else {
+                v.setTextViewText(R.id.batt_txt, "$level %")
+                v.setTextColor(R.id.batt_txt, Graphics.HEAD)
+            }
 
-            // Tocar la cabecera abre la configuración
+            // Abrir ajustes desde la cabecera, el día y la lista vacía
             val open = PendingIntent.getActivity(
-                ctx, 100, Intent(ctx, MainActivity::class.java),
+                ctx, 100, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
-            views.setOnClickPendingIntent(R.id.header, open)
+            v.setOnClickPendingIntent(R.id.header, open)
+            v.setOnClickPendingIntent(R.id.day_img, open)
+            v.setOnClickPendingIntent(R.id.empty, open)
 
-            // Lista de apps
+            // Setlist
             val pm = ctx.packageManager
+            val numColor = ColorUtils.setAlphaComponent(accent, 0xD9)
+            var shown = 0
             for (i in 0 until Prefs.SLOTS) {
                 val pkg = Prefs.app(ctx, i)
                 val launch = if (pkg.isNotBlank()) pm.getLaunchIntentForPackage(pkg) else null
                 if (launch == null) {
-                    views.setViewVisibility(ROW_IDS[i], View.GONE)
+                    v.setViewVisibility(TRACKS[i], View.GONE)
                     continue
                 }
-                views.setViewVisibility(ROW_IDS[i], View.VISIBLE)
-                val label = try {
-                    pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()
-                } catch (e: Exception) {
-                    pkg
-                }
-                views.setTextViewText(LABEL_IDS[i], label)
-                Graphics.tintedIcon(ctx, pkg, Prefs.SILVER)?.let {
-                    views.setImageViewBitmap(ICON_IDS[i], it)
-                }
+                shown++
+                v.setViewVisibility(TRACKS[i], View.VISIBLE)
+                v.setTextViewText(NUMS[i], String.format("%02d", shown))
+                v.setTextColor(NUMS[i], numColor)
+                v.setTextViewText(LABELS[i], Apps.label(ctx, pkg))
+                Graphics.monoIcon(ctx, pkg)?.let { v.setImageViewBitmap(ICONS[i], it) }
                 launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                val pi = PendingIntent.getActivity(
-                    ctx, i, launch,
-                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                v.setOnClickPendingIntent(
+                    TRACKS[i],
+                    PendingIntent.getActivity(ctx, i, launch, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                 )
-                views.setOnClickPendingIntent(ROW_IDS[i], pi)
             }
+            v.setViewVisibility(R.id.empty, if (shown == 0) View.VISIBLE else View.GONE)
+            v.setTextViewText(R.id.count, if (shown == 1) "1 pista" else "$shown pistas")
 
-            mgr.updateAppWidget(widgetId, views)
+            mgr.updateAppWidget(widgetId, v)
         }
 
-        /** Programa una actualización justo después de medianoche para cambiar el día. */
         fun scheduleMidnight(ctx: Context) {
             val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val cal = Calendar.getInstance().apply {
                 add(Calendar.DAY_OF_YEAR, 1)
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 5)
-                set(Calendar.MILLISECOND, 0)
+                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 5); set(Calendar.MILLISECOND, 0)
             }
             val pi = PendingIntent.getBroadcast(
-                ctx, 0,
-                Intent(ctx, RockWidget::class.java).setAction(ACTION_REFRESH),
+                ctx, 0, Intent(ctx, RockWidget::class.java).setAction(ACTION_REFRESH),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
             am.setWindow(AlarmManager.RTC, cal.timeInMillis, 60_000L, pi)

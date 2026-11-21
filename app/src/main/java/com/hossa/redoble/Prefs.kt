@@ -12,8 +12,7 @@ object Prefs {
         Color.parseColor("#378ADD"), // Azul
         Color.parseColor("#D3D1C7")  // Plata
     )
-    val SILVER = Color.parseColor("#D3D1C7")
-    val LIGHT = Color.parseColor("#F1EFE8")
+    val NAMES = arrayOf("Rojo", "Azul", "Plata")
 
     // Apps por defecto (solo se muestran si están instaladas)
     private val DEFAULT_APPS = listOf(
@@ -40,10 +39,14 @@ object Prefs {
     fun lon(ctx: Context) = p(ctx).getFloat("lon", Float.NaN)
     fun setCity(ctx: Context, name: String, lat: Double, lon: Double) =
         p(ctx).edit().putString("city", name).putFloat("lat", lat.toFloat())
-            .putFloat("lon", lon.toFloat()).remove("weather").apply()
+            .putFloat("lon", lon.toFloat()).remove("wxNow").remove("wxTomorrow").remove("wxAt").apply()
 
-    fun weather(ctx: Context) = p(ctx).getString("weather", "") ?: ""
-    fun setWeather(ctx: Context, text: String) = p(ctx).edit().putString("weather", text).apply()
+    fun weatherNow(ctx: Context) = p(ctx).getString("wxNow", "") ?: ""
+    fun weatherTomorrow(ctx: Context) = p(ctx).getString("wxTomorrow", "") ?: ""
+    fun weatherAt(ctx: Context) = p(ctx).getLong("wxAt", 0L)
+    fun setWeather(ctx: Context, now: String, tomorrow: String) = p(ctx).edit()
+        .putString("wxNow", now).putString("wxTomorrow", tomorrow)
+        .putLong("wxAt", System.currentTimeMillis()).apply()
 
     fun app(ctx: Context, slot: Int): String {
         val prefs = p(ctx)

@@ -28,20 +28,22 @@ class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
             val url = String.format(
                 Locale.US,
                 "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f" +
-                    "&current=temperature_2m,weather_code&daily=weather_code&forecast_days=2&timezone=auto",
+                    "&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=2&timezone=auto",
                 lat, lon
             )
             val json = JSONObject(get(url))
             val current = json.getJSONObject("current")
             val temp = current.getDouble("temperature_2m").roundToInt()
             val now = describe(current.getInt("weather_code"))
-            val daily = json.getJSONObject("daily").getJSONArray("weather_code")
-            val tomorrow = if (daily.length() > 1) describe(daily.getInt(1)) else null
-            val text = buildString {
-                append("$now, $temp°")
-                if (tomorrow != null) append("\nMañana: ${tomorrow.lowercase()}")
+            val daily = json.getJSONObject("daily")
+            val codes = daily.getJSONArray("weather_code")
+            var tomorrow = ""
+            if (codes.length() > 1) {
+                val mn = daily.getJSONArray("temperature_2m_min").getDouble(1).roundToInt()
+                val mx = daily.getJSONArray("temperature_2m_max").getDouble(1).roundToInt()
+                tomorrow = "Mañana: ${describe(codes.getInt(1)).lowercase()}, $mn° a $mx°"
             }
-            Prefs.setWeather(ctx, text)
+            Prefs.setWeather(ctx, "$now, $temp°", tomorrow)
             RockWidget.updateAll(ctx)
             Result.success()
         } catch (e: Exception) {
