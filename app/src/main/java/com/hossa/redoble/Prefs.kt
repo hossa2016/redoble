@@ -34,6 +34,14 @@ object Prefs {
     fun dim(ctx: Context) = p(ctx).getInt("dim", 40)
     fun setDim(ctx: Context, v: Int) = p(ctx).edit().putInt("dim", v).apply()
 
+    /** 0 = recortar (llenar la pantalla), 1 = foto completa */
+    fun wpMode(ctx: Context) = p(ctx).getInt("wpMode", 1)
+    fun setWpMode(ctx: Context, v: Int) = p(ctx).edit().putInt("wpMode", v).apply()
+    fun wpPos(ctx: Context) = p(ctx).getInt("wpPos", 50)
+    fun setWpPos(ctx: Context, v: Int) = p(ctx).edit().putInt("wpPos", v).apply()
+    fun wpZoom(ctx: Context) = p(ctx).getInt("wpZoom", 0)
+    fun setWpZoom(ctx: Context, v: Int) = p(ctx).edit().putInt("wpZoom", v).apply()
+
     fun city(ctx: Context) = p(ctx).getString("city", "") ?: ""
     fun lat(ctx: Context) = p(ctx).getFloat("lat", Float.NaN)
     fun lon(ctx: Context) = p(ctx).getFloat("lon", Float.NaN)

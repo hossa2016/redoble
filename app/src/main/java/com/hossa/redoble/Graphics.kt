@@ -274,15 +274,60 @@ object Graphics {
     // ------------------------------------------------------------------
     // Fondo de pantalla
     // ------------------------------------------------------------------
-    fun makeWallpaper(photo: Bitmap, width: Int, height: Int, dimPercent: Int): Bitmap {
+    /**
+     * Arma el fondo.
+     * mode 0: recorta para llenar la pantalla; pos elige qué parte se ve.
+     * mode 1: foto completa sobre negro, con bordes difuminados; pos la sube o la baja.
+     * zoom 0..100 agranda la foto (hasta 2x) en ambos modos.
+     */
+    fun makeWallpaper(photo: Bitmap, width: Int, height: Int, dimPercent: Int,
+                      mode: Int = 0, pos: Int = 50, zoom: Int = 0): Bitmap {
         val out = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val c = Canvas(out)
-        val scale = maxOf(width / photo.width.toFloat(), height / photo.height.toFloat())
-        val w = photo.width * scale
-        val h = photo.height * scale
-        val left = (width - w) / 2f
-        val top = (height - h) / 2f
-        c.drawBitmap(photo, null, RectF(left, top, left + w, top + h), Paint(Paint.FILTER_BITMAP_FLAG))
+        c.drawColor(Color.BLACK)
+        val pw = photo.width.toFloat()
+        val ph = photo.height.toFloat()
+        val base = if (mode == 0) maxOf(width / pw, height / ph) else minOf(width / pw, height / ph)
+        val scale = base * (1f + zoom.coerceIn(0, 100) / 100f)
+        val dw = pw * scale
+        val dh = ph * scale
+        val f = pos.coerceIn(0, 100) / 100f
+        // El eje que sobra (o falta) se mueve con pos; el otro queda centrado.
+        val horizontalPhoto = dw / width > dh / height
+        val left: Float
+        val top: Float
+        if (mode == 0) {
+            if (horizontalPhoto) { left = (width - dw) * f; top = (height - dh) / 2f }
+            else { left = (width - dw) / 2f; top = (height - dh) * f }
+        } else {
+            if (horizontalPhoto) { left = (width - dw) * if (zoom > 0) f else 0.5f; top = (height - dh) * f }
+            else { left = (width - dw) * f; top = (height - dh) / 2f }
+        }
+        val dst = RectF(left, top, left + dw, top + dh)
+        c.drawBitmap(photo, null, dst, Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG))
+
+        if (mode == 1) {
+            // Difuminar los bordes de la foto hacia el negro
+            val fadeV = dh * 0.18f
+            val fadeH = dw * 0.12f
+            val fp = Paint()
+            if (dst.top > 0.5f) {
+                fp.shader = LinearGradient(0f, dst.top, 0f, dst.top + fadeV, Color.BLACK, Color.TRANSPARENT, Shader.TileMode.CLAMP)
+                c.drawRect(0f, dst.top - 1f, width.toFloat(), dst.top + fadeV, fp)
+            }
+            if (dst.bottom < height - 0.5f) {
+                fp.shader = LinearGradient(0f, dst.bottom - fadeV, 0f, dst.bottom, Color.TRANSPARENT, Color.BLACK, Shader.TileMode.CLAMP)
+                c.drawRect(0f, dst.bottom - fadeV, width.toFloat(), dst.bottom + 1f, fp)
+            }
+            if (dst.left > 0.5f) {
+                fp.shader = LinearGradient(dst.left, 0f, dst.left + fadeH, 0f, Color.BLACK, Color.TRANSPARENT, Shader.TileMode.CLAMP)
+                c.drawRect(dst.left - 1f, 0f, dst.left + fadeH, height.toFloat(), fp)
+            }
+            if (dst.right < width - 0.5f) {
+                fp.shader = LinearGradient(dst.right - fadeH, 0f, dst.right, 0f, Color.TRANSPARENT, Color.BLACK, Shader.TileMode.CLAMP)
+                c.drawRect(dst.right - fadeH, 0f, dst.right + 1f, height.toFloat(), fp)
+            }
+        }
         c.drawColor(Color.argb(dimPercent.coerceIn(0, 100) * 255 / 100, 0, 0, 0))
         return out
     }

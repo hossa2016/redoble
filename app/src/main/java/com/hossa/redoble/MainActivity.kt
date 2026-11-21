@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(weatherPlate())
         col.addView(setlistPlate())
         col.addView(widgetPlate())
-        col.addView(ui.text("Redoble 3.0", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Redoble 4.0", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -147,71 +147,100 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ---------------- Fondo ----------------
+    private var photoSmall: Bitmap? = null
+
+    private fun smallPhoto(): Bitmap? {
+        val p = photo ?: return null
+        photoSmall?.let { return it }
+        val s = 900f / maxOf(p.width, p.height)
+        val sm = if (s < 1f) Bitmap.createScaledBitmap(p, (p.width * s).toInt(), (p.height * s).toInt(), true) else p
+        photoSmall = sm
+        return sm
+    }
+
+    private fun renderPreview(iv: ImageView) {
+        val sm = smallPhoto() ?: return
+        val (w, h) = screenSize()
+        val k = 360f / w
+        iv.setImageBitmap(
+            Graphics.makeWallpaper(sm, (w * k).toInt(), (h * k).toInt(), Prefs.dim(this),
+                Prefs.wpMode(this), Prefs.wpPos(this), Prefs.wpZoom(this))
+        )
+    }
+
     private fun wallpaperPlate(): View {
         val card = ui.plateCard()
         card.addView(ui.sectionTitle("Fondo"))
 
-        val dim = Prefs.dim(this)
+        val (sw, sh) = screenSize()
+        val pvW = ui.dp(150)
+        val pvH = (pvW * sh.toFloat() / sw).toInt()
         val preview = FrameLayout(this).apply {
             clipToOutline = true
             outlineProvider = object : ViewOutlineProvider() {
                 override fun getOutline(view: View, outline: Outline) {
-                    outline.setRoundRect(0, 0, view.width, view.height, ui.dp(12).toFloat())
+                    outline.setRoundRect(0, 0, view.width, view.height, ui.dp(16).toFloat())
                 }
             }
         }
-        val overlay = View(this).apply { setBackgroundColor(Color.BLACK); alpha = dim / 100f }
-        val p = photo
-        if (p != null) {
-            preview.background = ui.rect(Ui.WELL, 12f)
-            preview.addView(ImageView(this).apply {
-                scaleType = ImageView.ScaleType.CENTER_CROP
-                setImageBitmap(p)
-            }, FrameLayout.LayoutParams(-1, -1))
-            preview.addView(overlay, FrameLayout.LayoutParams(-1, -1))
-            val name = getSharedPreferences("redoble", MODE_PRIVATE).getString("photoName", "Tu foto") ?: "Tu foto"
-            preview.addView(ui.ellipsize(ui.text(name, ui.cond, 14f, Ui.HEAD)).apply {
-                setShadowLayer(ui.dp(3).toFloat(), 0f, 0f, Color.BLACK)
-            }, FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.START).apply {
-                setMargins(ui.dp(12), 0, ui.dp(12), ui.dp(10))
-            })
+        val iv = ImageView(this).apply { scaleType = ImageView.ScaleType.FIT_XY }
+        val hasPhoto = photo != null
+        if (hasPhoto) {
+            preview.background = ui.rect(Color.BLACK, 16f)
+            preview.addView(iv, FrameLayout.LayoutParams(-1, -1))
+            preview.foreground = ui.rect(Color.TRANSPARENT, 16f, Color.parseColor("#33EDE6DC"), 1f)
+            renderPreview(iv)
         } else {
             preview.background = GradientDrawable().apply {
-                setColor(Ui.WELL); cornerRadius = ui.dp(12).toFloat()
+                setColor(Ui.WELL); cornerRadius = ui.dp(16).toFloat()
                 setStroke(ui.dp(1.5f), Color.parseColor("#47EDE6DC"), ui.dp(6).toFloat(), ui.dp(4).toFloat())
             }
-            preview.addView(ui.text("Elige una foto de tu galería", ui.cond, 16f, Ui.MUTED).apply { gravity = Gravity.CENTER },
+            preview.addView(ui.text("Elige una foto\nde tu galería", ui.cond, 16f, Ui.MUTED).apply { gravity = Gravity.CENTER },
                 FrameLayout.LayoutParams(-1, -1))
         }
-        card.addView(preview, LinearLayout.LayoutParams(-1, ui.dp(150)))
+        card.addView(preview, LinearLayout.LayoutParams(pvW, pvH).apply { gravity = Gravity.CENTER_HORIZONTAL })
+        if (hasPhoto) {
+            val name = getSharedPreferences("redoble", MODE_PRIVATE).getString("photoName", "Tu foto") ?: "Tu foto"
+            card.addView(ui.ellipsize(ui.text(name, ui.cond, 14f, Ui.DIM)).apply { gravity = Gravity.CENTER },
+                LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
 
-        // Fader
-        val value = ui.text("$dim %", ui.condMedium, 18f, Ui.HEAD)
-        card.addView(LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            addView(ui.text("Oscurecer", ui.cond, 16f, Ui.HEAD), LinearLayout.LayoutParams(0, -2, 1f))
-            addView(value)
-        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(18) })
-
-        val fader = fader()
-        fader.progress = dim
-        fader.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(sb: SeekBar, v: Int, fromUser: Boolean) {
-                value.text = "$v %"
-                overlay.alpha = v / 100f
+            // Modo: recortar / foto completa
+            val mode = Prefs.wpMode(this)
+            val modes = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                background = ui.rect(Ui.WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+                setPadding(ui.dp(4), ui.dp(4), ui.dp(4), ui.dp(4))
             }
-            override fun onStartTrackingTouch(sb: SeekBar) {}
-            override fun onStopTrackingTouch(sb: SeekBar) = Prefs.setDim(this@MainActivity, sb.progress)
-        })
-        card.addView(fader, LinearLayout.LayoutParams(-1, ui.dp(40)))
-        card.addView(LinearLayout(this).apply {
-            setPadding(ui.dp(9), 0, ui.dp(9), 0)
-            addView(ui.text("0", ui.cond, 12f, Ui.DIM), LinearLayout.LayoutParams(0, -2, 1f))
-            addView(ui.text("85", ui.cond, 12f, Ui.DIM))
+            listOf("Foto completa" to 1, "Llenar pantalla" to 0).forEachIndexed { idx, (label, m) ->
+                val on = m == mode
+                val b = (if (on) ui.primary(label) else ui.textButton(label).apply { setTextColor(Ui.MUTED) }).apply {
+                    minHeight = ui.dp(40); minimumHeight = ui.dp(40)
+                    setOnClickListener {
+                        if (m != Prefs.wpMode(this@MainActivity)) {
+                            Prefs.setWpMode(this@MainActivity, m); Prefs.setWpPos(this@MainActivity, 50)
+                            Prefs.setWpZoom(this@MainActivity, 0); build()
+                        }
+                    }
+                }
+                modes.addView(b, LinearLayout.LayoutParams(0, ui.dp(40), 1f).apply { if (idx > 0) marginStart = ui.dp(4) })
+            }
+            card.addView(modes, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(16) })
+            card.addView(ui.bodyText(
+                if (mode == 1) "Se ve la foto entera; los bordes se funden con el negro."
+                else "La foto cubre toda la pantalla; elige qué parte se ve.", Ui.DIM, 13f
+            ).apply { setPadding(0, ui.dp(8), 0, 0) })
+
+            card.addView(sliderRow("Posición", Prefs.wpPos(this), 100, "%") { v, done ->
+                Prefs.setWpPos(this, v); renderPreview(iv)
+            })
+            card.addView(sliderRow("Zoom", Prefs.wpZoom(this), 100, "%") { v, done ->
+                Prefs.setWpZoom(this, v); renderPreview(iv)
+            })
+        }
+        card.addView(sliderRow("Oscurecer", Prefs.dim(this), 85, "%", showScale = true) { v, done ->
+            Prefs.setDim(this, v); if (hasPhoto) renderPreview(iv)
         })
 
-        // Botones
         val pick = ui.secondary(if (photo == null) "Elegir foto" else "Cambiar foto").apply {
             setOnClickListener { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
         }
@@ -221,14 +250,49 @@ class MainActivity : AppCompatActivity() {
             orientation = LinearLayout.HORIZONTAL
             addView(pick, LinearLayout.LayoutParams(0, ui.dp(48), 1f))
             addView(apply, LinearLayout.LayoutParams(0, ui.dp(48), 1f).apply { marginStart = ui.dp(10) })
-        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
-        card.addView(ui.bodyText("Se aplica a la pantalla de inicio y a la de bloqueo.", Ui.DIM, 13f).apply {
+        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(16) })
+        card.addView(ui.bodyText("Se aplica a la pantalla de inicio y a la de bloqueo, a la resolución exacta de tu pantalla.", Ui.DIM, 13f).apply {
             setPadding(0, ui.dp(10), 0, 0)
         })
         return card
     }
 
-    private fun fader(): SeekBar {
+    /** Fila con etiqueta, valor y fader. onChange(valor, soltó) */
+    private fun sliderRow(label: String, value: Int, max: Int, unit: String, showScale: Boolean = false,
+                          onChange: (Int, Boolean) -> Unit): View {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) }
+        }
+        val valueTv = ui.text("$value $unit", ui.condMedium, 18f, Ui.HEAD)
+        box.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            addView(ui.text(label, ui.cond, 16f, Ui.HEAD), LinearLayout.LayoutParams(0, -2, 1f))
+            addView(valueTv)
+        })
+        val sb = fader(max)
+        sb.progress = value
+        var last = 0L
+        sb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(s: SeekBar, v: Int, fromUser: Boolean) {
+                valueTv.text = "$v $unit"
+                val now = System.currentTimeMillis()
+                if (fromUser && now - last > 60) { last = now; onChange(v, false) }
+            }
+            override fun onStartTrackingTouch(s: SeekBar) {}
+            override fun onStopTrackingTouch(s: SeekBar) = onChange(s.progress, true)
+        })
+        box.addView(sb, LinearLayout.LayoutParams(-1, ui.dp(40)))
+        if (showScale) box.addView(LinearLayout(this).apply {
+            setPadding(ui.dp(9), 0, ui.dp(9), 0)
+            addView(ui.text("0", ui.cond, 12f, Ui.DIM), LinearLayout.LayoutParams(0, -2, 1f))
+            addView(ui.text("$max", ui.cond, 12f, Ui.DIM))
+        })
+        return box
+    }
+
+    private fun fader(maxValue: Int = 85): SeekBar {
         val track = ui.rect(Color.parseColor("#070605"), 3f, Color.parseColor("#0FFFFFFF"), 1f)
         val fill = ClipDrawable(ui.rect(ui.accent, 3f), Gravity.START, ClipDrawable.HORIZONTAL)
         val progress = LayerDrawable(arrayOf(track, fill)).apply {
@@ -254,7 +318,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         return SeekBar(this).apply {
-            max = 85
+            max = maxValue
             progressDrawable = progress
             this.thumb = thumb
             splitTrack = false
@@ -569,7 +633,11 @@ class MainActivity : AppCompatActivity() {
                 getSharedPreferences("redoble", MODE_PRIVATE).edit().putString("photoName", name).apply()
             }
             main.post {
-                if (bmp == null) toast("No pudimos abrir esa foto") else { photo = bmp; build() }
+                if (bmp == null) toast("No pudimos abrir esa foto") else {
+                    photo = bmp; photoSmall = null
+                    Prefs.setWpPos(this, 50); Prefs.setWpZoom(this, 0)
+                    build()
+                }
             }
         }
     }
@@ -577,8 +645,9 @@ class MainActivity : AppCompatActivity() {
     private fun decodeSampled(uri: Uri, reqW: Int, reqH: Int): Bitmap? {
         val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+        // Máxima calidad posible: solo se reduce si la foto pasa de ~16 MP
         var sample = 1
-        while (opts.outWidth / (sample * 2) >= reqW && opts.outHeight / (sample * 2) >= reqH) sample *= 2
+        while ((opts.outWidth.toLong() / sample) * (opts.outHeight.toLong() / sample) > 16_000_000L) sample *= 2
         val real = BitmapFactory.Options().apply { inSampleSize = sample }
         return contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, real) }
     }
@@ -595,9 +664,9 @@ class MainActivity : AppCompatActivity() {
         btn.text = "Aplicando…"
         io.execute {
             val ok = try {
-                val wall = Graphics.makeWallpaper(src, w, h, dim)
+                val wall = Graphics.makeWallpaper(src, w, h, dim, Prefs.wpMode(this), Prefs.wpPos(this), Prefs.wpZoom(this))
                 WallpaperManager.getInstance(this).setBitmap(
-                    wall, null, true, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK
+                    wall, android.graphics.Rect(0, 0, w, h), true, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK
                 )
                 true
             } catch (e: Exception) {
