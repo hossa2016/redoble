@@ -87,18 +87,19 @@ class RockWidget : AppWidgetProvider() {
             // Pads: se llenan en orden con las apps elegidas
             val pm = ctx.packageManager
             val numColor = ColorUtils.setAlphaComponent(accent, 0xD9)
-            val filled = (0 until Prefs.SLOTS).map { Prefs.app(ctx, it) }
-                .filter { it.isNotBlank() && pm.getLaunchIntentForPackage(it) != null }
+            val filled = (0 until Prefs.SLOTS)
+                .filter { val a = Prefs.app(ctx, it); a.isNotBlank() && pm.getLaunchIntentForPackage(a) != null }
             for (i in 0 until Prefs.SLOTS) {
-                val pkg = filled.getOrNull(i)
-                if (pkg == null) {
+                val slot = filled.getOrNull(i)
+                val pkg = slot?.let { Prefs.app(ctx, it) }
+                if (slot == null || pkg == null) {
                     v.setViewVisibility(PADS[i], View.INVISIBLE)
                     continue
                 }
                 v.setViewVisibility(PADS[i], View.VISIBLE)
                 v.setTextViewText(NUMS[i], String.format("%02d", i + 1))
                 v.setTextColor(NUMS[i], numColor)
-                v.setTextViewText(LABELS[i], Apps.label(ctx, pkg))
+                v.setTextViewText(LABELS[i], Prefs.displayName(ctx, slot))
                 Graphics.monoIcon(ctx, pkg)?.let { v.setImageViewBitmap(ICONS[i], it) }
                 val launch = pm.getLaunchIntentForPackage(pkg)!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 v.setOnClickPendingIntent(

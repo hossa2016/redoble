@@ -76,5 +76,15 @@ object Prefs {
     }
 
     fun setApp(ctx: Context, slot: Int, pkg: String) =
-        p(ctx).edit().putString("app$slot", pkg).apply()
+        p(ctx).edit().putString("app$slot", pkg).remove("label$slot").apply()
+
+    /** Nombre corto opcional para el pad; si no hay, se usa el nombre de la app. */
+    fun label(ctx: Context, slot: Int): String? = p(ctx).getString("label$slot", null)?.takeIf { it.isNotBlank() }
+    fun setLabel(ctx: Context, slot: Int, name: String?) =
+        p(ctx).edit().apply { if (name.isNullOrBlank()) remove("label$slot") else putString("label$slot", name.trim()) }.apply()
+
+    fun displayName(ctx: Context, slot: Int): String {
+        val pkg = app(ctx, slot)
+        return label(ctx, slot) ?: if (pkg.isBlank()) "" else Apps.label(ctx, pkg)
+    }
 }

@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(weatherPlate())
         col.addView(setlistPlate())
         col.addView(widgetPlate())
-        col.addView(ui.text("Redoble 5.4", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Redoble 5.5", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -520,12 +520,43 @@ class MainActivity : AppCompatActivity() {
         val card = ui.plateCard()
         val filled = (0 until Prefs.SLOTS).count { Prefs.app(this, it).isNotBlank() }
         card.addView(ui.sectionTitle("Setlist", "$filled de ${Prefs.SLOTS} pistas"))
+        card.addView(ui.bodyText("Mantén presionada una pista para ponerle un nombre corto.", Ui.DIM, 13f).apply {
+            setPadding(0, 0, 0, ui.dp(8))
+        })
         for (i in 0 until Prefs.SLOTS) {
             if (i > 0) card.addView(View(this).apply { setBackgroundColor(Color.parseColor("#0FFFFFFF")) },
                 LinearLayout.LayoutParams(-1, ui.dp(1)))
             card.addView(slotRow(i), LinearLayout.LayoutParams(-1, ui.dp(56)))
         }
         return card
+    }
+
+    private fun renameSlot(slot: Int) {
+        val pkg = Prefs.app(this, slot)
+        val original = Apps.label(this, pkg)
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(ui.dp(20), ui.dp(8), ui.dp(20), 0) }
+        val field = EditText(this).apply {
+            setText(Prefs.label(this@MainActivity, slot) ?: original)
+            setSelectAllOnFocus(true)
+            setSingleLine()
+            filters = arrayOf(android.text.InputFilter.LengthFilter(14))
+        }
+        box.addView(ui.bodyText("Nombre original: $original", Ui.MUTED, 13f))
+        box.addView(field)
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Nombre del pad %02d".format(slot + 1))
+            .setView(box)
+            .setPositiveButton("Guardar") { _, _ ->
+                val t = field.text.toString().trim()
+                Prefs.setLabel(this, slot, if (t == original) null else t)
+                RockWidget.updateAll(this); build()
+            }
+            .setNeutralButton("Original") { _, _ ->
+                Prefs.setLabel(this, slot, null); RockWidget.updateAll(this); build()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+        field.requestFocus()
     }
 
     private fun slotRow(i: Int): View {
@@ -540,11 +571,12 @@ class MainActivity : AppCompatActivity() {
             addView(ui.appHolder(pkg, 38, 19).apply {
                 (layoutParams as LinearLayout.LayoutParams).marginStart = ui.dp(10)
             })
-            addView(ui.ellipsize(ui.text(if (empty) "Pista libre" else Apps.label(this@MainActivity, pkg), ui.cond, 19f,
+            addView(ui.ellipsize(ui.text(if (empty) "Pista libre" else Prefs.displayName(this@MainActivity, i), ui.cond, 19f,
                 if (empty) Ui.DIM else Ui.HEAD)),
                 LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = ui.dp(14) })
             addView(ui.text(if (empty) "Elegir app" else "Cambiar", ui.cond, 15f, if (empty) ui.accent else Ui.MUTED))
             addView(ui.text("›", ui.condLight, 22f, Ui.DIM).apply { setPadding(ui.dp(8), 0, 0, ui.dp(2)) })
+            if (!empty) setOnLongClickListener { renameSlot(i); true }
             setOnClickListener {
                 AppPicker(this@MainActivity, ui, i) {
                     RockWidget.updateAll(this@MainActivity)
