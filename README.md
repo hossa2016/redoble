@@ -3,7 +3,7 @@
 Widget de pantalla de inicio estilo rock para Android (hecho para Xiaomi / HyperOS, funciona sobre el launcher original para conservar los gestos).
 
 - Día en vertical, hora, fecha, clima (Open-Meteo, sin clave) y batería
-- Lista de 6 apps con íconos en silueta plateada
+- Lista de 6 apps con íconos en silueta plateada o con su color original (se elige en Setlist)
 - Color de acento: rojo, azul o plata
 - Elegir una foto de la galería, oscurecerla y ponerla como fondo
 

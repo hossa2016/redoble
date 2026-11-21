@@ -7,6 +7,8 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.graphics.ColorUtils
@@ -100,7 +102,13 @@ class RockWidget : AppWidgetProvider() {
                 v.setTextViewText(NUMS[i], String.format("%02d", i + 1))
                 v.setTextColor(NUMS[i], numColor)
                 v.setTextViewText(LABELS[i], Prefs.displayName(ctx, slot))
-                Graphics.monoIcon(ctx, pkg)?.let { v.setImageViewBitmap(ICONS[i], it) }
+                Graphics.appIcon(ctx, pkg)?.let { v.setImageViewBitmap(ICONS[i], it) }
+                if (Build.VERSION.SDK_INT >= 31) {
+                    // En color, el ícono llena casi toda la placa; en silueta, queda pequeño como antes.
+                    val s = if (Prefs.originalIcons(ctx)) 30f else 18f
+                    v.setViewLayoutWidth(ICONS[i], s, TypedValue.COMPLEX_UNIT_DIP)
+                    v.setViewLayoutHeight(ICONS[i], s, TypedValue.COMPLEX_UNIT_DIP)
+                }
                 val launch = pm.getLaunchIntentForPackage(pkg)!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 v.setOnClickPendingIntent(
                     PADS[i],

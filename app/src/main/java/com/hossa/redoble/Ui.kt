@@ -235,8 +235,10 @@ class Ui(val ctx: Context, val accent: Int) {
                 addView(text("+", condLight, 22f, MUTED).apply { gravity = Gravity.CENTER },
                     FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
             } else {
-                Graphics.monoIcon(ctx, pkg, HEAD, dp(iconDp) * 2)?.let { iv.setImageBitmap(it) }
-                addView(iv, FrameLayout.LayoutParams(dp(iconDp), dp(iconDp), Gravity.CENTER))
+                val color = Prefs.originalIcons(ctx)
+                val size = if (color) sizeDp - 4 else iconDp
+                Graphics.appIcon(ctx, pkg, dp(iconDp) * 2, dp(size) * 2)?.let { iv.setImageBitmap(it) }
+                addView(iv, FrameLayout.LayoutParams(dp(size), dp(size), Gravity.CENTER))
             }
             layoutParams = LinearLayout.LayoutParams(dp(sizeDp), dp(sizeDp))
         }

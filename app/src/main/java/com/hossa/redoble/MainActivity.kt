@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(weatherPlate())
         col.addView(setlistPlate())
         col.addView(widgetPlate())
-        col.addView(ui.text("Redoble 5.5", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Redoble 5.7", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -594,6 +594,29 @@ class MainActivity : AppCompatActivity() {
         card.addView(ui.bodyText("Mantén presionada una pista para ponerle un nombre corto.", Ui.DIM, 13f).apply {
             setPadding(0, 0, 0, ui.dp(8))
         })
+
+        // Íconos: silueta (como ahora) o color original de cada app
+        val iconMode = Prefs.iconMode(this)
+        val iconModes = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            background = ui.rect(Ui.WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+            setPadding(ui.dp(4), ui.dp(4), ui.dp(4), ui.dp(4))
+        }
+        listOf("Silueta" to 0, "Color original" to 1).forEachIndexed { idx, (label, m) ->
+            val on = m == iconMode
+            val b = (if (on) ui.primary(label) else ui.textButton(label).apply { setTextColor(Ui.MUTED) }).apply {
+                minHeight = ui.dp(40); minimumHeight = ui.dp(40)
+                setOnClickListener {
+                    if (m != Prefs.iconMode(this@MainActivity)) {
+                        Prefs.setIconMode(this@MainActivity, m)
+                        RockWidget.updateAll(this@MainActivity)
+                        build()
+                    }
+                }
+            }
+            iconModes.addView(b, LinearLayout.LayoutParams(0, ui.dp(40), 1f).apply { if (idx > 0) marginStart = ui.dp(4) })
+        }
+        card.addView(iconModes, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(12) })
         for (i in 0 until Prefs.SLOTS) {
             if (i > 0) card.addView(View(this).apply { setBackgroundColor(Color.parseColor("#0FFFFFFF")) },
                 LinearLayout.LayoutParams(-1, ui.dp(1)))

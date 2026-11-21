@@ -39,6 +39,11 @@ object Prefs {
     fun setAccentIndex(ctx: Context, i: Int) = p(ctx).edit().putInt("accent", i).apply()
     fun accent(ctx: Context) = ACCENTS[accentIndex(ctx).coerceIn(0, ACCENTS.size - 1)]
 
+    /** 0 = silueta (como ahora, en un solo tono), 1 = color original de cada app */
+    fun iconMode(ctx: Context) = p(ctx).getInt("iconMode", 0)
+    fun setIconMode(ctx: Context, v: Int) = p(ctx).edit().putInt("iconMode", v).apply()
+    fun originalIcons(ctx: Context) = iconMode(ctx) == 1
+
     fun dim(ctx: Context) = p(ctx).getInt("dim", 40)
     fun setDim(ctx: Context, v: Int) = p(ctx).edit().putInt("dim", v).apply()
 

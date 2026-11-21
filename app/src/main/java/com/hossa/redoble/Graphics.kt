@@ -283,6 +283,36 @@ object Graphics {
         return out
     }
 
+    /** Ícono con su color original, recortado en círculo para que encaje en la placa. */
+    fun colorIcon(ctx: Context, pkg: String, sizePx: Int = 96): Bitmap? {
+        val key = "$pkg@color@$sizePx"
+        iconCache[key]?.let { return it }
+        val icon: Drawable = try { ctx.packageManager.getApplicationIcon(pkg) } catch (e: Exception) { return null }
+        val out = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val c = Canvas(out)
+        if (icon is AdaptiveIconDrawable) {
+            // Fondo + dibujo, recortados en círculo
+            val layer = c.saveLayer(0f, 0f, sizePx.toFloat(), sizePx.toFloat(), null)
+            icon.setBounds(0, 0, sizePx, sizePx)
+            icon.draw(c)
+            val mask = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
+            }
+            c.drawCircle(sizePx / 2f, sizePx / 2f, sizePx / 2f, mask)
+            c.restoreToCount(layer)
+        } else {
+            // Ícono clásico: ya trae su propia forma
+            icon.setBounds(0, 0, sizePx, sizePx)
+            icon.draw(c)
+        }
+        iconCache[key] = out
+        return out
+    }
+
+    /** Elige silueta o color original según el ajuste. */
+    fun appIcon(ctx: Context, pkg: String, monoSizePx: Int = 48, colorSizePx: Int = 96): Bitmap? =
+        if (Prefs.originalIcons(ctx)) colorIcon(ctx, pkg, colorSizePx) else monoIcon(ctx, pkg, HEAD, monoSizePx)
+
     private fun lum(c: Int) =
         (0.2126f * Color.red(c) + 0.7152f * Color.green(c) + 0.0722f * Color.blue(c)) / 255f
 
