@@ -19,6 +19,7 @@ class RockWidget : AppWidgetProvider() {
         scheduleMidnight(ctx)
         WeatherWorker.schedule(ctx)
         BatteryMonitor.check(ctx)
+        LiveService.start(ctx)
     }
 
     override fun onReceive(ctx: Context, intent: Intent) {

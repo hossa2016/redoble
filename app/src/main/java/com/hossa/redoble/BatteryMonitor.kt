@@ -112,6 +112,7 @@ class ChargerWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
     override fun doWork(): Result {
         BatteryMonitor.refresh(applicationContext)
         BatteryMonitor.check(applicationContext)
+        LiveService.start(applicationContext)
         return Result.success()
     }
 }
@@ -121,6 +122,7 @@ class BatteryWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
     override fun doWork(): Result {
         BatteryMonitor.refresh(applicationContext)
         BatteryMonitor.check(applicationContext)
+        LiveService.start(applicationContext)
         return Result.success()
     }
 }
