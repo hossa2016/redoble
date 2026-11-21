@@ -196,6 +196,28 @@ object Graphics {
         return bmp
     }
 
+    /** Rayo de carga con brillo, en el color de acento. */
+    fun boltBitmap(ctx: Context, color: Int): Bitmap {
+        val w = dp(ctx, 11f); val h = dp(ctx, 17f)
+        val bmp = Bitmap.createBitmap(w.toInt(), h.toInt(), Bitmap.Config.ARGB_8888)
+        val c = Canvas(bmp)
+        val path = android.graphics.Path().apply {
+            moveTo(w * 0.62f, h * 0.02f)
+            lineTo(w * 0.08f, h * 0.58f)
+            lineTo(w * 0.46f, h * 0.58f)
+            lineTo(w * 0.34f, h * 0.98f)
+            lineTo(w * 0.92f, h * 0.40f)
+            lineTo(w * 0.54f, h * 0.40f)
+            close()
+        }
+        c.drawPath(path, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            this.color = ColorUtils.setAlphaComponent(color, 0x8C)
+            maskFilter = BlurMaskFilter(dp(ctx, 2f), BlurMaskFilter.Blur.NORMAL)
+        })
+        c.drawPath(path, Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color })
+        return bmp
+    }
+
     // ------------------------------------------------------------------
     // Ícono monocromo
     // ------------------------------------------------------------------

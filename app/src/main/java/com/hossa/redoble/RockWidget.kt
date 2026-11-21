@@ -125,19 +125,18 @@ class RockWidget : AppWidgetProvider() {
             val level = BatteryMonitor.level(ctx)
             val charging = BatteryMonitor.isCharging(ctx)
             v.setImageViewBitmap(R.id.leds_img, Graphics.ledBitmap(ctx, level, accent, charging))
-            when {
-                charging -> {
-                    v.setTextViewText(R.id.batt_txt, "$level % · cargando")
-                    v.setTextColor(R.id.batt_txt, Graphics.HEAD)
-                }
-                level <= 15 -> {
-                    v.setTextViewText(R.id.batt_txt, "Batería baja, $level %")
-                    v.setTextColor(R.id.batt_txt, Graphics.ALERT)
-                }
-                else -> {
-                    v.setTextViewText(R.id.batt_txt, "$level %")
-                    v.setTextColor(R.id.batt_txt, Graphics.HEAD)
-                }
+            if (charging) {
+                v.setViewVisibility(R.id.batt_bolt, android.view.View.VISIBLE)
+                v.setImageViewBitmap(R.id.batt_bolt, Graphics.boltBitmap(ctx, accent))
+            } else {
+                v.setViewVisibility(R.id.batt_bolt, android.view.View.GONE)
+            }
+            if (!charging && level <= 15) {
+                v.setTextViewText(R.id.batt_txt, "$level %")
+                v.setTextColor(R.id.batt_txt, Graphics.ALERT)
+            } else {
+                v.setTextViewText(R.id.batt_txt, "$level %")
+                v.setTextColor(R.id.batt_txt, Graphics.HEAD)
             }
         }
 
