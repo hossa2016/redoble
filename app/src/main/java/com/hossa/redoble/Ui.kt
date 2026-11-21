@@ -38,7 +38,8 @@ class Ui(val ctx: Context, val accent: Int) {
         val ALERT = Color.parseColor("#E24B4A")
     }
 
-    val silver = accent == Prefs.ACCENTS[2]
+    /** Colores claros (plata, ámbar, verde, cian) llevan texto oscuro encima. */
+    val silver = ColorUtils.calculateLuminance(accent) > 0.35
     val onAccent = if (silver) Color.parseColor("#14110E") else Color.WHITE
     val accentSoft = ColorUtils.setAlphaComponent(accent, 0x29)
     val accentLine = ColorUtils.setAlphaComponent(accent, 0x8C)

@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(weatherPlate())
         col.addView(setlistPlate())
         col.addView(widgetPlate())
-        col.addView(ui.text("Redoble 5.3", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Redoble 5.4", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -338,13 +338,23 @@ class MainActivity : AppCompatActivity() {
         card.addView(ui.sectionTitle("Color de acento"))
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            setPadding(ui.dp(6), 0, ui.dp(6), 0)
+            setPadding(ui.dp(2), 0, ui.dp(2), 0)
         }
-        val sel = Prefs.accentIndex(this)
+        val sel = Prefs.accentIndex(this).coerceIn(0, Prefs.ACCENTS.size - 1)
         for (i in Prefs.ACCENTS.indices) {
-            row.addView(knob(i, i == sel), LinearLayout.LayoutParams(0, -2, 1f))
+            row.addView(knob(i, i == sel), LinearLayout.LayoutParams(ui.dp(88), -2))
         }
-        card.addView(row)
+        val scroller = android.widget.HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            overScrollMode = View.OVER_SCROLL_NEVER
+            addView(row)
+        }
+        card.addView(scroller, LinearLayout.LayoutParams(-1, -2))
+        card.addView(ui.text("${Prefs.NAMES[sel]} · desliza para ver más", ui.cond, 13f, Ui.DIM).apply {
+            gravity = Gravity.CENTER; setPadding(0, ui.dp(8), 0, 0)
+        }, LinearLayout.LayoutParams(-1, -2))
+        // Llevar el color elegido a la vista
+        scroller.post { scroller.scrollTo((ui.dp(88) * sel - scroller.width / 2 + ui.dp(44)).coerceAtLeast(0), 0) }
         return card
     }
 
