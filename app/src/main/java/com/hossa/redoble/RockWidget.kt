@@ -31,6 +31,8 @@ class RockWidget : AppWidgetProvider() {
                 BatteryMonitor.refresh(ctx)
                 BatteryMonitor.check(ctx)
             }
+            Player.ACTION_PLAY_PAUSE, Player.ACTION_NEXT, Player.ACTION_PREV ->
+                Player.handle(ctx, intent.action)
             ACTION_REFRESH, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> {
                 updateAll(ctx)
                 scheduleMidnight(ctx)
@@ -76,6 +78,7 @@ class RockWidget : AppWidgetProvider() {
             v.setViewVisibility(R.id.wx_tomorrow, if (tomorrow.isBlank()) View.GONE else View.VISIBLE)
 
             applyBattery(ctx, v)
+            Player.apply(ctx, v)
 
             // Abrir ajustes desde la cabecera, el día y la lista vacía
             val open = PendingIntent.getActivity(

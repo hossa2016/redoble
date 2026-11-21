@@ -55,6 +55,10 @@ object Prefs {
     fun wpZoom(ctx: Context) = p(ctx).getInt("wpZoom", 0)
     fun setWpZoom(ctx: Context, v: Int) = p(ctx).edit().putInt("wpZoom", v).apply()
 
+    /** Reproductor: true = solo RockPlay IA; false = cualquier app de música. */
+    fun onlyRockPlay(ctx: Context) = p(ctx).getBoolean("onlyRockPlay", true)
+    fun setOnlyRockPlay(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("onlyRockPlay", v).apply()
+
     fun city(ctx: Context) = p(ctx).getString("city", "") ?: ""
     fun lat(ctx: Context) = p(ctx).getFloat("lat", Float.NaN)
     fun lon(ctx: Context) = p(ctx).getFloat("lon", Float.NaN)

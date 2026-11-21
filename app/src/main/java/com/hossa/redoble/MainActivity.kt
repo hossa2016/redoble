@@ -4,6 +4,7 @@ import android.animation.LayoutTransition
 import android.app.WallpaperManager
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -19,6 +20,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.OpenableColumns
+import android.provider.Settings
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -101,8 +103,9 @@ class MainActivity : AppCompatActivity() {
         col.addView(accentPlate())
         col.addView(weatherPlate())
         col.addView(setlistPlate())
+        col.addView(playerPlate())
         col.addView(widgetPlate())
-        col.addView(ui.text("Redoble 5.9", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Redoble 6.0", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -681,6 +684,62 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ---------------- Widget ----------------
+    private fun playerPlate(): View {
+        val card = ui.plateCard()
+        card.addView(ui.sectionTitle("Reproductor"))
+        card.addView(ui.bodyText("Cuando suena música, aparece encima de la foto con la canción y los botones ⏮ ⏯ ⏭. Sin música se oculta y RockPlay se abre desde su pad."))
+
+        val on = Player.enabled(this)
+        card.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            addView(ui.dot(if (on) Ui.OK else ui.accent), LinearLayout.LayoutParams(ui.dp(7), ui.dp(7)))
+            addView(ui.text(
+                if (on) "Activo: Redoble puede ver qué está sonando."
+                else "Falta el permiso de acceso a notificaciones.",
+                ui.cond, 14f, Ui.MUTED
+            ).apply { setPadding(ui.dp(8), 0, 0, 0) })
+        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
+
+        if (!on) {
+            card.addView(ui.bodyText("Android pide este permiso para mostrar la música en un widget. Redoble solo lo usa para leer la canción y los controles; no lee tus mensajes.", Ui.DIM, 13f),
+                LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+        }
+        val btn = if (on) ui.textButton("Revisar permiso") else ui.primary("Dar permiso")
+        btn.setOnClickListener {
+            try {
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            } catch (e: Exception) {
+                Toast.makeText(this, "Busca «Acceso a notificaciones» en Ajustes y activa Redoble.", Toast.LENGTH_LONG).show()
+            }
+        }
+        card.addView(btn, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(12) })
+
+        // Qué música mostrar
+        val only = Prefs.onlyRockPlay(this)
+        val modes = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            background = ui.rect(Ui.WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+            setPadding(ui.dp(4), ui.dp(4), ui.dp(4), ui.dp(4))
+        }
+        listOf("Solo RockPlay" to true, "Cualquier app" to false).forEachIndexed { idx, (label, m) ->
+            val sel = m == only
+            val b = (if (sel) ui.primary(label) else ui.textButton(label).apply { setTextColor(Ui.MUTED) }).apply {
+                minHeight = ui.dp(40); minimumHeight = ui.dp(40)
+                setOnClickListener {
+                    if (m != Prefs.onlyRockPlay(this@MainActivity)) {
+                        Prefs.setOnlyRockPlay(this@MainActivity, m)
+                        Player.updateAll(this@MainActivity)
+                        build()
+                    }
+                }
+            }
+            modes.addView(b, LinearLayout.LayoutParams(0, ui.dp(40), 1f).apply { if (idx > 0) marginStart = ui.dp(4) })
+        }
+        card.addView(modes, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12); bottomMargin = ui.dp(4) })
+        return card
+    }
+
     private fun widgetPlate(): View {
         val card = ui.plateCard()
         card.layoutTransition = LayoutTransition()
