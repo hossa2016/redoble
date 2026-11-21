@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
 import android.os.SystemClock
@@ -30,7 +31,16 @@ object BatteryMonitor {
     const val ACTION_TICK = "com.hossa.redoble.BATTERY_TICK"
     private const val TICK_MS = 60_000L
 
+    /** Conectado a corriente (más fiable en Xiaomi que BatteryManager.isCharging). */
     fun isCharging(ctx: Context): Boolean {
+        try {
+            val i = ctx.applicationContext.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            if (i != null) {
+                val plugged = i.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
+                val status = i.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+                if (plugged != 0 || status == BatteryManager.BATTERY_STATUS_CHARGING) return true
+            }
+        } catch (e: Exception) { }
         val bm = ctx.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         return bm.isCharging
     }
