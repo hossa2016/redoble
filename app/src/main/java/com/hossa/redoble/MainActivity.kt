@@ -31,6 +31,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -171,9 +172,79 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    private val suggested = listOf(
+        R.drawable.fondo_bateria to "Batería",
+        R.drawable.fondo_neon to "Batería neón",
+        R.drawable.fondo_baquetas to "Baquetas",
+        R.drawable.fondo_bajo to "Bajo"
+    )
+    private val thumbs = HashMap<Int, Bitmap>()
+
+    private fun thumb(res: Int): Bitmap? = thumbs[res] ?: try {
+        val o = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeResource(resources, res, o)
+        var s = 1
+        while (maxOf(o.outWidth, o.outHeight) / (s * 2) >= 360) s *= 2
+        BitmapFactory.decodeResource(resources, res, BitmapFactory.Options().apply { inSampleSize = s })
+            ?.also { thumbs[res] = it }
+    } catch (e: Exception) { null }
+
+    private fun useSuggested(res: Int, name: String) {
+        io.execute {
+            val bmp = try { BitmapFactory.decodeResource(resources, res, BitmapFactory.Options().apply { inScaled = false }) } catch (e: Exception) { null }
+            if (bmp != null) {
+                try { photoFile.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 95, it) } } catch (e: Exception) { }
+                getSharedPreferences("redoble", MODE_PRIVATE).edit().putString("photoName", name).apply()
+            }
+            main.post {
+                if (bmp == null) toast("No pudimos abrir ese fondo") else {
+                    photo = bmp; photoSmall = null
+                    Prefs.setWpPos(this, 50); Prefs.setWpZoom(this, 0)
+                    build()
+                }
+            }
+        }
+    }
+
+    private fun suggestedRow(): View {
+        val current = if (photo != null) getSharedPreferences("redoble", MODE_PRIVATE).getString("photoName", "") else ""
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        suggested.forEachIndexed { i, (res, name) ->
+            val on = name == current
+            val tile = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER_HORIZONTAL
+                setOnClickListener { if (!on) useSuggested(res, name) }
+            }
+            val img = ImageView(this).apply {
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                setImageBitmap(thumb(res))
+                clipToOutline = true
+                outlineProvider = object : ViewOutlineProvider() {
+                    override fun getOutline(view: View, outline: Outline) {
+                        outline.setRoundRect(0, 0, view.width, view.height, ui.dp(12).toFloat())
+                    }
+                }
+                foreground = ui.rect(Color.TRANSPARENT, 12f, if (on) ui.accent else Color.parseColor("#33EDE6DC"), if (on) 2.5f else 1f)
+            }
+            tile.addView(img, LinearLayout.LayoutParams(ui.dp(76), ui.dp(120)))
+            tile.addView(ui.text(name, ui.cond, 13f, if (on) Ui.HEAD else Ui.MUTED).apply {
+                gravity = Gravity.CENTER; maxLines = 1
+            }, LinearLayout.LayoutParams(ui.dp(84), -2).apply { topMargin = ui.dp(6) })
+            row.addView(tile, LinearLayout.LayoutParams(-2, -2).apply { if (i > 0) marginStart = ui.dp(8) })
+        }
+        return HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(row)
+        }
+    }
+
     private fun wallpaperPlate(): View {
         val card = ui.plateCard()
         card.addView(ui.sectionTitle("Fondo"))
+        card.addView(ui.text("SUGERIDOS", ui.condSemi, 12f, Ui.DIM).apply { letterSpacing = 0.12f },
+            LinearLayout.LayoutParams(-2, -2).apply { bottomMargin = ui.dp(8) })
+        card.addView(suggestedRow(), LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(18) })
 
         val (sw, sh) = screenSize()
         val pvW = ui.dp(150)
@@ -198,7 +269,7 @@ class MainActivity : AppCompatActivity() {
                 setColor(Ui.WELL); cornerRadius = ui.dp(16).toFloat()
                 setStroke(ui.dp(1.5f), Color.parseColor("#47EDE6DC"), ui.dp(6).toFloat(), ui.dp(4).toFloat())
             }
-            preview.addView(ui.text("Elige una foto\nde tu galería", ui.cond, 16f, Ui.MUTED).apply { gravity = Gravity.CENTER },
+            preview.addView(ui.text("Elige un sugerido\no una foto tuya", ui.cond, 16f, Ui.MUTED).apply { gravity = Gravity.CENTER },
                 FrameLayout.LayoutParams(-1, -1))
         }
         card.addView(preview, LinearLayout.LayoutParams(pvW, pvH).apply { gravity = Gravity.CENTER_HORIZONTAL })
@@ -244,7 +315,7 @@ class MainActivity : AppCompatActivity() {
             Prefs.setDim(this, v); if (hasPhoto) renderPreview(iv)
         })
 
-        val pick = ui.secondary(if (photo == null) "Elegir foto" else "Cambiar foto").apply {
+        val pick = ui.secondary("Foto del celular").apply {
             setOnClickListener { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
         }
         val apply = ui.primary("Aplicar fondo")

@@ -11,8 +11,8 @@ android {
         applicationId = "com.hossa.redoble"
         minSdk = 26
         targetSdk = 34
-        versionCode = 11
-        versionName = "5.5"
+        versionCode = 12
+        versionName = "5.6"
     }
 
     signingConfigs {
