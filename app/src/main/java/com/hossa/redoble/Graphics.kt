@@ -160,13 +160,13 @@ object Graphics {
     // ------------------------------------------------------------------
     // Vúmetro LED de 12 segmentos
     // ------------------------------------------------------------------
-    fun ledBitmap(ctx: Context, level: Int, accent: Int): Bitmap {
+    fun ledBitmap(ctx: Context, level: Int, accent: Int, charging: Boolean = false): Bitmap {
         val w = dp(ctx, 113f).toInt()
         val h = dp(ctx, 19f).toInt()
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
         val on = Math.round(level.coerceIn(0, 100) / 100f * 12)
-        val color = if (level <= 15) ALERT else accent
+        val color = if (level <= 15 && !charging) ALERT else accent
         val segW = dp(ctx, 6f)
         val segH = dp(ctx, 11f)
         val gap = dp(ctx, 3f)

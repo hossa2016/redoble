@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         RockWidget.updateAll(this)
+        BatteryMonitor.check(this)
         build()
     }
 
@@ -99,7 +100,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(weatherPlate())
         col.addView(setlistPlate())
         col.addView(widgetPlate())
-        col.addView(ui.text("Redoble 4.1", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Redoble 5.0", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })

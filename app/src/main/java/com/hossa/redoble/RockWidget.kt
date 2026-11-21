@@ -7,7 +7,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.BatteryManager
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.graphics.ColorUtils
@@ -19,11 +18,16 @@ class RockWidget : AppWidgetProvider() {
         for (id in ids) update(ctx, mgr, id)
         scheduleMidnight(ctx)
         WeatherWorker.schedule(ctx)
+        BatteryMonitor.check(ctx)
     }
 
     override fun onReceive(ctx: Context, intent: Intent) {
         super.onReceive(ctx, intent)
         when (intent.action) {
+            BatteryMonitor.ACTION_TICK -> {
+                BatteryMonitor.refresh(ctx)
+                BatteryMonitor.check(ctx)
+            }
             ACTION_REFRESH, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> {
                 updateAll(ctx)
                 scheduleMidnight(ctx)
@@ -68,17 +72,7 @@ class RockWidget : AppWidgetProvider() {
             v.setTextViewText(R.id.wx_tomorrow, tomorrow)
             v.setViewVisibility(R.id.wx_tomorrow, if (tomorrow.isBlank()) View.GONE else View.VISIBLE)
 
-            // Batería
-            val bm = ctx.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-            val level = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY).coerceIn(0, 100)
-            v.setImageViewBitmap(R.id.leds_img, Graphics.ledBitmap(ctx, level, accent))
-            if (level <= 15) {
-                v.setTextViewText(R.id.batt_txt, "Batería baja, $level %")
-                v.setTextColor(R.id.batt_txt, Graphics.ALERT)
-            } else {
-                v.setTextViewText(R.id.batt_txt, "$level %")
-                v.setTextColor(R.id.batt_txt, Graphics.HEAD)
-            }
+            applyBattery(ctx, v)
 
             // Abrir ajustes desde la cabecera, el día y la lista vacía
             val open = PendingIntent.getActivity(
@@ -123,6 +117,28 @@ class RockWidget : AppWidgetProvider() {
             }
 
             mgr.updateAppWidget(widgetId, v)
+        }
+
+        /** Medidor LED y texto de batería (también se usa en actualizaciones parciales). */
+        fun applyBattery(ctx: Context, v: RemoteViews) {
+            val accent = Prefs.accent(ctx)
+            val level = BatteryMonitor.level(ctx)
+            val charging = BatteryMonitor.isCharging(ctx)
+            v.setImageViewBitmap(R.id.leds_img, Graphics.ledBitmap(ctx, level, accent, charging))
+            when {
+                charging -> {
+                    v.setTextViewText(R.id.batt_txt, "$level % · cargando")
+                    v.setTextColor(R.id.batt_txt, Graphics.HEAD)
+                }
+                level <= 15 -> {
+                    v.setTextViewText(R.id.batt_txt, "Batería baja, $level %")
+                    v.setTextColor(R.id.batt_txt, Graphics.ALERT)
+                }
+                else -> {
+                    v.setTextViewText(R.id.batt_txt, "$level %")
+                    v.setTextColor(R.id.batt_txt, Graphics.HEAD)
+                }
+            }
         }
 
         fun scheduleMidnight(ctx: Context) {
