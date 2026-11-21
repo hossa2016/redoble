@@ -31,7 +31,7 @@ class RockWidget : AppWidgetProvider() {
                 BatteryMonitor.refresh(ctx)
                 BatteryMonitor.check(ctx)
             }
-            Player.ACTION_PLAY_PAUSE, Player.ACTION_NEXT, Player.ACTION_PREV ->
+            Player.ACTION_PLAY_PAUSE, Player.ACTION_NEXT, Player.ACTION_PREV, Player.ACTION_CLOSE ->
                 Player.handle(ctx, intent.action)
             ACTION_REFRESH, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> {
                 updateAll(ctx)

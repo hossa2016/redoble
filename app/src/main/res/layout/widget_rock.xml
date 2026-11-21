@@ -203,12 +203,24 @@
                     android:textSize="13sp" />
                 <TextView
                     android:id="@+id/player_state"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:fontFamily="@font/barlow_condensed_regular"
                     android:maxLines="1"
                     android:textColor="#FFB5AA9F"
                     android:textSize="13sp" />
+                <ImageView
+                    android:id="@+id/player_close"
+                    android:layout_width="36dp"
+                    android:layout_height="28dp"
+                    android:layout_marginEnd="-8dp"
+                    android:contentDescription="Cerrar reproductor"
+                    android:paddingStart="10dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="6dp"
+                    android:scaleType="fitCenter" />
             </LinearLayout>
 
             <LinearLayout

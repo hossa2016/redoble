@@ -34,6 +34,10 @@ object Player {
     const val ACTION_PLAY_PAUSE = "com.hossa.redoble.PLAYER_PLAY_PAUSE"
     const val ACTION_NEXT = "com.hossa.redoble.PLAYER_NEXT"
     const val ACTION_PREV = "com.hossa.redoble.PLAYER_PREV"
+    const val ACTION_CLOSE = "com.hossa.redoble.PLAYER_CLOSE"
+
+    private fun key(c: MediaController): String =
+        c.packageName + "|" + (c.metadata?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "")
 
     private val main = Handler(Looper.getMainLooper())
 
@@ -78,6 +82,11 @@ object Player {
             ACTION_PLAY_PAUSE -> if (isPlaying(c)) t.pause() else t.play()
             ACTION_NEXT -> t.skipToNext()
             ACTION_PREV -> t.skipToPrevious()
+            ACTION_CLOSE -> {
+                // Detiene la música y oculta la tarjeta hasta que vuelva a sonar algo.
+                Prefs.setPlayerDismissed(ctx, key(c))
+                try { t.stop() } catch (e: Exception) { t.pause() }
+            }
             else -> return
         }
         val app = ctx.applicationContext
@@ -117,6 +126,14 @@ object Player {
             ?: md.description?.subtitle?.toString() ?: ""
         val playing = isPlaying(c)
         val accent = Prefs.accent(ctx)
+        val dismissed = Prefs.playerDismissed(ctx)
+        if (dismissed.isNotEmpty()) {
+            if (playing) Prefs.setPlayerDismissed(ctx, "")
+            else if (dismissed == key(c)) {
+                v.setViewVisibility(R.id.player, View.GONE)
+                return
+            }
+        }
 
         v.setViewVisibility(R.id.player, View.VISIBLE)
         val src = if (c.packageName == ROCKPLAY) "ROCKPLAY" else try {
@@ -137,6 +154,8 @@ object Player {
             ?: md.description?.iconBitmap
         v.setImageViewBitmap(R.id.player_art, artBitmap(ctx, art, accent))
 
+        v.setImageViewBitmap(R.id.player_close, iconBitmap(ctx, "close", 0xFFB5AA9F.toInt(), 16))
+        v.setOnClickPendingIntent(R.id.player_close, broadcast(ctx, ACTION_CLOSE, 205))
         v.setImageViewBitmap(R.id.player_prev, iconBitmap(ctx, "prev", Graphics.HEAD, 24))
         v.setImageViewBitmap(R.id.player_next, iconBitmap(ctx, "next", Graphics.HEAD, 24))
         v.setImageViewBitmap(R.id.player_play, playBitmap(ctx, playing, accent))
@@ -239,6 +258,14 @@ object Player {
             "prev" -> {
                 c.drawPath(Path().apply { moveTo(19f, 5f); lineTo(8f, 12f); lineTo(19f, 19f); close() }, fill)
                 c.drawRect(5f, 5f, 7.5f, 19f, fill)
+            }
+            "close" -> {
+                val st = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    this.color = color; style = Paint.Style.STROKE; strokeWidth = 2.6f
+                    strokeCap = Paint.Cap.ROUND
+                }
+                c.drawLine(5f, 5f, 19f, 19f, st)
+                c.drawLine(19f, 5f, 5f, 19f, st)
             }
             "note" -> {
                 val st = Paint(Paint.ANTI_ALIAS_FLAG).apply {

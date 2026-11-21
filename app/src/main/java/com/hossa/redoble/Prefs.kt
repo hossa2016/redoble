@@ -59,6 +59,9 @@ object Prefs {
     fun onlyRockPlay(ctx: Context) = p(ctx).getBoolean("onlyRockPlay", true)
     fun setOnlyRockPlay(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("onlyRockPlay", v).apply()
 
+    fun playerDismissed(ctx: Context) = p(ctx).getString("playerDismissed", "") ?: ""
+    fun setPlayerDismissed(ctx: Context, v: String) = p(ctx).edit().putString("playerDismissed", v).apply()
+
     fun city(ctx: Context) = p(ctx).getString("city", "") ?: ""
     fun lat(ctx: Context) = p(ctx).getFloat("lat", Float.NaN)
     fun lon(ctx: Context) = p(ctx).getFloat("lon", Float.NaN)
