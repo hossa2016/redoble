@@ -41,7 +41,7 @@ class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
             if (codes.length() > 1) {
                 val mn = daily.getJSONArray("temperature_2m_min").getDouble(1).roundToInt()
                 val mx = daily.getJSONArray("temperature_2m_max").getDouble(1).roundToInt()
-                tomorrow = "Mañana: ${describe(codes.getInt(1)).lowercase()} $mn°–$mx°"
+                tomorrow = "Mañana: ${describe(codes.getInt(1)).lowercase()} · $mn°–$mx°"
             }
             Prefs.setWeather(ctx, "$now, $temp°", tomorrow)
             RockWidget.updateAll(ctx)
@@ -94,7 +94,7 @@ class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
 
         fun describe(code: Int): String = when (code) {
             0 -> "Despejado"
-            1, 2 -> "Parcialmente nublado"
+            1, 2 -> "Algo nublado"
             3 -> "Nublado"
             45, 48 -> "Niebla"
             in 51..57 -> "Llovizna"
