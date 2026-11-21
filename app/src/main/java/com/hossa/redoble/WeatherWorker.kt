@@ -63,7 +63,8 @@ class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
 
         fun runNow(ctx: Context) {
             val req = OneTimeWorkRequestBuilder<WeatherWorker>().setConstraints(NET).build()
-            WorkManager.getInstance(ctx).enqueue(req)
+            WorkManager.getInstance(ctx)
+                .enqueueUniqueWork("clima-ahora", androidx.work.ExistingWorkPolicy.KEEP, req)
         }
 
         fun get(url: String): String {

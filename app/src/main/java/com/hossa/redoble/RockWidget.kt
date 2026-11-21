@@ -8,7 +8,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
-import android.os.Bundle
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.graphics.ColorUtils
@@ -20,10 +19,6 @@ class RockWidget : AppWidgetProvider() {
         for (id in ids) update(ctx, mgr, id)
         scheduleMidnight(ctx)
         WeatherWorker.schedule(ctx)
-    }
-
-    override fun onAppWidgetOptionsChanged(ctx: Context, mgr: AppWidgetManager, id: Int, opts: Bundle) {
-        update(ctx, mgr, id)
     }
 
     override fun onReceive(ctx: Context, intent: Intent) {
@@ -41,7 +36,7 @@ class RockWidget : AppWidgetProvider() {
 
         val DAYS = arrayOf("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado")
 
-        private val TRACKS = intArrayOf(R.id.track0, R.id.track1, R.id.track2, R.id.track3, R.id.track4, R.id.track5)
+        private val PADS = intArrayOf(R.id.pad0, R.id.pad1, R.id.pad2, R.id.pad3, R.id.pad4, R.id.pad5)
         private val NUMS = intArrayOf(R.id.num0, R.id.num1, R.id.num2, R.id.num3, R.id.num4, R.id.num5)
         private val ICONS = intArrayOf(R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5)
         private val LABELS = intArrayOf(R.id.label0, R.id.label1, R.id.label2, R.id.label3, R.id.label4, R.id.label5)
@@ -61,12 +56,8 @@ class RockWidget : AppWidgetProvider() {
             val v = RemoteViews(ctx.packageName, R.layout.widget_rock)
             val accent = Prefs.accent(ctx)
 
-            // Alto real del widget para el bitmap del día
-            val opts = mgr.getAppWidgetOptions(widgetId)
-            var hDp = opts?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0) ?: 0
-            if (hDp < 200) hDp = 452
             val day = DAYS[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1]
-            v.setImageViewBitmap(R.id.day_img, Graphics.dayBitmap(ctx, day, accent, hDp))
+            v.setImageViewBitmap(R.id.day_img, Graphics.dayBitmap(ctx, day, accent))
 
             v.setTextColor(R.id.colon, accent)
 
@@ -98,31 +89,38 @@ class RockWidget : AppWidgetProvider() {
             v.setOnClickPendingIntent(R.id.day_img, open)
             v.setOnClickPendingIntent(R.id.empty, open)
 
-            // Setlist
+            // Pads: se llenan en orden con las apps elegidas
             val pm = ctx.packageManager
             val numColor = ColorUtils.setAlphaComponent(accent, 0xD9)
-            var shown = 0
+            val filled = (0 until Prefs.SLOTS).map { Prefs.app(ctx, it) }
+                .filter { it.isNotBlank() && pm.getLaunchIntentForPackage(it) != null }
             for (i in 0 until Prefs.SLOTS) {
-                val pkg = Prefs.app(ctx, i)
-                val launch = if (pkg.isNotBlank()) pm.getLaunchIntentForPackage(pkg) else null
-                if (launch == null) {
-                    v.setViewVisibility(TRACKS[i], View.GONE)
+                val pkg = filled.getOrNull(i)
+                if (pkg == null) {
+                    v.setViewVisibility(PADS[i], View.INVISIBLE)
                     continue
                 }
-                shown++
-                v.setViewVisibility(TRACKS[i], View.VISIBLE)
-                v.setTextViewText(NUMS[i], String.format("%02d", shown))
+                v.setViewVisibility(PADS[i], View.VISIBLE)
+                v.setTextViewText(NUMS[i], String.format("%02d", i + 1))
                 v.setTextColor(NUMS[i], numColor)
                 v.setTextViewText(LABELS[i], Apps.label(ctx, pkg))
                 Graphics.monoIcon(ctx, pkg)?.let { v.setImageViewBitmap(ICONS[i], it) }
-                launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                val launch = pm.getLaunchIntentForPackage(pkg)!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 v.setOnClickPendingIntent(
-                    TRACKS[i],
+                    PADS[i],
                     PendingIntent.getActivity(ctx, i, launch, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                 )
             }
-            v.setViewVisibility(R.id.empty, if (shown == 0) View.VISIBLE else View.GONE)
-            v.setTextViewText(R.id.count, if (shown == 1) "1 pista" else "$shown pistas")
+            v.setViewVisibility(R.id.row2, if (filled.size > 3) View.VISIBLE else View.GONE)
+            v.setViewVisibility(R.id.row1, if (filled.isEmpty()) View.GONE else View.VISIBLE)
+            v.setViewVisibility(R.id.empty, if (filled.isEmpty()) View.VISIBLE else View.GONE)
+            v.setTextViewText(R.id.count, if (filled.size == 1) "1 pista" else "${filled.size} pistas")
+
+            // Si hay ciudad pero no hay dato del clima, pedirlo ya
+            if (Prefs.city(ctx).isNotBlank() &&
+                System.currentTimeMillis() - Prefs.weatherAt(ctx) > 45 * 60_000L) {
+                WeatherWorker.runNow(ctx)
+            }
 
             mgr.updateAppWidget(widgetId, v)
         }

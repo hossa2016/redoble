@@ -52,14 +52,12 @@ object Graphics {
     // ------------------------------------------------------------------
     // Día vertical con metal pulido + varilla de tensión
     // ------------------------------------------------------------------
-    fun dayBitmap(ctx: Context, dayName: String, accent: Int, heightDp: Int): Bitmap {
-        var scale = 1f
+    fun dayBitmap(ctx: Context, dayName: String, accent: Int, heightDp: Int = 210): Bitmap {
+        val scale = 1f
         val dens = ctx.resources.displayMetrics.density
-        // Mantener el bitmap en un tamaño razonable para RemoteViews.
-        if (106 * dens * heightDp * dens * 4 > 2_400_000) scale = 0.75f
         val d = { v: Float -> v * dens * scale }
 
-        val w = d(106f).toInt()
+        val w = d(72f).toInt()
         val h = d(heightDp.toFloat()).toInt()
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
@@ -69,21 +67,21 @@ object Graphics {
             typeface = anton(ctx)
             letterSpacing = 0.03f
         }
-        // Auto-ajuste: de 104dp hacia abajo hasta que quepa a lo alto (mínimo 64dp).
-        var size = d(104f)
+        // Auto-ajuste: de 58dp hacia abajo hasta que quepa a lo alto.
+        var size = d(58f)
         paint.textSize = size
-        val maxLen = h - d(16f)
-        while (paint.measureText(text) > maxLen && size > d(64f)) {
+        val maxLen = h - d(12f)
+        while (paint.measureText(text) > maxLen && size > d(36f)) {
             size -= d(2f)
             paint.textSize = size
         }
         // Si aún no cabe (widget muy bajo), forzar.
-        while (paint.measureText(text) > maxLen && size > d(20f)) {
+        while (paint.measureText(text) > maxLen && size > d(16f)) {
             size -= d(2f)
             paint.textSize = size
         }
         val textLen = paint.measureText(text)
-        val baselineX = d(94f)          // la línea base queda a la derecha; las letras crecen a la izquierda
+        val baselineX = d(56f)          // la línea base queda a la derecha; las letras crecen a la izquierda
         val startY = d(6f) + textLen    // el final de la palabra queda arriba con 6dp de margen
 
         fun drawWord(p: Paint, dxScreen: Float = 0f, dyScreen: Float = 0f) {
@@ -97,12 +95,12 @@ object Graphics {
         // Pasada 1: sombra
         val shadow = Paint(paint).apply {
             color = Color.parseColor("#D9000000")
-            setShadowLayer(d(5f), d(3f), 0f, Color.parseColor("#D9000000"))
+            
         }
         // En el lienzo rotado, "abajo" en pantalla es +x antes de rotar; usamos desplazamiento en pantalla.
         shadow.clearShadowLayer()
-        shadow.maskFilter = BlurMaskFilter(d(5f), BlurMaskFilter.Blur.NORMAL)
-        drawWord(shadow, 0f, d(3f))
+        shadow.maskFilter = BlurMaskFilter(d(4f), BlurMaskFilter.Blur.NORMAL)
+        drawWord(shadow, 0f, d(2f))
 
         // Pasada 2: relleno metálico (gradiente a lo ancho de las letras, en X de pantalla)
         val layer = c.saveLayer(0f, 0f, w.toFloat(), h.toFloat(), null)
@@ -123,8 +121,8 @@ object Graphics {
             style = Paint.Style.STROKE; strokeWidth = d(0.5f); color = Color.parseColor("#33FFFFFF")
         }, 0f, -d(0.5f))
 
-        // Varilla de tensión en x = 104dp
-        val rodX = d(103f)
+        // Varilla de tensión
+        val rodX = d(66f)
         val top = d(6f)
         val bottom = h - d(6f)
         val glow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -144,7 +142,7 @@ object Graphics {
         c.drawLine(rodX, top, rodX, bottom, rod)
         for (f in floatArrayOf(0.10f, 0.90f)) {
             val cy = top + (bottom - top) * f
-            val r = d(4f)
+            val r = d(3.5f)
             c.drawCircle(rodX, cy + d(1f), r, Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = Color.BLACK; maskFilter = BlurMaskFilter(d(1f), BlurMaskFilter.Blur.NORMAL)
             })

@@ -67,6 +67,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
         if (photoFile.exists()) photo = BitmapFactory.decodeFile(photoFile.path)
+        if (Prefs.city(this).isNotBlank() && System.currentTimeMillis() - Prefs.weatherAt(this) > 30 * 60_000L) {
+            WeatherWorker.runNow(this)
+            WeatherWorker.schedule(this)
+            main.postDelayed({ refreshCityStatus() }, 5000)
+        }
         build()
     }
 
@@ -93,7 +98,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(weatherPlate())
         col.addView(setlistPlate())
         col.addView(widgetPlate())
-        col.addView(ui.text("Redoble 2.0", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Redoble 3.0", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
