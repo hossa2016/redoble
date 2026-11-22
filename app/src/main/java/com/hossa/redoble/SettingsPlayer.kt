@@ -199,7 +199,6 @@ internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
         setPadding(ui.dp(4), 0, ui.dp(4), 0)
         setOnClickListener { action() }
     }, LinearLayout.LayoutParams(-1, ui.dp(48)))
-    if (hasWidget) link("Agregar otro widget") { showAddWidgetSteps(offerPin = true) }
     link("Ver la guía de inicio") { restartOnboarding() }
     link("Política de privacidad") {
         try {
