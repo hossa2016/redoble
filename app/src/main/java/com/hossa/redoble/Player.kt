@@ -74,6 +74,10 @@ object Player {
             ?: pool.firstOrNull()
     }
 
+    /** Títulos de YouTube vienen con códigos HTML (I&#39;m → I'm). */
+    private fun clean(s: String): String =
+        if (s.contains('&')) android.text.Html.fromHtml(s, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim() else s.trim()
+
     // ---------------------------------------------------------------- carátula
     private val artCache = android.util.LruCache<String, Bitmap>(12)
     private val loading = java.util.Collections.synchronizedSet(HashSet<String>())
@@ -160,12 +164,12 @@ object Player {
         if (!Prefs.el(ctx, "player")) return false
         val c = try { controller(ctx) } catch (e: Exception) { null }
         val md = c?.metadata
-        val title = md?.getString(MediaMetadata.METADATA_KEY_TITLE)
-            ?: md?.description?.title?.toString() ?: ""
+        val title = clean(md?.getString(MediaMetadata.METADATA_KEY_TITLE)
+            ?: md?.description?.title?.toString() ?: "")
         if (c == null || md == null || title.isBlank()) return false
-        val artist = md.getString(MediaMetadata.METADATA_KEY_ARTIST)
+        val artist = clean(md.getString(MediaMetadata.METADATA_KEY_ARTIST)
             ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
-            ?: md.description?.subtitle?.toString() ?: ""
+            ?: md.description?.subtitle?.toString() ?: "")
         val playing = isPlaying(c)
         val th = Themes.current(ctx)
         val accent = th.accent(ctx)
