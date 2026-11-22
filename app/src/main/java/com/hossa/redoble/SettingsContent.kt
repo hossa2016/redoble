@@ -152,10 +152,13 @@ internal fun MainActivity.renameSlot(slot: Int) {
         setSelectAllOnFocus(true)
         setSingleLine()
         filters = arrayOf(android.text.InputFilter.LengthFilter(14))
+        // Legible en la ventana clara u oscura
+        setTextColor(if (Ui.light) 0xFF1C1A17.toInt() else 0xFFF2ECE4.toInt())
     }
     box.addView(ui.bodyText("Nombre original: $original", Ui.MUTED, 13f))
     box.addView(field)
-    androidx.appcompat.app.AlertDialog.Builder(this)
+    android.app.AlertDialog.Builder(this,
+        if (Ui.light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else android.R.style.Theme_DeviceDefault_Dialog_Alert)
         .setTitle("Nombre del acceso %d".format(slot + 1))
         .setView(box)
         .setPositiveButton("Guardar") { _, _ ->

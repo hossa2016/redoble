@@ -48,7 +48,7 @@ object Themes {
         Theme(3, "Esmeralda", "cristal", R.layout.widget_cristal, c("#FFFFFF"), c("#B5CCC2"), c("#6FF0C0"), c("#2FBF8A"), c("#030305"),
             intArrayOf(c("#0E4A35"), c("#0D3D3F"), c("#1F4A22"))),
         Theme(4, "Claro", "claro", R.layout.widget_claro, c("#1C1A17"), c("#4F4A43"), c("#1C1A17"), c("#3A362F"), c("#F3EFE8"), light = true),
-        Theme(5, "Neón", "neon", R.layout.widget_neon, c("#EFFFFF"), c("#A3A5CC"), c("#3DF2FF"), c("#FF3DCB"), c("#07060D")),
+        Theme(5, "Neón", "neon", R.layout.widget_neon, c("#EFFFFF"), c("#9AA9B3"), c("#3DF2FF"), c("#FF3DCB"), c("#07060D")),
         Theme(6, "Lujo", "lujo", R.layout.widget_lujo, c("#EBD9AE"), c("#A8987A"), c("#D4B06A"), c("#A98545"), c("#0E0D0B")),
     )
 

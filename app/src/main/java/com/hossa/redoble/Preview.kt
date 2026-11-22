@@ -137,9 +137,12 @@ internal fun MainActivity.updatePreview() {
 internal fun MainActivity.showPreviewError(p: PreviewParts, msg: String?) {
     val old = p.frame.findViewWithTag<View>("pvErr")
     if (msg == null) { old?.let { p.frame.removeView(it) }; return }
-    if (old != null) { (old as android.widget.TextView).text = "No se pudo dibujar el widget:\n$msg"; return }
-    p.frame.addView(ui.text("No se pudo dibujar el widget:\n$msg", ui.body, 10f, Color.WHITE).apply {
-        tag = "pvErr"; translationZ = 4f
-        setBackgroundColor(Color.argb(0xCC, 0, 0, 0)); setPadding(ui.dp(6), ui.dp(6), ui.dp(6), ui.dp(6))
+    // Frase amable para todos; el detalle técnico solo en las versiones de prueba
+    val text = "La vista previa no se pudo mostrar. Tu widget en la pantalla de inicio no se ve afectado." +
+        (if (BuildConfig.DEBUG) "\n$msg" else "")
+    if (old != null) { (old as android.widget.TextView).text = text; return }
+    p.frame.addView(ui.text(text, ui.body, 13f, Color.WHITE).apply {
+        tag = "pvErr"; translationZ = 4f; gravity = Gravity.CENTER
+        setBackgroundColor(Color.argb(0xCC, 0, 0, 0)); setPadding(ui.dp(12), ui.dp(10), ui.dp(12), ui.dp(10))
     }, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
 }

@@ -41,7 +41,7 @@ object TextArt {
             54f, 15f, 16f, 14f, 12f, 0.25f, 0.1f, 0f, caps = true, shadow = false, glow = Color.parseColor("#3DF2FF")),
         "lujo" to Spec(R.font.cormorant_light, R.font.cormorant_light, R.font.cormorant_italic, R.font.montserrat_medium,
             R.font.cormorant_medium, R.font.montserrat_medium, R.font.montserrat_medium,
-            80f, 12f, 18f, 11f, 10f, 0.22f, 0.12f, 0f, caps = true, shadow = false),
+            80f, 12f, 18f, 12f, 12f, 0.22f, 0.12f, 0f, caps = true, shadow = false),
     )
 
     fun spec(family: String): Spec = SPECS[family] ?: SPECS.getValue("rock")

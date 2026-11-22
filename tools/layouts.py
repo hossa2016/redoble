@@ -12,10 +12,10 @@ F={
    tsize=76,dsize=14,wsize=15,tomsize=13,lsize=12,head='#FF1C1A17',dim='#FF4F4A43',pad='@android:color/transparent',holder='@drawable/bg_claro_holder',hs=48,isz=22,padh=72,
    card='@drawable/bg_claro_card',hair='@drawable/hairline_claro',shadow=False,caps=False,center=False,tls='0.2',lls='0',glow=None,tspace='-0.04'),
  'neon':dict(time='orbitron_medium',colon='orbitron_medium',body='rajdhani_medium',med='rajdhani_semibold',semi='rajdhani_semibold',title='orbitron_bold',label='rajdhani_semibold',
-   tsize=54,dsize=15,wsize=16,tomsize=14,lsize=12,head='#FFEFFFFF',dim='#FFA3A5CC',pad='@android:color/transparent',holder='@drawable/bg_neon_tile',hs=60,isz=24,padh=88,
+   tsize=54,dsize=15,wsize=16,tomsize=14,lsize=12,head='#FFEFFFFF',dim='#FF9AA9B3',pad='@android:color/transparent',holder='@drawable/bg_neon_tile',hs=60,isz=24,padh=88,
    card='@drawable/bg_neon_card',hair='@drawable/hairline_neon',shadow=False,caps=True,center=False,tls='0.25',lls='0.1',glow='#FF3DF2FF',tspace='0'),
  'lujo':dict(time='cormorant_light',colon='cormorant_light',body='cormorant_italic',med='montserrat_medium',semi='cormorant_medium',title='montserrat_medium',label='montserrat_medium',
-   tsize=80,dsize=12,wsize=18,tomsize=11,lsize=10,head='#FFEBD9AE',dim='#FFA8987A',pad='@android:color/transparent',holder='@drawable/bg_lujo_holder',hs=48,isz=20,padh=74,
+   tsize=80,dsize=12,wsize=18,tomsize=12,lsize=12,head='#FFEBD9AE',dim='#FFA8987A',pad='@android:color/transparent',holder='@drawable/bg_lujo_holder',hs=48,isz=20,padh=74,
    card='@drawable/bg_lujo_card',hair='@drawable/hairline_lujo',shadow=False,caps=True,center=True,tls='0.3',lls='0.15',glow=None,tspace='0'),
 }
 def sh(p,strong=False):

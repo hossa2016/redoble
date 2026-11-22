@@ -16,12 +16,12 @@ object Prefs {
         Color.parseColor("#E8A33D"), // Ámbar
         Color.parseColor("#5FD07A"), // Verde vúmetro
         Color.parseColor("#FF6A2B"), // Naranja fuego
-        Color.parseColor("#9B6BFF"), // Morado neón
+        Color.parseColor("#C6F03D"), // Lima neón (antes Morado neón: mismo lugar para no mover los guardados)
         Color.parseColor("#3FD0E0"), // Cian eléctrico
         Color.parseColor("#FF3D7F")  // Magenta punk
     )
     val NAMES = arrayOf("Rojo", "Azul", "Plata", "Rojo rock", "Ámbar", "Verde vúmetro",
-        "Naranja fuego", "Morado neón", "Cian eléctrico", "Magenta punk")
+        "Naranja fuego", "Lima neón", "Cian eléctrico", "Magenta punk")
 
     // Apps por defecto (solo se muestran si están instaladas)
     private val DEFAULT_APPS = listOf(

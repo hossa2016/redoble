@@ -88,7 +88,8 @@ internal fun MainActivity.pickMusicApp() {
     io.execute {
         val apps = Apps.launchable(this)
         onUi {
-            androidx.appcompat.app.AlertDialog.Builder(this)
+            android.app.AlertDialog.Builder(this,
+                if (Ui.light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else android.R.style.Theme_DeviceDefault_Dialog_Alert)
                 .setTitle("Tu app de música")
                 .setItems(apps.map { it.label }.toTypedArray()) { _, i ->
                     Prefs.setMusicApp(this, apps[i].pkg)

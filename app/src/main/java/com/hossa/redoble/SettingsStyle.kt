@@ -1,6 +1,5 @@
 package com.hossa.redoble
 
-import android.app.WallpaperManager
 import android.content.ComponentName
 import android.content.Intent
 import android.graphics.Bitmap
@@ -17,7 +16,6 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
@@ -616,30 +614,6 @@ internal fun MainActivity.customColor(start: Int, onPick: (Int) -> Unit) {
         .show()
 }
 
-internal fun MainActivity.applyThemeWallpaper(btn: Button, t: Theme, label: String = "Poner este fondo") {
-    val (w, h) = screenSize()
-    btn.isEnabled = false
-    btn.text = "Aplicando…"
-    io.execute {
-        val ok = try {
-            val wall = if (t.family == "rock" && Prefs.wallStyle(this) == "orig") {
-                // Rock: su foto de la batería
-                val src = android.graphics.BitmapFactory.decodeResource(resources, R.drawable.fondo_bateria)
-                Graphics.makeWallpaper(src, w, h, Prefs.dim(this), Prefs.wpMode(this), Prefs.wpPos(this), Prefs.wpZoom(this))
-            } else Themes.styledWallpaper(this, t, w, h)
-            WallpaperManager.getInstance(this).setBitmap(
-                wall, android.graphics.Rect(0, 0, w, h), true, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK
-            )
-            true
-        } catch (e: Throwable) { false }
-        onUi {
-            btn.isEnabled = true
-            btn.text = if (ok) "Fondo aplicado" else "No se pudo aplicar"
-            onUiDelayed(2000) { btn.text = label }
-        }
-    }
-}
-
 internal fun MainActivity.screenSize(): Pair<Int, Int> {
     return if (Build.VERSION.SDK_INT >= 30) {
         val b = getSystemService(WindowManager::class.java).maximumWindowMetrics.bounds
@@ -684,32 +658,4 @@ internal fun MainActivity.decodeSampled(uri: Uri, reqW: Int, reqH: Int): Bitmap?
     while ((opts.outWidth.toLong() / sample) * (opts.outHeight.toLong() / sample) > 4_000_000L) sample *= 2
     val real = BitmapFactory.Options().apply { inSampleSize = sample }
     return contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, real) }
-}
-
-internal fun MainActivity.applyWallpaper(btn: Button) {
-    val src = photo
-    if (src == null) {
-        toast("Primero elige una foto")
-        return
-    }
-    val (w, h) = screenSize()
-    val dim = Prefs.dim(this)
-    btn.isEnabled = false
-    btn.text = "Aplicando…"
-    io.execute {
-        val ok = try {
-            val wall = Graphics.makeWallpaper(src, w, h, dim, Prefs.wpMode(this), Prefs.wpPos(this), Prefs.wpZoom(this))
-            WallpaperManager.getInstance(this).setBitmap(
-                wall, android.graphics.Rect(0, 0, w, h), true, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK
-            )
-            true
-        } catch (e: Throwable) {
-            false
-        }
-        onUi {
-            btn.isEnabled = true
-            btn.text = if (ok) "Fondo aplicado" else "No se pudo aplicar"
-            onUiDelayed(2000) { btn.text = "Aplicar fondo" }
-        }
-    }
 }
