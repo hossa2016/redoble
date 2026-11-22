@@ -335,3 +335,72 @@ class VideoPreview(ctx: Context) : FrameLayout(ctx), TextureView.SurfaceTextureL
         postOnAnimation { tick() }
     }
 }
+
+/**
+ * El fondo animado a pantalla completa dentro de la app, dibujado con el mismo motor
+ * que el fondo real (capas, luz del fuego e inclinación): lo que se ve es lo que queda.
+ */
+class VideoSurfaceView(ctx: Context) : android.view.SurfaceView(ctx), SurfaceHolder.Callback {
+    private val thread = HandlerThread("prisma-vista").apply { start() }
+    private val gl = Handler(thread.looper)
+    private val tilt = Tilt(ctx)
+    private var renderer: VideoRenderer? = null
+    @Volatile private var surfaceOk = false
+    @Volatile private var running = false
+    @Volatile private var w = 0
+    @Volatile private var h = 0
+    private val t0 = SystemClock.uptimeMillis()
+
+    var scene: VideoScenes.Info = VideoScenes.ALL[0]
+        set(v) {
+            if (field.id == v.id && renderer != null) return
+            field = v
+            if (surfaceOk) gl.post { rebuild() }
+        }
+
+    private val tick = object : Runnable {
+        override fun run() {
+            tilt.smooth()
+            try { renderer?.draw(tilt.tx, tilt.ty, (SystemClock.uptimeMillis() - t0) / 1000f) } catch (e: Exception) { }
+            if (running) gl.postDelayed(this, 33)
+        }
+    }
+
+    init { holder.addCallback(this) }
+
+    private fun rebuild() {
+        renderer?.release(); renderer = null
+        if (!surfaceOk) return
+        val r = VideoRenderer(context, scene)
+        try { r.init(holder.surface); r.size(w, h); renderer = r; if (running) r.play() } catch (e: Exception) { r.release() }
+    }
+
+    override fun surfaceCreated(sh: SurfaceHolder) { surfaceOk = true; gl.post { rebuild() }; start() }
+    override fun surfaceChanged(sh: SurfaceHolder, format: Int, width: Int, height: Int) {
+        w = width; h = height; gl.post { renderer?.size(width, height) }
+    }
+    override fun surfaceDestroyed(sh: SurfaceHolder) {
+        surfaceOk = false; stop()
+        val latch = java.util.concurrent.CountDownLatch(1)
+        gl.post { renderer?.release(); renderer = null; latch.countDown() }
+        try { latch.await(1, java.util.concurrent.TimeUnit.SECONDS) } catch (e: Exception) { }
+    }
+
+    private fun start() {
+        if (running) return
+        running = true; tilt.start()
+        gl.post { renderer?.play() }
+        gl.removeCallbacks(tick); gl.post(tick)
+    }
+
+    private fun stop() {
+        running = false; tilt.stop(); gl.removeCallbacks(tick)
+        gl.post { renderer?.pause() }
+    }
+
+    override fun onDetachedFromWindow() {
+        stop()
+        gl.post { renderer?.release(); renderer = null; thread.quitSafely() }
+        super.onDetachedFromWindow()
+    }
+}

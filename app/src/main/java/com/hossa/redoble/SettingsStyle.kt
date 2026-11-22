@@ -68,7 +68,7 @@ internal fun MainActivity.useSuggested(res: Int, name: String) {
             if (bmp == null) toast("No pudimos abrir ese fondo") else {
                 photo = bmp; photoSmall = null
                 Prefs.setWpPos(this, 50); Prefs.setWpZoom(this, 0)
-                buildAndShowPreview()
+                build()
             }
         }
     }
@@ -117,18 +117,18 @@ internal fun MainActivity.wallpaperPlate(): View {
     card.addView(ui.sectionTitle("Fondo de pantalla"))
     val ws = Prefs.wallStyle(this)
     card.addView(ui.segmented(listOf("orig" to "Tema", "fade" to "Desvanecido", "solid" to "Fijo", "photo" to "Foto", "anim" to "Animado"), ws) {
-        Prefs.setWallStyle(this, it); RockWidget.updateAll(this); buildAndShowPreview()
+        Prefs.setWallStyle(this, it); RockWidget.updateAll(this); build()
     })
 
     if (ws == "fade" || ws == "solid") {
-        card.addView(colorSwatches(Prefs.wallColor(this)) { Prefs.setWallColor(this, it); RockWidget.updateAll(this); buildAndShowPreview() })
+        card.addView(colorSwatches(Prefs.wallColor(this)) { Prefs.setWallColor(this, it); RockWidget.updateAll(this); build() })
     }
     if (ws == "anim") {
         animSection(card)
     } else if (ws != "photo") {
-        val label = if (ws == "orig") "Poner el fondo del tema" else "Poner este fondo"
+        val label = "Ver y poner este fondo"
         val apply = ui.primary(label)
-        apply.setOnClickListener { applyThemeWallpaper(apply, th, label) }
+        apply.setOnClickListener { openFullPreview() }
         card.addView(apply, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(14) })
     } else {
         photoSection(card)
@@ -154,14 +154,8 @@ internal fun MainActivity.animSection(card: LinearLayout) {
         grid.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
     }
     card.addView(grid, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-    val apply = ui.primary("Poner fondo animado")
-    apply.setOnClickListener {
-        val intent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER).putExtra(
-            WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, ComponentName(this, PrismaWallpaper::class.java))
-        try { startActivity(intent) } catch (e: Exception) {
-            try { startActivity(Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER)) } catch (e2: Exception) { toast("Tu teléfono no permite fondos animados") }
-        }
-    }
+    val apply = ui.primary("Ver y poner fondo animado")
+    apply.setOnClickListener { openFullPreview() }
     card.addView(apply, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(14) })
     card.addView(ui.note("Se pausa al abrir una app.",
         "Se mueve solo con la pantalla encendida y en el inicio; al abrir una app o bloquear el teléfono se pausa para no gastar batería."),
@@ -197,7 +191,12 @@ internal fun MainActivity.sceneTile(s: VideoScenes.Info, on: Boolean, w: Int, h:
         isClickable = true
         foreground = ui.rowBg()
         contentDescription = "${s.name}: ${s.desc}" + if (on) ", elegido" else ""
-        setOnClickListener { if (!on) { Prefs.setLiveScene(this@sceneTile, s.id); RockWidget.updateAll(this@sceneTile); buildAndShowPreview() } }
+        // Tocar: verla a pantalla completa (ahí se aplica). Mantener presionado: elegirla directo.
+        setOnClickListener { openFullPreview(VideoScenes.ALL.indexOf(s)) }
+        setOnLongClickListener {
+            if (!on) { Prefs.setLiveScene(this@sceneTile, s.id); RockWidget.updateAll(this@sceneTile); build() }
+            true
+        }
     }
 }
 
@@ -271,8 +270,8 @@ internal fun MainActivity.photoSection(card: LinearLayout) {
     val pick = ui.secondary("Foto del celular").apply {
         setOnClickListener { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
     }
-    val apply = ui.primary("Aplicar fondo")
-    apply.setOnClickListener { applyWallpaper(apply) }
+    val apply = ui.primary("Ver y aplicar")
+    apply.setOnClickListener { openFullPreview() }
     card.addView(LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
         addView(pick, LinearLayout.LayoutParams(0, ui.dp(48), 1f))
@@ -505,10 +504,10 @@ internal fun MainActivity.widgetBgPlate(): View {
     card.addView(ui.sectionTitle("Fondo del widget"))
     val gs = Prefs.widgetStyle(this)
     card.addView(ui.segmented(listOf("orig" to "Normal", "fade" to "Desvanecido", "solid" to "Fijo"), gs) {
-        Prefs.setWidgetStyle(this, it); RockWidget.updateAll(this); buildAndShowPreview()
+        Prefs.setWidgetStyle(this, it); RockWidget.updateAll(this); build()
     })
     if (gs != "orig") card.addView(colorSwatches(Prefs.widgetColor(this)) {
-        Prefs.setWidgetColor(this, it); RockWidget.updateAll(this); buildAndShowPreview()
+        Prefs.setWidgetColor(this, it); RockWidget.updateAll(this); build()
     })
     card.addView(ui.note("Las letras se ajustan solas al color.", "Con colores claros, las letras del widget pasan a oscuras solas."),
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
@@ -606,7 +605,7 @@ internal fun MainActivity.loadPhoto(uri: Uri) {
             if (bmp == null) toast("No pudimos abrir esa foto") else {
                 photo = bmp; photoSmall = null
                 Prefs.setWpPos(this, 50); Prefs.setWpZoom(this, 0)
-                buildAndShowPreview()
+                build()
             }
         }
     }

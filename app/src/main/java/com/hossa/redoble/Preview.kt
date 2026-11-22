@@ -28,7 +28,7 @@ internal fun MainActivity.previewPlate(): View {
     preview?.let { (it.card.parent as? android.view.ViewGroup)?.removeView(it.card) }
 
     val card = ui.plateCard()
-    card.addView(ui.sectionTitle("Vista previa", "Así se ve"))
+    card.addView(ui.sectionTitle("Vista previa", "Toca para verla en grande"))
 
     val (sw, sh) = screenSize()
     val dens = resources.displayMetrics.density
@@ -61,7 +61,11 @@ internal fun MainActivity.previewPlate(): View {
         topMargin = (sh * 0.1f * scale).toInt()
     })
     // Capa que evita que los toques lleguen a los botones del widget de muestra
-    frame.addView(View(this).apply { isClickable = true; translationZ = 3f }, FrameLayout.LayoutParams(-1, -1))
+    frame.addView(View(this).apply {
+        translationZ = 3f
+        contentDescription = "Ver la vista previa a pantalla completa"
+        setOnClickListener { openFullPreview() }
+    }, FrameLayout.LayoutParams(-1, -1))
     card.addView(frame, LinearLayout.LayoutParams(boxW, boxH).apply { gravity = Gravity.CENTER_HORIZONTAL })
 
     preview = PreviewParts(card, frame, bg, holder, wPx, hPx, scale, boxH, key)
@@ -138,18 +142,4 @@ internal fun MainActivity.showPreviewError(p: PreviewParts, msg: String?) {
         tag = "pvErr"; translationZ = 4f
         setBackgroundColor(Color.argb(0xCC, 0, 0, 0)); setPadding(ui.dp(6), ui.dp(6), ui.dp(6), ui.dp(6))
     }, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
-}
-
-/**
- * Al elegir un fondo: se aplica y la pantalla sube con suavidad hasta la vista
- * previa, para ver enseguida cómo queda.
- */
-internal fun MainActivity.buildAndShowPreview() {
-    build()
-    val sv = scroll ?: return
-    val card = preview?.card ?: return
-    sv.postDelayed({
-        val top = (card.top - ui.dp(8)).coerceAtLeast(0)
-        if (sv.scrollY > top) sv.smoothScrollTo(0, top)
-    }, 120)
 }

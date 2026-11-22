@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
             onUi {
                 photo = bmp
                 // Solo se reconstruye si la foto se ve en pantalla (evita construir dos veces)
-                if (Prefs.onboarded(this) && Prefs.wallStyle(this) == "photo") buildAndShowPreview()
+                if (Prefs.onboarded(this) && Prefs.wallStyle(this) == "photo") build()
             }
         }
         if (Prefs.city(this).isNotBlank() && (System.currentTimeMillis() - Prefs.weatherAt(this) > 30 * 60_000L ||
