@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(setlistPlate())
         col.addView(playerPlate())
         if (hasWidget) col.addView(widgetDonePlate())
-        col.addView(ui.text("Prisma 8.3", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Prisma 8.4", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -914,10 +914,10 @@ class MainActivity : AppCompatActivity() {
         card.addView(styleRow(ws) { Prefs.setWallStyle(this, it); RockWidget.updateAll(this); build() },
             LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
         if (ws != "orig") card.addView(swatches(Prefs.wallColor(this)) { Prefs.setWallColor(this, it); RockWidget.updateAll(this); build() })
-        val apply = ui.primary("Poner este fondo")
-        apply.setOnClickListener { applyThemeWallpaper(apply, th) }
-        if (ws != "orig" || th.hasOwnWallpaper)
-            card.addView(apply, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(12) })
+        val label = if (ws == "orig") "Volver al fondo del tema" else "Poner este fondo"
+        val apply = ui.primary(label)
+        apply.setOnClickListener { applyThemeWallpaper(apply, th, label) }
+        card.addView(apply, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(12) })
 
         // Fondo del widget
         card.addView(ui.text("Fondo del widget", ui.cond, 16f, Ui.HEAD), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(20) })
@@ -967,13 +967,17 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun applyThemeWallpaper(btn: Button, t: Theme) {
+    private fun applyThemeWallpaper(btn: Button, t: Theme, label: String = "Poner este fondo") {
         val (w, h) = screenSize()
         btn.isEnabled = false
         btn.text = "Aplicando…"
         io.execute {
             val ok = try {
-                val wall = Themes.styledWallpaper(this, t, w, h)
+                val wall = if (t.family == "rock" && Prefs.wallStyle(this) == "orig") {
+                    // Rock: su foto de la batería
+                    val src = android.graphics.BitmapFactory.decodeResource(resources, R.drawable.fondo_bateria)
+                    Graphics.makeWallpaper(src, w, h, Prefs.dim(this), Prefs.wpMode(this), Prefs.wpPos(this), Prefs.wpZoom(this))
+                } else Themes.styledWallpaper(this, t, w, h)
                 WallpaperManager.getInstance(this).setBitmap(
                     wall, android.graphics.Rect(0, 0, w, h), true, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK
                 )
@@ -982,7 +986,7 @@ class MainActivity : AppCompatActivity() {
             main.post {
                 btn.isEnabled = true
                 btn.text = if (ok) "Fondo aplicado" else "No se pudo aplicar"
-                main.postDelayed({ btn.text = "Poner este fondo" }, 2000)
+                main.postDelayed({ btn.text = label }, 2000)
             }
         }
     }
