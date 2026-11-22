@@ -33,7 +33,7 @@ internal fun MainActivity.onboardingView(): View {
     val (title, body) = when (step) {
         0 -> "Elige tu estilo" to "Siete temas, cada uno con sus propias letras. Puedes cambiarlo cuando quieras."
         1 -> "Agrega el widget" to "Ponlo en tu pantalla de inicio y estíralo para que ocupe el ancho y casi todo el alto."
-        3 -> "Así lo configuras" to "Todo se cambia desde esta app y el widget se actualiza al instante. Arriba verás una vista previa."
+        3 -> "Así lo configuras" to "Todo se cambia desde esta app y el widget se actualiza al instante."
         else -> "Muestra tu música" to "Para ver la canción y los botones ⏮ ⏯ ⏭ en el widget, Android pide el acceso a notificaciones. " +
             "Prisma Widgets solo lo usa para leer la música que suena; no lee ni guarda tus mensajes."
     }
@@ -54,7 +54,7 @@ internal fun MainActivity.onboardingView(): View {
             val has = RockWidget.hasWidgets(this)
             val add = if (has) ui.secondary("Widget agregado ✓") else ui.primary("Agregar widget")
             add.setOnClickListener {
-                if (!tryPin()) toast("Mantén presionada la pantalla de inicio → Widgets → Prisma Widgets")
+                if (!tryPin()) showAddWidgetSteps()
             }
             content.addView(add, LinearLayout.LayoutParams(-1, ui.dp(52)))
             content.addView(howTo(listOf(
@@ -67,14 +67,20 @@ internal fun MainActivity.onboardingView(): View {
         }
         3 -> {
             val tips = listOf(
+                "Vista previa" to "Arriba ves cómo queda tu widget. Tócala para verla a pantalla completa.",
+                "Secciones" to "Toca el título de una sección para abrirla o cerrarla. Debajo del título ves lo que tienes elegido.",
                 "Tema" to "Elige uno de los 7 estilos. «Letras del tema» usa la letra propia de cada uno.",
-                "Fondo de pantalla" to "Del tema, un color desvanecido o fijo, o una foto. Toca el botón para aplicarlo.",
-                "Fondo del widget" to "Una capa detrás de la hora. Con colores claros, las letras pasan a oscuras solas.",
+                "Fondo de pantalla" to "Del tema, desvanecido, fijo, una foto o animado. Toca un fondo animado para verlo en grande: " +
+                    "desliza a los lados para ver los demás y toca Aplicar. Para salir sin cambiar nada, desliza hacia abajo.",
+                "Fondo del widget" to "Una capa detrás de la hora. Con colores claros, las letras pasan a oscuras solas. " +
+                    "También lo cambias en la pantalla completa, con «Estilo del widget».",
                 "Diseño" to "Completo, Música o Minimal. En «Personalizar elementos» prendes o apagas día, hora, clima, batería y más.",
-                "Apps" to "Toca un espacio para elegir la app. Mantén presionado para ponerle un nombre corto.",
+                "Apps" to "3 o 4 por fila. Toca un espacio para elegir la app y mantenlo presionado para ponerle un nombre corto.",
                 "Clima" to "Escribe tu ciudad y toca Guardar.",
-                "Reproductor" to "Elige tu app de música, si va abajo o debajo del clima, y si muestra solo tu app o cualquiera.",
-                "Actualización en vivo" to "Batería al instante y hora con la letra del tema (usa una notificación fija)."
+                "Reproductor" to "Elige tu app de música, si va abajo o debajo del clima, y si muestra solo tu app o cualquiera. " +
+                    "Con el reproductor grande sonando, queda una fila de apps para que quepan los botones.",
+                "Actualización en vivo" to "Batería al instante y hora con la letra del tema (usa una notificación fija).",
+                "Apariencia" to "Modo claro u oscuro de esta pantalla, en App → Apariencia y ayuda."
             )
             tips.forEach { (t, d) ->
                 content.addView(LinearLayout(this).apply {
@@ -85,7 +91,7 @@ internal fun MainActivity.onboardingView(): View {
                     addView(ui.bodyText(d, Ui.MUTED, 14f).apply { setPadding(0, ui.dp(4), 0, 0) })
                 }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(8) })
             }
-            content.addView(ui.bodyText("Puedes volver a ver esta guía en Ajustes → Reproductor → «Ver la guía de inicio».", Ui.DIM, 14f).apply {
+            content.addView(ui.bodyText("Puedes volver a ver esta guía en App → Apariencia y ayuda → «Ver la guía de inicio».", Ui.DIM, 14f).apply {
                 setPadding(0, ui.dp(6), 0, 0)
             })
         }
@@ -99,7 +105,7 @@ internal fun MainActivity.onboardingView(): View {
                 }
             }
             content.addView(give, LinearLayout.LayoutParams(-1, ui.dp(52)))
-            content.addView(ui.bodyText("Puedes hacerlo después desde Ajustes → Reproductor y permisos.", Ui.DIM, 14f).apply {
+            content.addView(ui.bodyText("Puedes hacerlo después en la sección Reproductor.", Ui.DIM, 14f).apply {
                 setPadding(0, ui.dp(12), 0, 0)
             })
         }

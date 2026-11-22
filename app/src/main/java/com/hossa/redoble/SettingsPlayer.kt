@@ -149,6 +149,28 @@ internal fun MainActivity.widgetPlate(): View {
     return card
 }
 
+/**
+ * Cómo agregar el widget. Muchos teléfonos (Xiaomi/HyperOS, por ejemplo) no dejan que
+ * una app lo agregue sola: entonces se explican los pasos para hacerlo a mano.
+ */
+internal fun MainActivity.showAddWidgetSteps(offerPin: Boolean = false) {
+    val msg = "1. Mantén presionado un espacio vacío de la pantalla de inicio.\n" +
+        "2. Toca Widgets.\n" +
+        "3. Busca Prisma Widgets.\n" +
+        "4. Arrástralo a la pantalla y estíralo a lo ancho."
+    val b = android.app.AlertDialog.Builder(this,
+        if (Ui.light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else android.R.style.Theme_DeviceDefault_Dialog_Alert)
+        .setTitle("Agregar el widget")
+        .setMessage(msg)
+        .setNegativeButton("Entendido", null)
+    if (offerPin && AppWidgetManager.getInstance(this).isRequestPinAppWidgetSupported)
+        b.setPositiveButton("Probar agregarlo") { _, _ ->
+            if (!tryPin()) toast("Tu teléfono no lo permite desde aquí; usa los pasos.")
+            else toast("Si no aparece una ventana para confirmar, usa los pasos.")
+        }
+    b.show()
+}
+
 internal fun MainActivity.tryPin(): Boolean {
     val mgr = AppWidgetManager.getInstance(this)
     return try {
@@ -177,7 +199,7 @@ internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
         setPadding(ui.dp(4), 0, ui.dp(4), 0)
         setOnClickListener { action() }
     }, LinearLayout.LayoutParams(-1, ui.dp(48)))
-    if (hasWidget) link("Agregar otro widget") { tryPin() }
+    if (hasWidget) link("Agregar otro widget") { showAddWidgetSteps(offerPin = true) }
     link("Ver la guía de inicio") { restartOnboarding() }
     link("Política de privacidad") {
         try {
