@@ -291,7 +291,7 @@ class RockWidget : AppWidgetProvider() {
                 if (!preview) armClockCheck(ctx)
             }
             val ts = timeSize(th.family) * (if (playing) 0.875f else 1f)
-            for (id in intArrayOf(R.id.hh, R.id.colon, R.id.mm)) v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_DIP, ts)
+            for (id in intArrayOf(R.id.hh, R.id.colon, R.id.mm)) v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_SP, ts)
             v.setTextColor(R.id.colon, when (th.family) { "claro" -> th.head; "neon" -> th.accent2; else -> accent })
 
             // Clima

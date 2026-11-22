@@ -133,8 +133,6 @@ def build(name,p):
 </LinearLayout>
 '''
     xml=add_bmps(xml, name)
-    # Tamaños en dp: el widget tiene alturas fijas y la escala de letra del sistema lo cortaría
-    xml=_re.sub(r'android:textSize="(\d+)sp"', r'android:textSize="\1dp"', xml)
     open(f'{RES}/layout/widget_{name}.xml','w',encoding='utf-8').write(xml)
 
 import re as _re
