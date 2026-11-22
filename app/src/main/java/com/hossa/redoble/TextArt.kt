@@ -73,11 +73,14 @@ object TextArt {
         if (maxWidthPx > 0 && p.measureText(t.toString()) + pad * 2 > maxWidthPx) {
             t = TextUtils.ellipsize(t, p, (maxWidthPx - pad * 2).toFloat().coerceAtLeast(1f), TextUtils.TruncateAt.END)
         }
-        val fm = p.fontMetrics
+        // Alto ajustado a las letras (no al espacio reservado de la fuente), así las
+        // líneas quedan juntas como un bloque. Se toma al menos la altura de mayúscula.
+        val (top, bottom) = vBounds(p, t.toString())
+        val (pt, pb) = vPad(ctx, shadow, glow)
         val w = ceil(p.measureText(t.toString())).toInt() + pad * 2
-        val h = ceil(fm.descent - fm.ascent).toInt() + pad * 2
+        val h = (bottom - top) + pt + pb
         val bmp = Bitmap.createBitmap(w.coerceAtLeast(1), h.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
-        Canvas(bmp).drawText(t.toString(), pad.toFloat(), pad - fm.ascent, p)
+        Canvas(bmp).drawText(t.toString(), pad.toFloat(), (pt - top).toFloat(), p)
         return bmp
     }
 
@@ -87,12 +90,13 @@ object TextArt {
         val col = paint(ctx, s.colon, sp, colonColor, 0f, s.shadow, s.glow)
         val pad = pad(ctx, s.shadow, s.glow)
         val wH = main.measureText(hh); val wC = col.measureText(":"); val wM = main.measureText(mm)
-        val fm = main.fontMetrics
+        val (top, bottom) = vBounds(main, "0123456789")
+        val (pt, pb) = vPad(ctx, s.shadow, s.glow)
         val w = ceil(wH + wC + wM).toInt() + pad * 2
-        val h = ceil(fm.descent - fm.ascent).toInt() + pad * 2
+        val h = (bottom - top) + pt + pb
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
-        val base = pad - fm.ascent
+        val base = (pt - top).toFloat()
         c.drawText(hh, pad.toFloat(), base, main)
         c.drawText(":", pad + wH, base, col)
         c.drawText(mm, pad + wH + wC, base, main)
@@ -210,6 +214,25 @@ object TextArt {
                 shadow -> setShadowLayer(6f * d, 0f, 2f * d, Color.parseColor("#CC000000"))
             }
         }
+
+    /** Parte de arriba y de abajo real de las letras (mínimo, la altura de una mayúscula con acento). */
+    private fun vBounds(p: TextPaint, text: String): Pair<Int, Int> {
+        val r = android.graphics.Rect()
+        p.getTextBounds(text, 0, text.length, r)
+        val ref = android.graphics.Rect()
+        p.getTextBounds("HÁ", 0, 2, ref)
+        return Pair(minOf(r.top, ref.top), maxOf(r.bottom, 0))
+    }
+
+    /** Margen vertical: lo justo para la sombra (más abajo, porque cae hacia abajo) o el brillo. */
+    private fun vPad(ctx: Context, shadow: Boolean, glow: Int): Pair<Int, Int> {
+        val d = ctx.resources.displayMetrics.density
+        return when {
+            glow != 0 -> Pair((12 * d).toInt(), (12 * d).toInt())
+            shadow -> Pair((2 * d).toInt(), (6 * d).toInt())
+            else -> Pair((1 * d).toInt(), (2 * d).toInt())
+        }
+    }
 
     private fun pad(ctx: Context, shadow: Boolean, glow: Int): Int {
         val d = ctx.resources.displayMetrics.density

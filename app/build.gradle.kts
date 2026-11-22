@@ -11,8 +11,8 @@ android {
         applicationId = "com.hossa.redoble"
         minSdk = 26
         targetSdk = 36
-        versionCode = 41
-        versionName = "9.6"
+        versionCode = 42
+        versionName = "9.7"
     }
 
     // Firma: si existen las variables (GitHub Secrets), se usan; si no, la clave
