@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(setlistPlate())
         col.addView(playerPlate())
         if (hasWidget) col.addView(widgetDonePlate())
-        col.addView(ui.text("Prisma 7.3", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Prisma 7.4", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -713,10 +713,10 @@ class MainActivity : AppCompatActivity() {
         }
         card.addView(row)
         val desc = when (preset) {
-            "completo" -> "Hora, clima, batería y 6 apps. Cuando suena música, el reproductor aparece compacto y quedan 3 apps."
+            "completo" -> "Hora, clima, batería y 6 apps. Cuando suena música, el reproductor aparece compacto y quedan 3 apps para que no se apriete."
             "musica" -> "Reproductor grande siempre a la vista, cabecera compacta y 3 apps."
             "minimal" -> "Solo día, hora, clima y 3 apps. Se luce el fondo."
-            else -> "Elementos elegidos por ti."
+            else -> "Elementos elegidos por ti. Se respeta el número de apps aunque suene música."
         }
         card.addView(ui.bodyText(desc, Ui.MUTED, 14f), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
 

@@ -124,7 +124,10 @@ class RockWidget : AppWidgetProvider() {
 
             // Apps: cuántas mostrar según la distribución (con música, solo una fila)
             val wanted = Prefs.appsCount(ctx)
-            val maxApps = if (playing && wanted > 3) 3 else wanted
+            // En "Completo", con música se deja una sola fila para dar espacio al
+            // reproductor. Si el usuario eligió el número a mano, se respeta.
+            val auto = Prefs.preset(ctx) == "completo"
+            val maxApps = if (auto && playing && wanted > 3) 3 else wanted
             val pm = ctx.packageManager
             val showNums = th.family == "rock" || th.family == "neon"
             val numColor = ColorUtils.setAlphaComponent(if (rock) accent else th.accent2, if (rock) 0x99 else 0xCC)
