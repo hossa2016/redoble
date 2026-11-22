@@ -215,12 +215,8 @@ internal fun MainActivity.designPlate(): View {
     }
     card.addView(ui.note(short, longDesc), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
 
-    val more = ui.textButton(if (customOpen) "Personalizar elementos  ▾" else "Personalizar elementos  ▸").apply {
-        setTextColor(Ui.HEAD)
-        gravity = Gravity.CENTER_VERTICAL or Gravity.START
-        setOnClickListener { customOpen = !customOpen; build() }
-    }
-    card.addView(more, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(8) })
+    val more = ui.expander("Personalizar elementos", customOpen) { customOpen = !customOpen; build() }
+    card.addView(more, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
 
     if (customOpen) {
         val box = LinearLayout(this).apply {

@@ -24,7 +24,8 @@ internal fun MainActivity.playerPlate(): View {
     card.addView(LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
-        addView(ui.dot(if (on) Ui.OK else ui.accent), LinearLayout.LayoutParams(ui.dp(7), ui.dp(7)))
+        // Verde si funciona, rojo de aviso si falta el permiso (con acento plata o verde el punto no avisaba)
+        addView(ui.dot(if (on) Ui.OK else Ui.ALERT), LinearLayout.LayoutParams(ui.dp(7), ui.dp(7)))
         addView(ui.text(
             if (on) "Activo: puede ver qué suena."
             else "Falta un permiso de Android.",
@@ -73,10 +74,11 @@ internal fun MainActivity.playerPlate(): View {
         Prefs.setPlayerTop(this, top); RockWidget.updateAll(this); build()
     })
 
-    // Qué música mostrar
+    // Qué música mostrar (con su etiqueta, igual que Posición)
+    card.addView(ui.text("Qué música muestra", ui.cond, 15f, Ui.MUTED), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
     card.addView(ui.segmented(listOf(true to "Solo tu app", false to "Cualquier app"), Prefs.onlyMusicApp(this)) { m ->
         Prefs.setOnlyMusicApp(this, m); Player.updateAll(this); build()
-    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12); bottomMargin = ui.dp(4) })
+    }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(4) })
 
     return card
 }

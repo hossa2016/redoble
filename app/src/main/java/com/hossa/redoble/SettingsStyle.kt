@@ -126,14 +126,16 @@ internal fun MainActivity.wallpaperPlate(): View {
     if (ws == "anim") {
         animSection(card)
     } else if (ws != "photo") {
-        val label = "Ver y poner este fondo"
-        val apply = ui.primary(label)
+        // Mismo nombre de acción en todos los fondos: "Ver y aplicar" lleva a la pantalla completa, donde se aplica
+        val apply = ui.primary("Ver y aplicar")
         apply.setOnClickListener { openFullPreview() }
         card.addView(apply, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(14) })
     } else {
         photoSection(card)
     }
-    card.addView(ui.note("Para inicio y bloqueo."), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+    // Los fondos fijos preguntan dónde ponerlos; el animado lo confirma Android
+    if (ws != "anim") card.addView(ui.note("Al aplicar eliges inicio, bloqueo o ambas."),
+        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
     return card
 }
 
@@ -154,10 +156,11 @@ internal fun MainActivity.animSection(card: LinearLayout) {
         grid.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
     }
     card.addView(grid, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-    val apply = ui.primary("Ver y poner fondo animado")
+    val apply = ui.primary("Ver y aplicar")
     apply.setOnClickListener { openFullPreview() }
     card.addView(apply, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(14) })
-    card.addView(ui.note("Se pausa al abrir una app.",
+    card.addView(ui.note("Toca uno para verlo; mantenlo presionado para elegirlo.",
+        "Al tocar uno lo ves a pantalla completa, donde puedes deslizar para ver los demás y aplicarlo. " +
         "Se mueve solo con la pantalla encendida y en el inicio; al abrir una app o bloquear el teléfono se pausa para no gastar batería."),
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
 }
@@ -202,7 +205,7 @@ internal fun MainActivity.sceneTile(s: VideoScenes.Info, on: Boolean, w: Int, h:
 
 /** Fotos sugeridas o del celular, con vista previa; posición, zoom y oscurecer plegados. */
 internal fun MainActivity.photoSection(card: LinearLayout) {
-    card.addView(ui.text("SUGERIDOS", ui.condSemi, 13f, Ui.MUTED, 0.12f),
+    card.addView(ui.label("Sugeridos"),
         LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(16); bottomMargin = ui.dp(8) })
     card.addView(suggestedRow(), LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(16) })
 
@@ -239,12 +242,8 @@ internal fun MainActivity.photoSection(card: LinearLayout) {
             LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
 
         // Ajustes finos, plegados
-        val more = ui.textButton(if (photoOpen) "Ajustar foto  ▾" else "Ajustar foto  ▸").apply {
-            setTextColor(Ui.HEAD)
-            gravity = Gravity.CENTER_VERTICAL or Gravity.START
-            setOnClickListener { photoOpen = !photoOpen; build() }
-        }
-        card.addView(more, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(8) })
+        val more = ui.expander("Ajustar foto", photoOpen) { photoOpen = !photoOpen; build() }
+        card.addView(more, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
         if (photoOpen) {
             val mode = Prefs.wpMode(this)
             card.addView(ui.segmented(listOf(1 to "Foto completa", 0 to "Llenar pantalla"), mode) { m ->
@@ -368,7 +367,8 @@ internal fun MainActivity.accentPlate(): View {
         addView(row)
     }
     card.addView(scroller, LinearLayout.LayoutParams(-1, -2))
-    card.addView(ui.text("${Prefs.NAMES[sel]} · desliza para ver más", ui.cond, 13f, Ui.DIM).apply {
+    // El nombre del color ya se ve bajo el título de la sección: aquí solo la pista
+    card.addView(ui.text("Desliza para ver más colores", ui.cond, 13f, Ui.DIM).apply {
         gravity = Gravity.CENTER; setPadding(0, ui.dp(8), 0, 0)
     }, LinearLayout.LayoutParams(-1, -2))
     // Llevar el color elegido a la vista
@@ -448,33 +448,44 @@ internal fun MainActivity.themePlate(): View {
         isHorizontalScrollBarEnabled = false
         addView(strip)
     })
-    card.addView(switchRow("Letras del tema", Prefs.themeFonts(this)) { on ->
+    // Letras: primero el interruptor general y, justo debajo, la hora (que depende de él)
+    val fonts = Prefs.themeFonts(this)
+    val live = Prefs.liveUpdates(this)
+    card.addView(switchRow("Letras del tema", fonts) { on ->
         Prefs.setThemeFonts(this, on)
         RockWidget.updateAll(this)
         build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
-    card.addView(ui.note("Cada tema con su propia letra."))
-    card.addView(switchRow("Actualización en vivo", Prefs.liveUpdates(this)) { on ->
+    card.addView(ui.note("Clima, batería, música y apps con la letra de cada tema.",
+        "La hora, el día y la fecha usan el reloj del sistema, que nunca se atrasa. " +
+        "Si quieres que también lleven la letra del tema, activa «Hora con la letra del tema»."))
+    if (fonts) {
+        // Solo cuenta como encendida si la actualización en vivo también lo está (es quien la avanza)
+        card.addView(switchRow("Hora con la letra del tema", Prefs.themeClock(this) && live) { on ->
+            Prefs.setThemeClock(this, on)
+            // Necesita la actualización en vivo: se enciende con ella en un solo toque
+            if (on && !live) { Prefs.setLiveUpdates(this, true); askNotifications(); LiveService.start(this) }
+            RockWidget.updateAll(this)
+            build()
+            if (on) showKeepAliveSteps()
+        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
+        card.addView(ui.note("Usa la actualización en vivo. Si la hora se queda quieta, apágalo.",
+            "Con esto Prisma Widgets dibuja la hora, el día y la fecha cada minuto, y para eso enciende la " +
+            "actualización en vivo. Si HyperOS cierra la app para ahorrar batería, la hora se congela. " +
+            "Apagado, se usa el reloj del sistema, que nunca se atrasa."))
+    }
+    card.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0F)) },
+        LinearLayout.LayoutParams(-1, ui.dp(1)).apply { topMargin = ui.dp(10); bottomMargin = ui.dp(4) })
+    card.addView(switchRow("Actualización en vivo", live) { on ->
         Prefs.setLiveUpdates(this, on)
         // Android exige una notificación fija para esto; el permiso se pide solo aquí, ya explicado
         if (on) { askNotifications(); LiveService.start(this) } else LiveService.stop(this)
         RockWidget.updateAll(this)
         build()
-    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-    card.addView(ui.note("Batería al instante.",
+    })
+    card.addView(ui.note("Batería al instante (con una notificación fija).",
         "Mantiene la batería al día y permite la hora con la letra del tema. Android exige mostrar una " +
         "notificación fija mientras está activa; al encenderla te pedirá el permiso de notificaciones."))
-    if (Prefs.themeFonts(this) && Prefs.liveUpdates(this)) {
-        card.addView(switchRow("Hora con la letra del tema", Prefs.themeClock(this)) { on ->
-            Prefs.setThemeClock(this, on)
-            RockWidget.updateAll(this)
-            build()
-            if (on) showKeepAliveSteps()
-        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-        card.addView(ui.note("Si la hora se queda quieta, apágalo.",
-            "Con esto la hora la dibuja Prisma cada minuto. Si HyperOS cierra la app para ahorrar batería, " +
-            "la hora se congela. Apagado, se usa el reloj del sistema, que nunca se atrasa."))
-    }
     return card
 }
 
@@ -483,10 +494,11 @@ internal fun MainActivity.themePlate(): View {
  * del tema no se congele hay que darle Inicio automático y batería sin restricciones.
  */
 internal fun MainActivity.showKeepAliveSteps() {
-    val msg = "Para que HyperOS no cierre Prisma y la hora no se congele:\n\n" +
+    val msg = "Para que HyperOS no cierre Prisma Widgets y la hora no se congele:\n\n" +
         "1. Activa Inicio automático.\n" +
-        "2. En Ahorro de batería elige Sin restricciones.\n" +
-        "3. En Recientes, baja la tarjeta de Prisma para bloquearla (candado)."
+        "2. En Batería (Ahorro de batería) elige Sin restricciones.\n" +
+        "3. En Recientes, baja la tarjeta de Prisma Widgets para bloquearla (candado).\n\n" +
+        "Si aun así se queda quieta, apaga «Hora con la letra del tema»."
     android.app.AlertDialog.Builder(this,
         if (Ui.light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else android.R.style.Theme_DeviceDefault_Dialog_Alert)
         .setTitle("Mantener la hora al día")
@@ -517,17 +529,23 @@ internal fun MainActivity.colorSwatches(cur: Int, onPick: (Int) -> Unit): View {
     val th = Themes.current(this)
     val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
     fun line(title: String, colors: List<Int>) {
-        box.addView(ui.text(title, ui.condSemi, 13f, Ui.MUTED, 0.08f), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(12) })
+        box.addView(ui.label(title), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(12) })
         val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        // Cada color es un círculo de verdad (antes se estiraba en óvalo) dentro de una
+        // celda alta de 44 dp, más fácil de tocar. En modo claro el aro va oscuro para que se vea.
+        val ring = if (Ui.light) Ui.HEAD else Color.WHITE
         colors.forEachIndexed { i, c ->
             val on = c == cur
-            row.addView(View(this).apply {
-                background = ui.oval(c, if (on) Color.WHITE else Ui.veil(0x33), if (on) 3f else 1f)
+            row.addView(FrameLayout(this).apply {
+                addView(View(this@colorSwatches).apply {
+                    background = ui.oval(c, if (on) ring else Ui.veil(0x33), if (on) 3f else 1f)
+                }, FrameLayout.LayoutParams(ui.dp(30), ui.dp(30), Gravity.CENTER))
+                background = ui.rowBg()
                 contentDescription = "$title, color ${i + 1}" + if (on) ", elegido" else ""
                 setOnClickListener { onPick(c) }
-            }, LinearLayout.LayoutParams(0, ui.dp(36), 1f).apply { marginEnd = ui.dp(6) })
+            }, LinearLayout.LayoutParams(0, ui.dp(44), 1f))
         }
-        box.addView(row, LinearLayout.LayoutParams(-1, ui.dp(36)).apply { topMargin = ui.dp(6) })
+        box.addView(row, LinearLayout.LayoutParams(-1, ui.dp(44)).apply { topMargin = ui.dp(2) })
     }
     line("Oscuros", Prefs.DARK_TONES)
     line("Claros", Prefs.LIGHT_TONES)
@@ -588,7 +606,9 @@ internal fun MainActivity.customColor(start: Int, onPick: (Int) -> Unit) {
     bar("Tono", 360, hsv[0].toInt()) { hsv[0] = it.toFloat() }
     bar("Brillo", 100, light0) { setLight(it) }
     refresh()
-    android.app.AlertDialog.Builder(this)
+    // Mismo estilo de ventana que las demás: clara u oscura según la pantalla de ajustes
+    android.app.AlertDialog.Builder(this,
+        if (Ui.light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else android.R.style.Theme_DeviceDefault_Dialog_Alert)
         .setTitle("Color personalizado")
         .setView(box)
         .setPositiveButton("Usar") { _, _ -> onPick(col() or 0xFF000000.toInt()) }

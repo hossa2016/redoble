@@ -100,9 +100,10 @@ object Prefs {
     fun widgetColor(ctx: Context) = p(ctx).getInt("widgetColor", 0)
     fun setWidgetColor(ctx: Context, c: Int) = p(ctx).edit().putInt("widgetColor", c).apply()
 
-    val DARK_TONES = listOf("#0E3B5C", "#0B4F57", "#0F4A33", "#5A1622", "#6B3A1E", "#6E5520", "#3A2163", "#2A2A2E")
+    // Sin violetas ni lilas (no van con la estética de la app); en su lugar pizarra, grafito cálido, plata y arena
+    val DARK_TONES = listOf("#0E3B5C", "#0B4F57", "#0F4A33", "#5A1622", "#6B3A1E", "#6E5520", "#24343B", "#2A2A2E")
         .map { android.graphics.Color.parseColor(it) }
-    val LIGHT_TONES = listOf("#F2C6D2", "#D9CCF0", "#C6EBD9", "#C7E2F5", "#F7D3BC", "#F3EBD8", "#E6D3EC", "#CFDCC8")
+    val LIGHT_TONES = listOf("#F2C6D2", "#D6DCE0", "#C6EBD9", "#C7E2F5", "#F7D3BC", "#F3EBD8", "#E4D9CC", "#CFDCC8")
         .map { android.graphics.Color.parseColor(it) }
 
     /**

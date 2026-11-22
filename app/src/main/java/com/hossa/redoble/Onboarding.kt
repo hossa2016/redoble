@@ -69,17 +69,21 @@ internal fun MainActivity.onboardingView(): View {
             val tips = listOf(
                 "Vista previa" to "Arriba ves cómo queda tu widget. Tócala para verla a pantalla completa.",
                 "Secciones" to "Toca el título de una sección para abrirla o cerrarla. Debajo del título ves lo que tienes elegido.",
-                "Tema" to "Elige uno de los 7 estilos. «Letras del tema» usa la letra propia de cada uno.",
-                "Fondo de pantalla" to "Del tema, desvanecido, fijo, una foto o animado. Toca un fondo animado para verlo en grande: " +
+                "Tema" to "Elige uno de los 7 estilos. «Letras del tema» pone la letra propia de cada uno en clima, batería, " +
+                    "música y apps. La hora usa el reloj del sistema para que nunca se atrase.",
+                "Hora con la letra del tema" to "Opcional: la hora, el día y la fecha con la letra del tema. " +
+                    "Enciende la actualización en vivo y, en HyperOS, pide Inicio automático y batería sin restricciones. " +
+                    "Si la hora se queda quieta, apágalo.",
+                "Actualización en vivo" to "Batería al instante (usa una notificación fija).",
+                "Fondo de pantalla" to "Del tema, desvanecido, fijo, una foto o animado. Toca Ver y aplicar (o un fondo animado) para verlo en grande: " +
                     "desliza a los lados para ver los demás y toca Aplicar. Para salir sin cambiar nada, desliza hacia abajo.",
                 "Fondo del widget" to "Una capa detrás de la hora. Con colores claros, las letras pasan a oscuras solas. " +
-                    "También lo cambias en la pantalla completa, con «Estilo del widget».",
+                    "También lo cambias en la pantalla completa, con el botón «Fondo del widget».",
                 "Diseño" to "Completo, Música o Minimal. En «Personalizar elementos» prendes o apagas día, hora, clima, batería y más.",
                 "Apps" to "3 o 4 por fila. Toca un espacio para elegir la app y mantenlo presionado para ponerle un nombre corto.",
                 "Clima" to "Escribe tu ciudad y toca Guardar.",
                 "Reproductor" to "Elige tu app de música, si va abajo o debajo del clima, y si muestra solo tu app o cualquiera. " +
                     "Con el reproductor grande sonando, queda una fila de apps para que quepan los botones.",
-                "Actualización en vivo" to "Batería al instante y hora con la letra del tema (usa una notificación fija).",
                 "Apariencia" to "Modo claro u oscuro de esta pantalla, en App → Apariencia y ayuda."
             )
             tips.forEach { (t, d) ->

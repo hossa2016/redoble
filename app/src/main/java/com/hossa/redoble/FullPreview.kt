@@ -195,7 +195,7 @@ internal fun MainActivity.openFullPreview(animIndex: Int? = null) {
             panel.addView(LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 isBaselineAligned = false
-                addView(ui.secondary("Estilo del widget").apply {
+                addView(ui.secondary("Fondo del widget").apply {
                     ui.fitText(this, 17, 12)
                     setOnClickListener { styleOpen = true; fill() }
                 }, LinearLayout.LayoutParams(0, ui.dp(48), 1f))

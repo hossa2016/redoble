@@ -311,6 +311,31 @@ class Ui(val ctx: Context, val accent: Int) {
         return well
     }
 
+    /**
+     * Fila "Ajustar foto" / "Personalizar elementos" con la misma flecha dibujada de las
+     * secciones (abajo cerrada, arriba abierta), en vez de ▸ ▾ de texto.
+     */
+    fun expander(label: String, open: Boolean, onClick: () -> Unit): View = LinearLayout(ctx).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        minimumHeight = dp(48)
+        setPadding(dp(4), 0, 0, 0)
+        background = rowBg()
+        isClickable = true
+        contentDescription = "$label, " + if (open) "abierto, toca para cerrar" else "cerrado, toca para abrir"
+        addView(text(label, cond, 16f, HEAD), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        addView(ImageView(ctx).apply {
+            setImageResource(R.drawable.ic_chevron)
+            imageTintList = ColorStateList.valueOf(MUTED)
+            scaleType = ImageView.ScaleType.CENTER
+            rotation = if (open) -90f else 90f
+        }, LinearLayout.LayoutParams(dp(40), dp(40)))
+        setOnClickListener { onClick() }
+    }
+
+    /** Etiqueta pequeña dentro de una tarjeta (Sugeridos, Oscuros, Claros…), en minúsculas y del mismo estilo. */
+    fun label(s: String) = text(s, condSemi, 13f, MUTED, 0.06f)
+
     /** Encabezado de grupo (Estilo, Contenido, Reproductor). */
     fun groupHeader(title: String): View = LinearLayout(ctx).apply {
         orientation = LinearLayout.VERTICAL
