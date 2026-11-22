@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Prisma Widgets</string>
     <string name="widget_desc">Día, hora, clima, música y tus apps en 7 estilos</string>
+    <string name="wallpaper_desc">Fondo animado que se mueve al inclinar el teléfono</string>
 </resources>

@@ -1,6 +1,8 @@
 package com.hossa.redoble
 
 import android.app.WallpaperManager
+import android.content.ComponentName
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -114,14 +116,16 @@ internal fun MainActivity.wallpaperPlate(): View {
     val th = Themes.current(this)
     card.addView(ui.sectionTitle("Fondo de pantalla"))
     val ws = Prefs.wallStyle(this)
-    card.addView(ui.segmented(listOf("orig" to "Del tema", "fade" to "Desvanecido", "solid" to "Fijo", "photo" to "Foto"), ws) {
+    card.addView(ui.segmented(listOf("orig" to "Tema", "fade" to "Desvanecido", "solid" to "Fijo", "photo" to "Foto", "anim" to "Animado"), ws) {
         Prefs.setWallStyle(this, it); RockWidget.updateAll(this); build()
     })
 
     if (ws == "fade" || ws == "solid") {
         card.addView(colorSwatches(Prefs.wallColor(this)) { Prefs.setWallColor(this, it); RockWidget.updateAll(this); build() })
     }
-    if (ws != "photo") {
+    if (ws == "anim") {
+        animSection(card)
+    } else if (ws != "photo") {
         val label = if (ws == "orig") "Poner el fondo del tema" else "Poner este fondo"
         val apply = ui.primary(label)
         apply.setOnClickListener { applyThemeWallpaper(apply, th, label) }
@@ -133,6 +137,55 @@ internal fun MainActivity.wallpaperPlate(): View {
         setPadding(0, ui.dp(10), 0, 0)
     })
     return card
+}
+
+/** Fondo animado: vista previa viva, las 10 escenas y el botón para ponerlo. */
+internal fun MainActivity.animSection(card: LinearLayout) {
+    val cur = Prefs.liveScene(this)
+    val info = LiveScenes.find(cur)
+    val (sw, sh) = screenSize()
+    val pvW = ui.dp(150); val pvH = (pvW * sh.toFloat() / sw).toInt()
+    val view = SceneView(this).apply {
+        sceneId = cur
+        clipToOutline = true
+        outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) { outline.setRoundRect(0, 0, view.width, view.height, ui.dp(16).toFloat()) }
+        }
+        contentDescription = "Vista previa del fondo animado ${info.name}"
+    }
+    card.addView(view, LinearLayout.LayoutParams(pvW, pvH).apply { gravity = Gravity.CENTER_HORIZONTAL; topMargin = ui.dp(16) })
+    card.addView(ui.bodyText("Inclina el teléfono o desliza el dedo sobre la vista previa.", Ui.MUTED, 13f).apply { gravity = Gravity.CENTER },
+        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+    // Escenas: dos columnas de botones
+    val grid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+    LiveScenes.ALL.chunked(2).forEach { pair ->
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        pair.forEachIndexed { i, s ->
+            val on = s.id == cur
+            val b = (if (on) ui.primary(s.name) else ui.secondary(s.name)).apply {
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f); maxLines = 1
+                contentDescription = if (on) "${s.name}, elegido" else s.name
+                setOnClickListener { if (!on) { Prefs.setLiveScene(this@animSection, s.id); build() } }
+            }
+            row.addView(b, LinearLayout.LayoutParams(0, ui.dp(48), 1f).apply { if (i > 0) marginStart = ui.dp(8) })
+        }
+        if (pair.size == 1) row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f).apply { marginStart = ui.dp(8) })
+        grid.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+    }
+    card.addView(grid, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+    card.addView(ui.bodyText(info.desc + ".", Ui.MUTED, 14f).apply { gravity = Gravity.CENTER },
+        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+    val apply = ui.primary("Poner fondo animado")
+    apply.setOnClickListener {
+        val intent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER).putExtra(
+            WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, ComponentName(this, PrismaWallpaper::class.java))
+        try { startActivity(intent) } catch (e: Exception) {
+            try { startActivity(Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER)) } catch (e2: Exception) { toast("Tu teléfono no permite fondos animados") }
+        }
+    }
+    card.addView(apply, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(14) })
+    card.addView(ui.bodyText("Se mueve solo con la pantalla encendida y en el inicio; al abrir una app o bloquear el teléfono se detiene.", Ui.MUTED, 13f),
+        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
 }
 
 /** Fotos sugeridas o del celular, con vista previa; posición, zoom y oscurecer plegados. */

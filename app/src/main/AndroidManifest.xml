@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <uses-feature android:name="android.software.live_wallpaper" android:required="false" />
+
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -56,6 +58,20 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Mantener actualizado el widget de pantalla de inicio (batería y carga en tiempo real)" />
+        </service>
+
+        <!-- Fondo de pantalla animado (se mueve con el sensor de gravedad) -->
+        <service
+            android:name=".PrismaWallpaper"
+            android:exported="true"
+            android:label="Prisma Widgets · Animado"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/prisma_wallpaper" />
         </service>
 
         <service
