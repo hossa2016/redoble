@@ -341,7 +341,11 @@ class Ui(val ctx: Context, val accent: Int) {
         addView(bar, LinearLayout.LayoutParams(dp(3), dp(18)))
         // Título siempre en una línea: si no cabe junto al resumen, se achica un poco
         addView(
-            text(title.uppercase(), anton, 21f, HEAD, 0.03f).apply { fitText(this, 21, 15) },
+            text(title.uppercase(), anton, 21f, HEAD, 0.03f).apply {
+                // Una sola línea real (sin saltos): se achica hasta caber y, en último caso, "…"
+                isSingleLine = true; ellipsize = TextUtils.TruncateAt.END
+                fitText(this, 21, 12)
+            },
             LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginStart = dp(10) }
         )
         if (hint != null) addView(text(hint, cond, 14f, DIM).apply { tag = "hint"; hintStyle(this) })
@@ -373,7 +377,7 @@ class Ui(val ctx: Context, val accent: Int) {
 
     /** Resumen a la derecha del título: una línea y con "…" si es largo. */
     fun hintStyle(tv: TextView) {
-        tv.maxLines = 1; tv.ellipsize = TextUtils.TruncateAt.END; tv.maxWidth = dp(140)
+        tv.maxLines = 1; tv.ellipsize = TextUtils.TruncateAt.END; tv.maxWidth = dp(112)
         tv.setPadding(dp(8), 0, 0, 0)
     }
 
