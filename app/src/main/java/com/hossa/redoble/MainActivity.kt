@@ -71,7 +71,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()  // Android 15+ lo exige; los márgenes se ajustan en build()
         super.onCreate(savedInstanceState)
-        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
         // La foto se lee fuera del hilo principal para no trabar la apertura
         // reducida a ~4 MP por si una versión anterior guardó una foto más grande.
         if (photoFile.exists()) io.execute {
@@ -125,7 +124,12 @@ class MainActivity : AppCompatActivity() {
     // ==================================================================
     internal fun build() {
         val th = Themes.current(this)
-        ui = Ui(this, if (th.light) Color.parseColor("#D8CFC2") else th.accent(this))
+        applyUiMode()
+        val base = if (th.light) Color.parseColor(if (Ui.light) "#4A423B" else "#D8CFC2") else th.accent(this)
+        // En modo claro los acentos muy claros (plata, ámbar, cian) se oscurecen para que se lean
+        val accent = if (Ui.light && androidx.core.graphics.ColorUtils.calculateLuminance(base) > 0.4)
+            androidx.core.graphics.ColorUtils.blendARGB(base, Color.BLACK, 0.35f) else base
+        ui = Ui(this, accent)
         if (!Prefs.onboarded(this)) { setScreen(onboardingView(), keepScroll = false); return }
 
         val col = LinearLayout(this).apply {
@@ -150,6 +154,9 @@ class MainActivity : AppCompatActivity() {
 
         col.addView(ui.groupHeader("Reproductor y permisos", "Tu música en el widget"))
         col.addView(playerPlate())
+
+        col.addView(ui.groupHeader("App", "Modo claro u oscuro"))
+        col.addView(appearancePlate())
         if (hasWidget) col.addView(widgetDonePlate())
 
         col.addView(ui.text("Prisma Widgets " + BuildConfig.VERSION_NAME, ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
@@ -159,6 +166,19 @@ class MainActivity : AppCompatActivity() {
         setScreen(col, keepScroll = true)
     }
 
+    /** Aplica el modo claro u oscuro de la configuración (y los íconos de la barra de estado). */
+    internal fun applyUiMode() {
+        val night = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+            android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val light = when (Prefs.uiMode(this)) { "light" -> true; "system" -> !night; else -> false }
+        Ui.setLight(light)
+        window.decorView.setBackgroundColor(Ui.INK)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = light
+            isAppearanceLightNavigationBars = light
+        }
+    }
+
     /** Pone la pantalla dentro de un scroll que respeta barras del sistema y teclado. */
     internal fun setScreen(content: View, keepScroll: Boolean) {
         val y = if (keepScroll) scroll?.scrollY ?: 0 else 0
@@ -166,6 +186,7 @@ class MainActivity : AppCompatActivity() {
         // ni saltar el scroll): así tocar un botón no produce destellos.
         scroll?.let { sv ->
             if (sv.parent != null) {
+                sv.setBackgroundColor(Ui.INK)
                 sv.removeAllViews()
                 sv.addView(content)
                 // El scroll se ubica justo antes de dibujar, cuando el contenido nuevo ya

@@ -133,7 +133,7 @@ internal fun MainActivity.setlistPlate(): View {
         Prefs.setIconMode(this, m); RockWidget.updateAll(this); build()
     }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(12) })
     for (i in 0 until Prefs.SLOTS) {
-        if (i > 0) card.addView(View(this).apply { setBackgroundColor(Color.parseColor("#0FFFFFFF")) },
+        if (i > 0) card.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0F)) },
             LinearLayout.LayoutParams(-1, ui.dp(1)))
         card.addView(slotRow(i), LinearLayout.LayoutParams(-1, ui.dp(56)))
     }
@@ -221,7 +221,7 @@ internal fun MainActivity.designPlate(): View {
     if (customOpen) {
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = ui.rect(Ui.WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+            background = ui.rect(Ui.WELL, 12f, Ui.veil(0x12), 1f)
             setPadding(ui.dp(14), ui.dp(4), ui.dp(10), ui.dp(8))
         }
         val labels = listOf("dia" to "Día y fecha", "hora" to "Hora", "clima" to "Clima actual",
@@ -254,8 +254,8 @@ internal fun MainActivity.switchRow(label: String, on: Boolean, onChange: (Boole
     val sw = androidx.appcompat.widget.SwitchCompat(this).apply {
         isChecked = on
         val states = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
-        thumbTintList = android.content.res.ColorStateList(states, intArrayOf(Color.WHITE, Color.parseColor("#9C9187")))
-        trackTintList = android.content.res.ColorStateList(states, intArrayOf(ui.accent, Color.parseColor("#3A322B")))
+        thumbTintList = android.content.res.ColorStateList(states, intArrayOf(Color.WHITE, if (Ui.light) Color.WHITE else Ui.MUTED))
+        trackTintList = android.content.res.ColorStateList(states, intArrayOf(ui.accent, if (Ui.light) Color.parseColor("#B9AFA3") else Color.parseColor("#3A322B")))
         setOnCheckedChangeListener { _, v -> onChange(v) }
     }
     row.addView(sw)

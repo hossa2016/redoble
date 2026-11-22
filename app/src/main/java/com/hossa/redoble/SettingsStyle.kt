@@ -93,7 +93,7 @@ internal fun MainActivity.suggestedRow(): View {
                     outline.setRoundRect(0, 0, view.width, view.height, ui.dp(12).toFloat())
                 }
             }
-            foreground = ui.rect(Color.TRANSPARENT, 12f, if (on) ui.accent else Color.parseColor("#33EDE6DC"), if (on) 2.5f else 1f)
+            foreground = ui.rect(Color.TRANSPARENT, 12f, if (on) ui.accent else Ui.headA(0x33), if (on) 2.5f else 1f)
         }
         tile.addView(img, LinearLayout.LayoutParams(ui.dp(76), ui.dp(120)))
         tile.addView(ui.text(name, ui.cond, 13f, if (on) Ui.HEAD else Ui.MUTED).apply {
@@ -208,12 +208,12 @@ internal fun MainActivity.photoSection(card: LinearLayout) {
     if (hasPhoto) {
         preview.background = ui.rect(Color.BLACK, 16f)
         preview.addView(iv, FrameLayout.LayoutParams(-1, -1))
-        preview.foreground = ui.rect(Color.TRANSPARENT, 16f, Color.parseColor("#33EDE6DC"), 1f)
+        preview.foreground = ui.rect(Color.TRANSPARENT, 16f, Ui.headA(0x33), 1f)
         renderPreview(iv)
     } else {
         preview.background = GradientDrawable().apply {
             setColor(Ui.WELL); cornerRadius = ui.dp(16).toFloat()
-            setStroke(ui.dp(1.5f), Color.parseColor("#47EDE6DC"), ui.dp(6).toFloat(), ui.dp(4).toFloat())
+            setStroke(ui.dp(1.5f), Ui.headA(0x47), ui.dp(6).toFloat(), ui.dp(4).toFloat())
         }
         preview.addView(ui.text("Elige un sugerido\no una foto tuya", ui.cond, 16f, Ui.MUTED).apply { gravity = Gravity.CENTER },
             FrameLayout.LayoutParams(-1, -1))
@@ -300,7 +300,7 @@ internal fun MainActivity.sliderRow(label: String, value: Int, max: Int, unit: S
 }
 
 internal fun MainActivity.fader(maxValue: Int = 85): SeekBar {
-    val track = ui.rect(Color.parseColor("#070605"), 3f, Color.parseColor("#0FFFFFFF"), 1f)
+    val track = ui.rect(Ui.WELL, 3f, Ui.veil(0x0F), 1f)
     val fill = ClipDrawable(ui.rect(ui.accent, 3f), Gravity.START, ClipDrawable.HORIZONTAL)
     val progress = LayerDrawable(arrayOf(track, fill)).apply {
         setId(0, android.R.id.background)
@@ -379,14 +379,14 @@ internal fun MainActivity.knob(i: Int, selected: Boolean): View {
             gradientRadius = ui.dp(34).toFloat()
             setGradientCenter(0.5f, 0.35f)
             colors = intArrayOf(Color.parseColor("#3A342E"), Color.parseColor("#141110"))
-            setStroke(ui.dp(1), Color.parseColor("#1AFFFFFF"))
+            setStroke(ui.dp(1), Color.argb(0x1A, 255, 255, 255))
         }
         elevation = ui.dp(4).toFloat()
         outlineProvider = ViewOutlineProvider.BACKGROUND
         val gem = FrameLayout(this@knob).apply {
             background = ui.oval(color)
             addView(View(this@knob).apply {
-                background = ui.oval(Color.parseColor("#4DFFFFFF")); alpha = 0.5f
+                background = ui.oval(Color.argb(0x4D, 255, 255, 255)); alpha = 0.5f
             }, FrameLayout.LayoutParams(ui.dp(20), ui.dp(10), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
                 topMargin = ui.dp(3)
             })
@@ -458,7 +458,7 @@ internal fun MainActivity.colorSwatches(cur: Int, onPick: (Int) -> Unit): View {
         colors.forEachIndexed { i, c ->
             val on = c == cur
             row.addView(View(this).apply {
-                background = ui.oval(c, if (on) Color.WHITE else Color.parseColor("#33FFFFFF"), if (on) 3f else 1f)
+                background = ui.oval(c, if (on) Color.WHITE else Ui.veil(0x33), if (on) 3f else 1f)
                 contentDescription = "$title, color ${i + 1}" + if (on) ", elegido" else ""
                 setOnClickListener { onPick(c) }
             }, LinearLayout.LayoutParams(0, ui.dp(36), 1f).apply { marginEnd = ui.dp(6) })

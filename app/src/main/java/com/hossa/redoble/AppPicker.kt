@@ -65,16 +65,16 @@ class AppPicker(
             orientation = LinearLayout.VERTICAL
             background = GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
-                intArrayOf(Color.parseColor("#1E1915"), Color.parseColor("#110E0C"), Color.parseColor("#110E0C"))
+                intArrayOf(Ui.PLATE_TOP, Ui.INK, Ui.INK)
             ).apply {
                 val r = ui.dp(24).toFloat()
                 cornerRadii = floatArrayOf(r, r, r, r, 0f, 0f, 0f, 0f)
-                setStroke(ui.dp(1), Color.parseColor("#1FFFFFFF"))
+                setStroke(ui.dp(1), Ui.veil(0x1F))
             }
         }
 
         // Agarre
-        sheet.addView(View(ctx).apply { background = ui.rect(Color.parseColor("#40EDE6DC"), 2f) },
+        sheet.addView(View(ctx).apply { background = ui.rect(Ui.headA(0x40), 2f) },
             LinearLayout.LayoutParams(ui.dp(40), ui.dp(4)).apply {
                 gravity = Gravity.CENTER_HORIZONTAL; topMargin = ui.dp(10); bottomMargin = ui.dp(16)
             })

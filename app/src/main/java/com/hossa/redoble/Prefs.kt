@@ -118,6 +118,9 @@ object Prefs {
     fun setPlayerTop(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("playerTop", v).apply()
 
     /** Escena del fondo animado de video (fogata, brasero, chispas, ciudad, cafe, ventana). */
+    /** Apariencia de la configuración: "system", "dark" o "light". */
+    fun uiMode(ctx: Context) = p(ctx).getString("uiMode", "dark") ?: "dark"
+    fun setUiMode(ctx: Context, v: String) = p(ctx).edit().putString("uiMode", v).apply()
     fun liveScene(ctx: Context) = p(ctx).getString("liveScene", "fogata") ?: "fogata"
     fun setLiveScene(ctx: Context, id: String) = p(ctx).edit().putString("liveScene", id).apply()
 

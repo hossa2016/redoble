@@ -25,17 +25,42 @@ import androidx.core.graphics.ColorUtils
 class Ui(val ctx: Context, val accent: Int) {
 
     companion object {
-        val INK = Color.parseColor("#0E0B09")
-        val PLATE_TOP = Color.parseColor("#1C1713")
-        val PLATE_BOTTOM = Color.parseColor("#141110")
-        val PLATE_PRESSED = Color.parseColor("#1F1915")
-        val WELL = Color.parseColor("#0A0807")
-        val GROOVE = Color.parseColor("#2A231E")
-        val HEAD = Color.parseColor("#EDE6DC")
-        val MUTED = Color.parseColor("#9C9187")
-        val DIM = Color.parseColor("#8A7F75")  // contraste ≥ 4.5:1 sobre las tarjetas
-        val OK = Color.parseColor("#7FB38A")
-        val ALERT = Color.parseColor("#E24B4A")
+        /** true: la configuración se ve en modo claro. */
+        var light = false; private set
+        var INK = 0; private set
+        var PLATE_TOP = 0; private set
+        var PLATE_BOTTOM = 0; private set
+        var PLATE_PRESSED = 0; private set
+        var WELL = 0; private set
+        var GROOVE = 0; private set
+        var HEAD = 0; private set
+        var MUTED = 0; private set
+        var DIM = 0; private set  // contraste ≥ 4.5:1 sobre las tarjetas
+        var OK = 0; private set
+        var ALERT = 0; private set
+
+        init { setLight(false) }
+
+        fun setLight(on: Boolean) {
+            light = on
+            fun c(dark: String, clear: String) = Color.parseColor(if (on) clear else dark)
+            INK = c("#0E0B09", "#F3EFE9")
+            PLATE_TOP = c("#1C1713", "#FFFFFF")
+            PLATE_BOTTOM = c("#141110", "#FBF8F4")
+            PLATE_PRESSED = c("#1F1915", "#ECE6DE")
+            WELL = c("#0A0807", "#EEE9E2")
+            GROOVE = c("#2A231E", "#D9D1C6")
+            HEAD = c("#EDE6DC", "#1C1713")
+            MUTED = c("#9C9187", "#5B524A")
+            DIM = c("#8A7F75", "#6B6158")
+            OK = c("#7FB38A", "#2F7A45")
+            ALERT = c("#E24B4A", "#C42F2D")
+        }
+
+        /** Velo para bordes y separadores: blanco translúcido en oscuro, negro en claro. */
+        fun veil(alpha: Int) = if (light) Color.argb((alpha * 1.4f).toInt().coerceAtMost(255), 40, 30, 20) else Color.argb(alpha, 255, 255, 255)
+        /** Color de los títulos con transparencia (bordes suaves). */
+        fun headA(alpha: Int) = ColorUtils.setAlphaComponent(HEAD, alpha)
     }
 
     /** Colores claros (plata, ámbar, verde, cian) llevan texto oscuro encima. */
@@ -93,11 +118,11 @@ class Ui(val ctx: Context, val accent: Int) {
         GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(PLATE_TOP, PLATE_BOTTOM)
     ).apply {
         cornerRadius = dp(18).toFloat()
-        setStroke(dp(1), Color.parseColor("#12FFFFFF"))
+        setStroke(dp(1), veil(0x12))
     }
 
     fun field(): Drawable {
-        val normal = rect(WELL, 12f, Color.parseColor("#1FFFFFFF"), 1f)
+        val normal = rect(WELL, 12f, veil(0x1F), 1f)
         val focus = rect(WELL, 12f, accent, 1.5f)
         return StateListDrawable().apply {
             addState(intArrayOf(android.R.attr.state_focused), focus)
@@ -110,14 +135,14 @@ class Ui(val ctx: Context, val accent: Int) {
         gradientType = GradientDrawable.RADIAL_GRADIENT
         gradientRadius = dp(19).toFloat()
         setGradientCenter(0.5f, 0.3f)
-        colors = intArrayOf(Color.parseColor("#12FFFFFF"), Color.parseColor("#05FFFFFF"))
-        setStroke(dp(1), Color.parseColor("#24FFFFFF"))
+        colors = intArrayOf(veil(0x12), veil(0x05))
+        setStroke(dp(1), veil(0x24))
     }
 
     fun dashedHolder(): Drawable = GradientDrawable().apply {
         shape = GradientDrawable.OVAL
         setColor(Color.TRANSPARENT)
-        setStroke(dp(1.5f), Color.parseColor("#47EDE6DC"), dp(4).toFloat(), dp(3).toFloat())
+        setStroke(dp(1.5f), headA(0x47), dp(4).toFloat(), dp(3).toFloat())
     }
 
     /** Fondo de fila con estado presionado y seleccionado. */
@@ -159,7 +184,7 @@ class Ui(val ctx: Context, val accent: Int) {
             GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(accentLight, accentDark)
         ).apply { cornerRadius = dp(12).toFloat() }
         val shine = GradientDrawable().apply {
-            setColor(Color.parseColor("#40FFFFFF")); cornerRadius = dp(12).toFloat()
+            setColor(Color.argb(0x40, 255, 255, 255)); cornerRadius = dp(12).toFloat()
         }
         val normal = LayerDrawable(arrayOf(shine, normalFill)).apply {
             setLayerInset(1, 0, dp(1), 0, 0)
@@ -182,8 +207,8 @@ class Ui(val ctx: Context, val accent: Int) {
 
     fun secondary(label: String) = baseButton(label).apply {
         background = StateListDrawable().apply {
-            addState(intArrayOf(android.R.attr.state_pressed), rect(Color.parseColor("#0FFFFFFF"), 12f, Color.parseColor("#38EDE6DC"), 1f))
-            addState(intArrayOf(), rect(Color.TRANSPARENT, 12f, Color.parseColor("#38EDE6DC"), 1f))
+            addState(intArrayOf(android.R.attr.state_pressed), rect(veil(0x0F), 12f, headA(0x38), 1f))
+            addState(intArrayOf(), rect(Color.TRANSPARENT, 12f, headA(0x38), 1f))
         }
         setTextColor(HEAD)
         pressDown(this)
@@ -204,7 +229,7 @@ class Ui(val ctx: Context, val accent: Int) {
     fun <T> segmented(options: List<Pair<T, String>>, selected: T, onPick: (T) -> Unit): LinearLayout {
         val row = LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL
-            background = rect(WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+            background = rect(WELL, 12f, veil(0x12), 1f)
             setPadding(dp(4), dp(4), dp(4), dp(4))
         }
         options.forEachIndexed { i, (value, label) ->
@@ -275,7 +300,7 @@ class Ui(val ctx: Context, val accent: Int) {
             } else {
                 val color = Prefs.originalIcons(ctx)
                 val size = if (color) sizeDp - 4 else iconDp
-                Graphics.appIcon(ctx, pkg, dp(iconDp) * 2, dp(size) * 2)?.let { iv.setImageBitmap(it) }
+                Graphics.appIcon(ctx, pkg, dp(iconDp) * 2, dp(size) * 2, HEAD)?.let { iv.setImageBitmap(it) }
                 addView(iv, FrameLayout.LayoutParams(dp(size), dp(size), Gravity.CENTER))
             }
             layoutParams = LinearLayout.LayoutParams(dp(sizeDp), dp(sizeDp))

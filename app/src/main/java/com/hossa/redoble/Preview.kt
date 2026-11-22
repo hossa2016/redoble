@@ -32,7 +32,7 @@ internal fun MainActivity.previewPlate(): View {
                 outline.setRoundRect(0, 0, view.width, view.height, ui.dp(18).toFloat())
             }
         }
-        foreground = ui.rect(Color.TRANSPARENT, 18f, Color.parseColor("#33EDE6DC"), 1f)
+        foreground = ui.rect(Color.TRANSPARENT, 18f, Ui.headA(0x33), 1f)
         contentDescription = "Vista previa del widget"
     }
     // Fondo: el que tendrá la pantalla con lo elegido

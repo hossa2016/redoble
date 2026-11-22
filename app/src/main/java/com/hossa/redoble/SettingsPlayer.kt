@@ -133,7 +133,7 @@ internal fun MainActivity.widgetPlate(): View {
 
     val steps = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        background = ui.rect(Ui.WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+        background = ui.rect(Ui.WELL, 12f, Ui.veil(0x12), 1f)
         setPadding(ui.dp(14), ui.dp(14), ui.dp(14), ui.dp(4))
         visibility = View.GONE
     }
@@ -144,7 +144,7 @@ internal fun MainActivity.widgetPlate(): View {
         "Arrástralo a la pantalla y estíralo hasta ocupar el ancho."
     )
     texts.forEachIndexed { n, t ->
-        if (n > 0) steps.addView(View(this).apply { setBackgroundColor(Color.parseColor("#0DFFFFFF")) },
+        if (n > 0) steps.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0D)) },
             LinearLayout.LayoutParams(-1, ui.dp(1)))
         steps.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -183,4 +183,16 @@ internal fun MainActivity.tryPin(): Boolean {
     } catch (e: Exception) {
         false
     }
+}
+
+/** Modo claro u oscuro de esta pantalla de configuración (no cambia el widget). */
+internal fun MainActivity.appearancePlate(): View {
+    val card = ui.plateCard()
+    card.addView(ui.sectionTitle("Apariencia"))
+    card.addView(ui.bodyText("Cómo se ve esta configuración. El widget conserva los colores de su tema."))
+    card.addView(ui.segmented(listOf("system" to "Sistema", "dark" to "Oscuro", "light" to "Claro"), Prefs.uiMode(this)) {
+        Prefs.setUiMode(this, it)
+        build()
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
+    return card
 }

@@ -79,7 +79,7 @@ internal fun MainActivity.onboardingView(): View {
             tips.forEach { (t, d) ->
                 content.addView(LinearLayout(this).apply {
                     orientation = LinearLayout.VERTICAL
-                    background = ui.rect(Ui.WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+                    background = ui.rect(Ui.WELL, 12f, Ui.veil(0x12), 1f)
                     setPadding(ui.dp(14), ui.dp(12), ui.dp(14), ui.dp(12))
                     addView(ui.text(t, ui.condSemi, 17f, Ui.HEAD))
                     addView(ui.bodyText(d, Ui.MUTED, 14f).apply { setPadding(0, ui.dp(4), 0, 0) })
@@ -125,7 +125,7 @@ internal fun MainActivity.onboardingView(): View {
 /** Lista numerada de pasos cortos. */
 internal fun MainActivity.howTo(items: List<String>): View = LinearLayout(this).apply {
     orientation = LinearLayout.VERTICAL
-    background = ui.rect(Ui.WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+    background = ui.rect(Ui.WELL, 12f, Ui.veil(0x12), 1f)
     setPadding(ui.dp(14), ui.dp(8), ui.dp(14), ui.dp(8))
     items.forEachIndexed { n, t ->
         addView(LinearLayout(this@howTo).apply {
@@ -176,7 +176,7 @@ internal fun MainActivity.themeTile(t: Theme, on: Boolean, onPick: () -> Unit): 
     }
     val frame = android.widget.FrameLayout(this).apply {
         // Borde claro y grueso en el elegido, igual en todos los temas
-        foreground = ui.rect(Color.TRANSPARENT, 12f, if (on) Color.WHITE else Color.parseColor("#24FFFFFF"), if (on) 2.5f else 1f)
+        foreground = ui.rect(Color.TRANSPARENT, 12f, if (on) Color.WHITE else Color.argb(0x24, 255, 255, 255), if (on) 2.5f else 1f)
     }
     frame.addView(img, android.widget.FrameLayout.LayoutParams(tw, thH))
     frame.addView(ui.text("5:43", ui.condLight, 26f, t.head).apply { gravity = Gravity.CENTER },
