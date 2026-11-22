@@ -9,28 +9,31 @@ import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.Toast
 
-// Guía de inicio en 3 pasos para quien abre la app por primera vez:
-// 1) elegir tema → 2) agregar el widget → 3) permiso para mostrar la música.
+// Guía de inicio en 4 pasos para quien abre la app por primera vez:
+// 1) elegir tema → 2) agregar el widget → 3) permiso para la música → 4) cómo se configura.
+
+private const val LAST = 3
 
 internal fun MainActivity.onboardingView(): View {
     val col = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(ui.dp(20), ui.dp(28), ui.dp(20), ui.dp(28))
     }
-    val step = onbStep.coerceIn(0, 2)
+    val step = onbStep.coerceIn(0, LAST)
 
     // Progreso: 1 · 2 · 3
     col.addView(LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
-        for (i in 0..2) addView(View(this@onboardingView).apply {
+        for (i in 0..LAST) addView(View(this@onboardingView).apply {
             background = ui.rect(if (i <= step) ui.accent else Ui.GROOVE, 2f)
         }, LinearLayout.LayoutParams(0, ui.dp(4), 1f).apply { if (i > 0) marginStart = ui.dp(6) })
     }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(24) })
 
-    col.addView(ui.text("Paso ${step + 1} de 3", ui.cond, 15f, Ui.MUTED))
+    col.addView(ui.text("Paso ${step + 1} de ${LAST + 1}", ui.cond, 15f, Ui.MUTED))
     val (title, body) = when (step) {
         0 -> "Elige tu estilo" to "Siete temas, cada uno con sus propias letras. Puedes cambiarlo cuando quieras."
-        1 -> "Agrega el widget" to "Ponlo en tu pantalla de inicio y estíralo a lo ancho para que luzca."
+        1 -> "Agrega el widget" to "Ponlo en tu pantalla de inicio y estíralo para que ocupe el ancho y casi todo el alto."
+        3 -> "Así lo configuras" to "Todo se cambia desde esta app y el widget se actualiza al instante. Arriba verás una vista previa."
         else -> "Muestra tu música" to "Para ver la canción y los botones ⏮ ⏯ ⏭ en el widget, Android pide el acceso a notificaciones. " +
             "Prisma Widgets solo lo usa para leer la música que suena; no lee ni guarda tus mensajes."
     }
@@ -54,8 +57,37 @@ internal fun MainActivity.onboardingView(): View {
                 if (!tryPin()) toast("Mantén presionada la pantalla de inicio → Widgets → Prisma Widgets")
             }
             content.addView(add, LinearLayout.LayoutParams(-1, ui.dp(52)))
-            content.addView(ui.bodyText("Si tu teléfono no lo permite desde aquí: mantén presionado un espacio vacío de la " +
-                "pantalla de inicio, toca Widgets y busca Prisma Widgets.", Ui.DIM, 14f).apply { setPadding(0, ui.dp(12), 0, 0) })
+            content.addView(howTo(listOf(
+                "Toca Agregar widget y confirma. Si tu teléfono no lo permite desde aquí:",
+                "Mantén presionado un espacio vacío de la pantalla de inicio y toca Widgets.",
+                "Busca Prisma Widgets y arrástralo a la pantalla.",
+                "Mantenlo presionado y usa los bordes para estirarlo: a lo ancho y casi todo el alto.",
+                "Si quieres cambiar algo después, toca la hora en el widget y se abren estos ajustes."
+            )), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
+        }
+        3 -> {
+            val tips = listOf(
+                "Tema" to "Elige uno de los 7 estilos. «Letras del tema» usa la letra propia de cada uno.",
+                "Fondo de pantalla" to "Del tema, un color desvanecido o fijo, o una foto. Toca el botón para aplicarlo.",
+                "Fondo del widget" to "Una capa detrás de la hora. Con colores claros, las letras pasan a oscuras solas.",
+                "Diseño" to "Completo, Música o Minimal. En «Personalizar elementos» prendes o apagas día, hora, clima, batería y más.",
+                "Apps" to "Toca un espacio para elegir la app. Mantén presionado para ponerle un nombre corto.",
+                "Clima" to "Escribe tu ciudad y toca Guardar.",
+                "Reproductor" to "Elige tu app de música, si va abajo o debajo del clima, y si muestra solo tu app o cualquiera.",
+                "Actualización en vivo" to "Batería al instante y hora con la letra del tema (usa una notificación fija)."
+            )
+            tips.forEach { (t, d) ->
+                content.addView(LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    background = ui.rect(Ui.WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+                    setPadding(ui.dp(14), ui.dp(12), ui.dp(14), ui.dp(12))
+                    addView(ui.text(t, ui.condSemi, 17f, Ui.HEAD))
+                    addView(ui.bodyText(d, Ui.MUTED, 14f).apply { setPadding(0, ui.dp(4), 0, 0) })
+                }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(8) })
+            }
+            content.addView(ui.bodyText("Puedes volver a ver esta guía en Ajustes → Reproductor → «Ver la guía de inicio».", Ui.DIM, 14f).apply {
+                setPadding(0, ui.dp(6), 0, 0)
+            })
         }
         else -> {
             val on = Player.enabled(this)
@@ -67,7 +99,7 @@ internal fun MainActivity.onboardingView(): View {
                 }
             }
             content.addView(give, LinearLayout.LayoutParams(-1, ui.dp(52)))
-            content.addView(ui.bodyText("Puedes hacerlo después desde Ajustes → Reproductor.", Ui.DIM, 14f).apply {
+            content.addView(ui.bodyText("Puedes hacerlo después desde Ajustes → Reproductor y permisos.", Ui.DIM, 14f).apply {
                 setPadding(0, ui.dp(12), 0, 0)
             })
         }
@@ -81,13 +113,31 @@ internal fun MainActivity.onboardingView(): View {
             if (step == 0) finishOnboarding() else { onbStep = step - 1; build() }
         }
     }, LinearLayout.LayoutParams(0, ui.dp(52), 1f))
-    nav.addView(ui.primary(if (step == 2) "Empezar" else "Siguiente").apply {
+    nav.addView(ui.primary(if (step == LAST) "Empezar" else "Siguiente").apply {
         setOnClickListener {
-            if (step == 2) finishOnboarding() else { onbStep = step + 1; build() }
+            if (step == LAST) finishOnboarding() else { onbStep = step + 1; build() }
         }
     }, LinearLayout.LayoutParams(0, ui.dp(52), 1.4f).apply { marginStart = ui.dp(10) })
     col.addView(nav, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(36) })
     return col
+}
+
+/** Lista numerada de pasos cortos. */
+internal fun MainActivity.howTo(items: List<String>): View = LinearLayout(this).apply {
+    orientation = LinearLayout.VERTICAL
+    background = ui.rect(Ui.WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+    setPadding(ui.dp(14), ui.dp(8), ui.dp(14), ui.dp(8))
+    items.forEachIndexed { n, t ->
+        addView(LinearLayout(this@howTo).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, ui.dp(8), 0, ui.dp(8))
+            addView(ui.text("${n + 1}", ui.condSemi, 14f, ui.accent).apply {
+                gravity = Gravity.CENTER
+                background = ui.oval(Color.TRANSPARENT, ui.accentLine, 1f)
+            }, LinearLayout.LayoutParams(ui.dp(24), ui.dp(24)))
+            addView(ui.bodyText(t, Ui.HEAD, 15f), LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = ui.dp(12) })
+        })
+    }
 }
 
 internal fun MainActivity.finishOnboarding() {
