@@ -86,7 +86,9 @@ class RockWidget : AppWidgetProvider() {
 
         private fun widthPx(ctx: Context, mgr: AppWidgetManager, id: Int): Int {
             val dp = try { mgr.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) } catch (e: Exception) { 0 }
-            return ((if (dp > 0) dp else 360) * ctx.resources.displayMetrics.density).toInt()
+            val dm = ctx.resources.displayMetrics
+            val screen = minOf(dm.widthPixels, dm.heightPixels) - (16 * dm.density).toInt()
+            return maxOf((dp * dm.density).toInt(), screen)
         }
 
         private fun clockBitmap(ctx: Context, th: Theme, playing: Boolean): android.graphics.Bitmap {
@@ -178,6 +180,7 @@ class RockWidget : AppWidgetProvider() {
             v.setTextViewText(R.id.wx_now, now0(ctx, null))
             v.setTextViewText(R.id.wx_tomorrow, tomorrow)
             val nowTxt = now0(ctx, now)
+            if (fonts && clima && Prefs.weatherCode(ctx) < 0 && Prefs.city(ctx).isNotBlank()) WeatherWorker.runNow(ctx)
             val wxIcon = fonts && clima && Prefs.weatherCode(ctx) >= 0 && (th.family == "cristal" || th.family == "claro")
             val tomInline = wxIcon && manana && tomorrow.isNotBlank()
             twin(v, R.id.wx_now, R.id.wx_now_bmp, clima, fonts) {
