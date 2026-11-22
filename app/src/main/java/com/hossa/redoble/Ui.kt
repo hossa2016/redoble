@@ -227,9 +227,9 @@ class Ui(val ctx: Context, val accent: Int) {
      * El texto se achica solo si no cabe, también con letra grande del sistema.
      */
     fun <T> segmented(options: List<Pair<T, String>>, selected: T, onPick: (T) -> Unit): LinearLayout {
-        // Con 5 o más opciones van en filas de 3 para que ningún texto se corte,
+        // Con 5 o más opciones van en dos filas (cada una ocupa todo el ancho) para que ningún texto se corte,
         // aunque el teléfono tenga la letra grande.
-        val perRow = if (options.size >= 5) 3 else options.size
+        val perRow = if (options.size >= 5) (options.size + 1) / 2 else options.size
         val well = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             background = rect(WELL, 12f, veil(0x12), 1f)
@@ -256,13 +256,8 @@ class Ui(val ctx: Context, val accent: Int) {
                 contentDescription = if (on) "$label, seleccionado" else label
                 setOnClickListener { if (!on) onPick(value) }
             }
-            val weight = if (perRow < options.size) 1f else label.length + 3f
+            val weight = label.length + 3f
             row.addView(b, LinearLayout.LayoutParams(0, dp(48), weight).apply { if (i > 0) marginStart = dp(3) })
-        }
-        // La última fila incompleta se rellena para que sus botones midan igual que los de arriba
-        val left = (perRow - options.size % perRow) % perRow
-        if (perRow < options.size) repeat(left) {
-            row.addView(View(ctx), LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginStart = dp(3) })
         }
         return well
     }
