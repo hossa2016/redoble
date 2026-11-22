@@ -140,7 +140,8 @@ internal fun MainActivity.wallpaperPlate(): View {
 /** Fondo animado: grilla de miniaturas de cada escena y botón para ponerlo. */
 internal fun MainActivity.animSection(card: LinearLayout) {
     val info = VideoScenes.find(Prefs.liveScene(this))
-    val (sw, _) = screenSize()
+    // Ancho real de la ventana (sirve también en pantalla dividida)
+    val sw = resources.displayMetrics.widthPixels
     // Ancho útil de la tarjeta: pantalla menos márgenes (16) y relleno (18) a cada lado
     val gap = ui.dp(8)
     val tileW = (sw - ui.dp(16 + 18) * 2 - gap * 2) / 3

@@ -176,7 +176,7 @@ internal fun MainActivity.themeTile(t: Theme, on: Boolean, onPick: () -> Unit): 
     }
     val frame = android.widget.FrameLayout(this).apply {
         // Borde claro y grueso en el elegido, igual en todos los temas
-        foreground = ui.rect(Color.TRANSPARENT, 12f, if (on) Color.WHITE else Color.argb(0x24, 255, 255, 255), if (on) 2.5f else 1f)
+        foreground = ui.rect(Color.TRANSPARENT, 12f, if (on) (if (Ui.light) ui.accent else Color.WHITE) else Color.argb(0x24, 255, 255, 255), if (on) 2.5f else 1f)
     }
     frame.addView(img, android.widget.FrameLayout.LayoutParams(tw, thH))
     frame.addView(ui.text("5:43", ui.condLight, 26f, t.head).apply { gravity = Gravity.CENTER },
@@ -185,9 +185,9 @@ internal fun MainActivity.themeTile(t: Theme, on: Boolean, onPick: () -> Unit): 
         android.widget.FrameLayout.LayoutParams(ui.dp(22), ui.dp(4)).apply {
             gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL; bottomMargin = ui.dp(14)
         })
-    if (on) frame.addView(ui.text("✓", ui.condSemi, 13f, Color.parseColor("#14110E")).apply {
+    if (on) frame.addView(ui.text("✓", ui.condSemi, 13f, if (Ui.light) ui.onAccent else Color.parseColor("#14110E")).apply {
         gravity = Gravity.CENTER
-        background = ui.oval(Color.WHITE)
+        background = ui.oval(if (Ui.light) ui.accent else Color.WHITE)
     }, android.widget.FrameLayout.LayoutParams(ui.dp(22), ui.dp(22)).apply {
         gravity = Gravity.TOP or Gravity.END; topMargin = ui.dp(6); marginEnd = ui.dp(6)
     })

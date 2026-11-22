@@ -298,7 +298,8 @@ class VideoPreview(ctx: Context) : FrameLayout(ctx), TextureView.SurfaceTextureL
         p.setSurface(Surface(st)); p.isLooping = true; p.setVolume(0f, 0f); p.start(); mp = p
     }
 
-    override fun onSurfaceTextureAvailable(st: SurfaceTexture, w: Int, h: Int) { restart(); tick() }
+    private var ticking = false
+    override fun onSurfaceTextureAvailable(st: SurfaceTexture, w: Int, h: Int) { restart(); if (!ticking) { ticking = true; tick() } }
     override fun onSurfaceTextureSizeChanged(st: SurfaceTexture, w: Int, h: Int) {}
     override fun onSurfaceTextureDestroyed(st: SurfaceTexture): Boolean { mp?.release(); mp = null; return true }
     override fun onSurfaceTextureUpdated(st: SurfaceTexture) {}
@@ -317,7 +318,7 @@ class VideoPreview(ctx: Context) : FrameLayout(ctx), TextureView.SurfaceTextureL
     }
 
     private fun tick() {
-        if (!isAttachedToWindow) return
+        if (!isAttachedToWindow) { ticking = false; return }
         val dx = dragX; val dy = dragY
         if (dx != null && dy != null) tilt.smooth(dx, dy) else tilt.smooth()
         val p = mp

@@ -113,6 +113,12 @@ class MainActivity : AppCompatActivity() {
     internal fun onUi(block: () -> Unit) { main.post { if (alive()) block() } }
     internal fun onUiDelayed(ms: Long, block: () -> Unit) { main.postDelayed({ if (alive()) block() }, ms) }
 
+    /** Al salir de la app se suelta el video de la vista previa (no gasta batería en segundo plano). */
+    override fun onStop() {
+        preview?.let { p -> p.video?.let { p.frame.removeView(it) }; p.video = null }
+        super.onStop()
+    }
+
     override fun onResume() {
         super.onResume()
         // El widget se redibuja fuera del hilo principal para que la app abra fluida
