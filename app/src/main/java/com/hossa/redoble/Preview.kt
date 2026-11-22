@@ -106,15 +106,33 @@ internal fun MainActivity.updatePreview() {
     // El widget se arma fuera del hilo principal; mientras tanto se ve el anterior
     val appCtx = applicationContext
     io.execute {
-        val rv = try { RockWidget.buildViews(appCtx, p.wPx, preview = true) } catch (e: Exception) { null }
+        var err: Throwable? = null
+        val rv = try { RockWidget.buildViews(appCtx, p.wPx, preview = true) } catch (e: Throwable) { err = e; null }
         onUi {
             try {
                 rv?.let {
                     val fresh = it.apply(this, p.holder)
                     p.holder.removeAllViews()
                     p.holder.addView(fresh, FrameLayout.LayoutParams(p.wPx, p.hPx))
+                    fresh.post {
+                        // Diagnóstico: si el widget quedó sin tamaño, se avisa en la vista previa
+                        if (fresh.width == 0 || fresh.height == 0) showPreviewError(p, "Widget sin tamaño (${fresh.width}x${fresh.height})")
+                        else showPreviewError(p, null)
+                    }
                 }
-            } catch (e: Exception) { }
+            } catch (e: Throwable) { err = e }
+            err?.let { showPreviewError(p, it.javaClass.simpleName + ": " + (it.message ?: "")) }
         }
     }
+}
+
+/** Muestra (o quita) un aviso dentro de la vista previa si el widget no se pudo dibujar. */
+internal fun MainActivity.showPreviewError(p: PreviewParts, msg: String?) {
+    val old = p.frame.findViewWithTag<View>("pvErr")
+    if (msg == null) { old?.let { p.frame.removeView(it) }; return }
+    if (old != null) { (old as android.widget.TextView).text = "No se pudo dibujar el widget:\n$msg"; return }
+    p.frame.addView(ui.text("No se pudo dibujar el widget:\n$msg", ui.body, 10f, Color.WHITE).apply {
+        tag = "pvErr"; translationZ = 4f
+        setBackgroundColor(Color.argb(0xCC, 0, 0, 0)); setPadding(ui.dp(6), ui.dp(6), ui.dp(6), ui.dp(6))
+    }, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
 }
