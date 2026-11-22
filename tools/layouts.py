@@ -163,7 +163,7 @@ def add_bmps(xml, name):
         img=f'<ImageView android:id="@+id/{i}_bmp" {attrs} android:adjustViewBounds="true" android:scaleType="{sc}" android:contentDescription="@null" android:visibility="gone" />'
         # Si el texto ocupaba el espacio sobrante (peso), un relleno lo ocupa para que
         # lo que viene después (por ejemplo la X de cerrar) siga pegado a la derecha
-        if had_weight: img+='<FrameLayout android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />'
+        if had_weight: img+='<FrameLayout android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="0.01" />'
         xml=xml[:m.end()]+img+xml[m.end():]
     # Reloj: imagen gemela después del contenedor de la hora
     k=xml.index('android:id="@+id/clock"'); e=xml.index('</LinearLayout>',k)+len('</LinearLayout>')
