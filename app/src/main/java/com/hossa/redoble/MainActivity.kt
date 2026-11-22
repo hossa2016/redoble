@@ -168,7 +168,16 @@ class MainActivity : AppCompatActivity() {
             if (sv.parent != null) {
                 sv.removeAllViews()
                 sv.addView(content)
-                if (keepScroll) sv.scrollTo(0, y) else sv.scrollTo(0, 0)
+                // El scroll se ubica justo antes de dibujar, cuando el contenido nuevo ya
+                // tiene su alto (si se hace antes, Android lo lleva al principio).
+                val target = if (keepScroll) y else 0
+                sv.viewTreeObserver.addOnPreDrawListener(object : android.view.ViewTreeObserver.OnPreDrawListener {
+                    override fun onPreDraw(): Boolean {
+                        sv.viewTreeObserver.removeOnPreDrawListener(this)
+                        sv.scrollTo(0, target)
+                        return true
+                    }
+                })
                 return
             }
         }
