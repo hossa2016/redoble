@@ -123,7 +123,7 @@ def build(name,p):
 </LinearLayout>'''
     xml=f'''<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
-<FrameLayout android:id="@+id/top_space" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+<FrameLayout android:id="@+id/top_space" android:layout_width="match_parent" android:layout_height="12dp" />
 {header}
 <FrameLayout android:id="@+id/middle" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:minHeight="10dp">
 {large}
