@@ -41,11 +41,12 @@ class MainActivity : AppCompatActivity() {
     internal val thumbs = java.util.concurrent.ConcurrentHashMap<Int, Bitmap>()
     /** Miniaturas de los temas (se dibujan una sola vez, no en cada toque). */
     internal val themeThumbs = HashMap<Int, Bitmap>()
-    /** Última vista previa, para mostrarla mientras se arma la nueva (sin parpadeo). */
     internal val openSections: MutableSet<String> by lazy { Prefs.openSections(this).take(1).toMutableSet() }
     /** Para cerrar las demás secciones cuando se abre una (solo una abierta a la vez). */
     internal val folds = HashMap<String, (Boolean) -> Unit>()
-    internal var lastPreviewWidget: View? = null
+    /** Vista previa fija (no se rehace en cada toque) y la columna de la pantalla. */
+    internal var preview: PreviewParts? = null
+    internal var mainCol: LinearLayout? = null
     internal var lastPreviewBg: Bitmap? = null
 
     internal val suggested = listOf(
@@ -135,16 +136,19 @@ class MainActivity : AppCompatActivity() {
         ui = Ui(this, accent)
         if (!Prefs.onboarded(this)) { setScreen(onboardingView(), keepScroll = false); return }
 
-        val col = LinearLayout(this).apply {
+        // La columna y la vista previa se conservan; se rehace solo lo demás
+        val col = mainCol ?: LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, ui.dp(14), 0, ui.dp(40))
-        }
+        }.also { mainCol = it }
         val hasWidget = RockWidget.hasWidgets(this)
-        col.addView(topBar())
-        if (!hasWidget) col.addView(widgetPlate())
-        col.addView(previewPlate())
+        val pv = previewPlate()
+        for (i in col.childCount - 1 downTo 0) if (col.getChildAt(i) !== pv) col.removeViewAt(i)
+        if (pv.parent == null) col.addView(pv)
+        col.addView(topBar(), 0)
+        if (!hasWidget) col.addView(widgetPlate(), 1)
 
-        col.addView(ui.groupHeader("Estilo", "Cómo se ve tu widget"))
+        col.addView(ui.groupHeader("Estilo"))
         val ws = Prefs.wallStyle(this)
         val wallName = when (ws) {
             "fade" -> "Desvanecido"; "solid" -> "Fijo"; "photo" -> "Foto"
@@ -156,18 +160,17 @@ class MainActivity : AppCompatActivity() {
         col.addView(fold(widgetBgPlate(), "fondoWidget", widgetBgName))
         if (th.usesUserAccent) col.addView(fold(accentPlate(), "acento"))
 
-        col.addView(ui.groupHeader("Contenido", "Qué muestra"))
+        col.addView(ui.groupHeader("Contenido"))
         col.addView(fold(designPlate(), "diseno"))
         col.addView(fold(setlistPlate(), "apps"))
         col.addView(fold(weatherPlate(), "clima", Prefs.city(this).substringBefore(",").ifBlank { "Sin ciudad" }))
 
-        col.addView(ui.groupHeader("Reproductor y permisos", "Tu música en el widget"))
+        col.addView(ui.groupHeader("Reproductor"))
         col.addView(fold(playerPlate(), "reproductor", if (Player.enabled(this)) "Activo" else "Sin permiso"))
 
-        col.addView(ui.groupHeader("App", "Modo claro u oscuro"))
-        col.addView(fold(appearancePlate(), "apariencia",
+        col.addView(ui.groupHeader("App"))
+        col.addView(fold(appearancePlate(hasWidget), "apariencia",
             when (Prefs.uiMode(this)) { "system" -> "Sistema"; "light" -> "Claro"; else -> "Oscuro" }))
-        if (hasWidget) col.addView(widgetDonePlate())
 
         col.addView(ui.text("Prisma Widgets " + BuildConfig.VERSION_NAME, ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
@@ -195,6 +198,8 @@ class MainActivity : AppCompatActivity() {
         // Si ya hay pantalla, solo se cambia su contenido (sin reemplazar la ventana
         // ni saltar el scroll): así tocar un botón no produce destellos.
         scroll?.let { sv ->
+            // Misma pantalla: ya está puesta, no se toca (sin saltos ni parpadeos)
+            if (sv.parent != null && sv.getChildAt(0) === content) { sv.setBackgroundColor(Ui.INK); return }
             if (sv.parent != null) {
                 sv.setBackgroundColor(Ui.INK)
                 sv.removeAllViews()

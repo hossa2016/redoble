@@ -10,9 +10,23 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 
 // Vista previa en vivo: el mismo widget real (RemoteViews) dibujado dentro de la
-// app, sobre el fondo elegido. Cambia al instante al tocar cada opción.
+// app, sobre el fondo elegido. Se arma una sola vez y en cada cambio solo se
+// actualiza lo de adentro: así el video del fondo animado no se reinicia.
+
+/** Piezas fijas de la vista previa (se reutilizan entre un toque y otro). */
+internal class PreviewParts(
+    val card: LinearLayout, val frame: FrameLayout, val bg: ImageView, val holder: FrameLayout,
+    val wPx: Int, val hPx: Int, val scale: Float, val boxH: Int, val key: String
+) {
+    var video: VideoPreview? = null
+}
 
 internal fun MainActivity.previewPlate(): View {
+    // Se rehace solo si cambia el modo claro/oscuro o el color de acento (cambian sus bordes)
+    val key = "${Ui.light}-${ui.accent}"
+    preview?.takeIf { it.key == key }?.let { updatePreview(); return it.card }
+    preview?.let { (it.card.parent as? android.view.ViewGroup)?.removeView(it.card) }
+
     val card = ui.plateCard()
     card.addView(ui.sectionTitle("Vista previa", "Así se ve"))
 
@@ -21,7 +35,7 @@ internal fun MainActivity.previewPlate(): View {
     // Tamaño real aproximado del widget: ancho de pantalla y 4/5 del alto útil
     val wPx = sw - (16 * dens).toInt()
     val hPx = (sh * 0.78f).toInt()
-    val boxW = ui.dp(180)
+    val boxW = ui.dp(140)
     val scale = boxW.toFloat() / sw
     val boxH = (sh * scale).toInt()
 
@@ -29,66 +43,78 @@ internal fun MainActivity.previewPlate(): View {
         clipToOutline = true
         outlineProvider = object : ViewOutlineProvider() {
             override fun getOutline(view: View, outline: Outline) {
-                outline.setRoundRect(0, 0, view.width, view.height, ui.dp(18).toFloat())
+                outline.setRoundRect(0, 0, view.width, view.height, ui.dp(16).toFloat())
             }
         }
-        foreground = ui.rect(Color.TRANSPARENT, 18f, Ui.headA(0x33), 1f)
+        foreground = ui.rect(Color.TRANSPARENT, 16f, Ui.headA(0x33), 1f)
         contentDescription = "Vista previa del widget"
     }
-    // Fondo: el que tendrá la pantalla con lo elegido
     val bg = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageBitmap(lastPreviewBg) }
-    if (Prefs.wallStyle(this) == "anim") {
-        // Fondo animado: la escena viva detrás del widget de muestra
-        frame.addView(VideoPreview(this).apply { scene = VideoScenes.find(Prefs.liveScene(this@previewPlate)) }, FrameLayout.LayoutParams(-1, -1))
-    } else frame.addView(bg, FrameLayout.LayoutParams(-1, -1))
-    if (Prefs.wallStyle(this) != "anim") io.execute {
-        val th = Themes.current(this)
-        val small = try {
-            val w = (sw * scale).toInt().coerceAtLeast(1); val h = boxH.coerceAtLeast(1)
-            val style = Prefs.wallStyle(this)
-            when {
-                style == "photo" && photo != null -> smallPhoto()?.let {
-                    Graphics.makeWallpaper(it, w, h, Prefs.dim(this), Prefs.wpMode(this), Prefs.wpPos(this), Prefs.wpZoom(this))
-                }
-                th.family == "rock" && style != "fade" && style != "solid" -> thumb(R.drawable.fondo_bateria)
-                else -> Themes.styledWallpaper(this, th, w, h)
-            }
-        } catch (e: Throwable) { null }
-        onUi { if (small != null) { lastPreviewBg = small; bg.setImageBitmap(small) } }
+    frame.addView(bg, FrameLayout.LayoutParams(-1, -1))
+    // El widget real, a su tamaño, reducido con escala; siempre por encima del fondo
+    val holder = FrameLayout(this).apply {
+        pivotX = 0f; pivotY = 0f; scaleX = scale; scaleY = scale
+        translationZ = 2f
     }
-
-    // El widget real, a su tamaño, reducido con escala. Se arma fuera del hilo
-    // principal (dibuja varias imágenes) y luego se muestra.
-    val holder = FrameLayout(this).apply { pivotX = 0f; pivotY = 0f; scaleX = scale; scaleY = scale }
     frame.addView(holder, FrameLayout.LayoutParams(wPx, hPx).apply {
         leftMargin = ((sw - wPx) / 2f * scale).toInt()
         topMargin = (sh * 0.1f * scale).toInt()
     })
-    // Mientras se arma la nueva, se ve la anterior
-    lastPreviewWidget?.let { old ->
-        (old.parent as? android.view.ViewGroup)?.removeView(old)
-        holder.addView(old, FrameLayout.LayoutParams(wPx, hPx))
-    }
     // Capa que evita que los toques lleguen a los botones del widget de muestra
-    frame.addView(View(this).apply { isClickable = true }, FrameLayout.LayoutParams(-1, -1))
+    frame.addView(View(this).apply { isClickable = true; translationZ = 3f }, FrameLayout.LayoutParams(-1, -1))
+    card.addView(frame, LinearLayout.LayoutParams(boxW, boxH).apply { gravity = Gravity.CENTER_HORIZONTAL })
+
+    preview = PreviewParts(card, frame, bg, holder, wPx, hPx, scale, boxH, key)
+    updatePreview()
+    return card
+}
+
+/** Pone el fondo (imagen o video) y vuelve a dibujar el widget de muestra. */
+internal fun MainActivity.updatePreview() {
+    val p = preview ?: return
+    val (sw, _) = screenSize()
+    if (Prefs.wallStyle(this) == "anim") {
+        // Fondo animado: la escena viva detrás del widget; si es la misma, sigue corriendo
+        val id = Prefs.liveScene(this)
+        if (p.video?.scene?.id != id) {
+            p.video?.let { p.frame.removeView(it) }
+            val v = VideoPreview(this).apply { scene = VideoScenes.find(id) }
+            p.frame.addView(v, 1, FrameLayout.LayoutParams(-1, -1))
+            p.video = v
+        }
+        p.bg.visibility = View.GONE
+    } else {
+        p.video?.let { p.frame.removeView(it) }
+        p.video = null
+        p.bg.visibility = View.VISIBLE
+        io.execute {
+            val th = Themes.current(this)
+            val small = try {
+                val w = (sw * p.scale).toInt().coerceAtLeast(1); val h = p.boxH.coerceAtLeast(1)
+                val style = Prefs.wallStyle(this)
+                when {
+                    style == "photo" && photo != null -> smallPhoto()?.let {
+                        Graphics.makeWallpaper(it, w, h, Prefs.dim(this), Prefs.wpMode(this), Prefs.wpPos(this), Prefs.wpZoom(this))
+                    }
+                    th.family == "rock" && style != "fade" && style != "solid" -> thumb(R.drawable.fondo_bateria)
+                    else -> Themes.styledWallpaper(this, th, w, h)
+                }
+            } catch (e: Throwable) { null }
+            onUi { if (small != null) { lastPreviewBg = small; p.bg.setImageBitmap(small) } }
+        }
+    }
+    // El widget se arma fuera del hilo principal; mientras tanto se ve el anterior
     val appCtx = applicationContext
     io.execute {
-        val rv = try { RockWidget.buildViews(appCtx, wPx, preview = true) } catch (e: Exception) { null }
+        val rv = try { RockWidget.buildViews(appCtx, p.wPx, preview = true) } catch (e: Exception) { null }
         onUi {
             try {
                 rv?.let {
-                    val fresh = it.apply(this, holder)
-                    holder.removeAllViews()
-                    holder.addView(fresh, FrameLayout.LayoutParams(wPx, hPx))
-                    lastPreviewWidget = fresh
+                    val fresh = it.apply(this, p.holder)
+                    p.holder.removeAllViews()
+                    p.holder.addView(fresh, FrameLayout.LayoutParams(p.wPx, p.hPx))
                 }
             } catch (e: Exception) { }
         }
     }
-
-    card.addView(frame, LinearLayout.LayoutParams(boxW, boxH).apply { gravity = Gravity.CENTER_HORIZONTAL })
-    card.addView(ui.bodyText("Se actualiza al cambiar el tema, los fondos o lo que muestra.", Ui.MUTED, 13f).apply {
-        gravity = Gravity.CENTER
-    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
-    return card
 }

@@ -14,11 +14,13 @@ internal fun MainActivity.fold(card: View, key: String, summary: String? = null)
     if (summary != null && title.findViewWithTag<View>("hint") == null) {
         title.addView(ui.text(summary, ui.cond, 14f, Ui.DIM).apply { tag = "hint"; maxLines = 1 })
     }
-    val chev = ui.text("›", ui.condLight, 30f, Ui.MUTED).apply {
-        gravity = Gravity.CENTER
-        includeFontPadding = false
+    // Flecha dibujada en dp (no en letra): no se corta con letra grande del sistema
+    val chev = android.widget.ImageView(this).apply {
+        setImageResource(R.drawable.ic_chevron)
+        imageTintList = android.content.res.ColorStateList.valueOf(Ui.MUTED)
+        scaleType = android.widget.ImageView.ScaleType.CENTER
     }
-    title.addView(chev, LinearLayout.LayoutParams(ui.dp(32), ui.dp(32)).apply { marginStart = ui.dp(6) })
+    title.addView(chev, LinearLayout.LayoutParams(ui.dp(40), ui.dp(40)).apply { marginStart = ui.dp(4) })
     title.minimumHeight = ui.dp(48)
     title.isClickable = true
     title.background = ui.rowBg()

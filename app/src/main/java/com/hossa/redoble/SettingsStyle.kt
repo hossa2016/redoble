@@ -133,46 +133,26 @@ internal fun MainActivity.wallpaperPlate(): View {
     } else {
         photoSection(card)
     }
-    card.addView(ui.bodyText("Se aplica a la pantalla de inicio y a la de bloqueo.", Ui.MUTED, 13f).apply {
-        setPadding(0, ui.dp(10), 0, 0)
-    })
+    card.addView(ui.note("Para inicio y bloqueo."), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
     return card
 }
 
-/** Fondo animado: video real con profundidad; vista previa viva, escenas y botón para ponerlo. */
+/** Fondo animado: grilla de miniaturas de cada escena y botón para ponerlo. */
 internal fun MainActivity.animSection(card: LinearLayout) {
     val info = VideoScenes.find(Prefs.liveScene(this))
-    val (sw, sh) = screenSize()
-    val pvW = ui.dp(150); val pvH = (pvW * sh.toFloat() / sw).toInt()
-    val view = VideoPreview(this).apply {
-        scene = info
-        clipToOutline = true
-        outlineProvider = object : ViewOutlineProvider() {
-            override fun getOutline(view: View, outline: Outline) { outline.setRoundRect(0, 0, view.width, view.height, ui.dp(16).toFloat()) }
-        }
-        contentDescription = "Vista previa del fondo animado ${info.name}"
-    }
-    card.addView(view, LinearLayout.LayoutParams(pvW, pvH).apply { gravity = Gravity.CENTER_HORIZONTAL; topMargin = ui.dp(16) })
-    card.addView(ui.bodyText("Inclina el teléfono o desliza el dedo sobre la vista previa.", Ui.MUTED, 13f).apply { gravity = Gravity.CENTER },
-        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+    val (sw, _) = screenSize()
+    // Ancho útil de la tarjeta: pantalla menos márgenes (16) y relleno (18) a cada lado
+    val gap = ui.dp(8)
+    val tileW = (sw - ui.dp(16 + 18) * 2 - gap * 2) / 3
+    val tileH = (tileW * 1.45f).toInt()
     val grid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-    VideoScenes.ALL.chunked(2).forEach { pair ->
+    VideoScenes.ALL.chunked(3).forEach { trio ->
         val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; isBaselineAligned = false }
-        pair.forEachIndexed { i, s ->
-            val on = s.id == info.id
-            val b = (if (on) ui.primary(s.name) else ui.secondary(s.name)).apply {
-                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f); isSingleLine = true; ellipsize = android.text.TextUtils.TruncateAt.END; includeFontPadding = false; gravity = Gravity.CENTER
-                setPadding(ui.dp(6), 0, ui.dp(6), 0)
-                contentDescription = if (on) "${s.name}, elegido" else s.name
-                setOnClickListener { if (!on) { Prefs.setLiveScene(this@animSection, s.id); build() } }
-            }
-            row.addView(b, LinearLayout.LayoutParams(0, ui.dp(48), 1f).apply { if (i > 0) marginStart = ui.dp(8) })
-        }
-        grid.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+        trio.forEachIndexed { i, s -> row.addView(sceneTile(s, s.id == info.id, tileW, tileH),
+            LinearLayout.LayoutParams(tileW, -2).apply { if (i > 0) marginStart = gap }) }
+        grid.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
     }
-    card.addView(grid, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
-    card.addView(ui.bodyText(info.desc + ".", Ui.MUTED, 14f).apply { gravity = Gravity.CENTER },
-        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+    card.addView(grid, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
     val apply = ui.primary("Poner fondo animado")
     apply.setOnClickListener {
         val intent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER).putExtra(
@@ -182,8 +162,42 @@ internal fun MainActivity.animSection(card: LinearLayout) {
         }
     }
     card.addView(apply, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(14) })
-    card.addView(ui.bodyText("Se mueve solo con la pantalla encendida y en el inicio; al abrir una app o bloquear el teléfono se pausa.", Ui.MUTED, 13f),
+    card.addView(ui.note("Se pausa al abrir una app.",
+        "Se mueve solo con la pantalla encendida y en el inicio; al abrir una app o bloquear el teléfono se pausa para no gastar batería."),
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+}
+
+/** Miniatura de una escena: imagen, nombre debajo y borde del acento si es la elegida. */
+internal fun MainActivity.sceneTile(s: VideoScenes.Info, on: Boolean, w: Int, h: Int): View {
+    val img = android.widget.ImageView(this).apply {
+        scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+        VideoScenes.thumb(s.id)?.let { setImageResource(it) }
+        clipToOutline = true
+        outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) { outline.setRoundRect(0, 0, view.width, view.height, ui.dp(12).toFloat()) }
+        }
+    }
+    val frame = FrameLayout(this).apply {
+        addView(img, FrameLayout.LayoutParams(-1, -1))
+        foreground = ui.rect(Color.TRANSPARENT, 12f, if (on) ui.accent else Ui.headA(0x24), if (on) 2.5f else 1f)
+        if (on) addView(ui.text("✓", ui.condSemi, 13f, ui.onAccent).apply {
+            gravity = Gravity.CENTER
+            background = ui.oval(ui.accent)
+        }, FrameLayout.LayoutParams(ui.dp(22), ui.dp(22), Gravity.TOP or Gravity.END).apply { topMargin = ui.dp(6); marginEnd = ui.dp(6) })
+    }
+    return LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        addView(frame, LinearLayout.LayoutParams(w, h))
+        addView(ui.text(s.name, if (on) ui.condSemi else ui.cond, 13f, if (on) Ui.HEAD else Ui.MUTED).apply {
+            gravity = Gravity.CENTER
+            ui.fitText(this, 13)
+            setPadding(0, ui.dp(4), 0, 0)
+        }, LinearLayout.LayoutParams(-1, ui.dp(26)))
+        isClickable = true
+        foreground = ui.rowBg()
+        contentDescription = "${s.name}: ${s.desc}" + if (on) ", elegido" else ""
+        setOnClickListener { if (!on) { Prefs.setLiveScene(this@sceneTile, s.id); RockWidget.updateAll(this@sceneTile); build() } }
+    }
 }
 
 /** Fotos sugeridas o del celular, con vista previa; posición, zoom y oscurecer plegados. */
@@ -236,10 +250,11 @@ internal fun MainActivity.photoSection(card: LinearLayout) {
             card.addView(ui.segmented(listOf(1 to "Foto completa", 0 to "Llenar pantalla"), mode) { m ->
                 Prefs.setWpMode(this, m); Prefs.setWpPos(this, 50); Prefs.setWpZoom(this, 0); build()
             })
-            card.addView(ui.bodyText(
+            card.addView(ui.note(
+                if (mode == 1) "Se ve la foto entera." else "La foto cubre la pantalla.",
                 if (mode == 1) "Se ve la foto entera; los bordes se funden con el negro."
-                else "La foto cubre toda la pantalla; elige qué parte se ve.", Ui.MUTED, 13f
-            ).apply { setPadding(0, ui.dp(8), 0, 0) })
+                else "La foto cubre toda la pantalla; con Posición eliges qué parte se ve."
+            ), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
             card.addView(sliderRow("Posición", Prefs.wpPos(this), 100, "%") { v, _ ->
                 Prefs.setWpPos(this, v); renderPreview(iv)
             })
@@ -399,10 +414,13 @@ internal fun MainActivity.knob(i: Int, selected: Boolean): View {
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER_HORIZONTAL
         addView(outer, LinearLayout.LayoutParams(ui.dp(76), ui.dp(76)))
-        addView(ui.text(Prefs.NAMES[i], ui.cond, 16f, if (selected) Ui.HEAD else Ui.MUTED).apply {
-            setPadding(0, ui.dp(4), 0, 0)
-        })
+        addView(ui.text(Prefs.NAMES[i], if (selected) ui.condSemi else ui.cond, 15f, if (selected) Ui.HEAD else Ui.MUTED).apply {
+            gravity = Gravity.CENTER
+            ui.fitText(this, 15)
+            setPadding(ui.dp(2), ui.dp(4), ui.dp(2), 0)
+        }, LinearLayout.LayoutParams(-1, ui.dp(26)))
         isClickable = true
+        contentDescription = "Color ${Prefs.NAMES[i]}" + if (selected) ", elegido" else ""
         setOnClickListener {
             animate().scaleX(0.96f).scaleY(0.96f).setDuration(80).withEndAction {
                 scaleX = 1f; scaleY = 1f
@@ -435,7 +453,7 @@ internal fun MainActivity.themePlate(): View {
         RockWidget.updateAll(this)
         build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
-    card.addView(ui.bodyText("Cada tema con su propia letra.", Ui.MUTED, 13f))
+    card.addView(ui.note("Cada tema con su propia letra."))
     card.addView(switchRow("Actualización en vivo", Prefs.liveUpdates(this)) { on ->
         Prefs.setLiveUpdates(this, on)
         // Android exige una notificación fija para esto; el permiso se pide solo aquí, ya explicado
@@ -443,8 +461,9 @@ internal fun MainActivity.themePlate(): View {
         RockWidget.updateAll(this)
         build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-    card.addView(ui.bodyText("Batería al instante y hora con la letra del tema. Android exige mostrar una notificación fija " +
-        "mientras está activa; al encenderla te pedirá el permiso de notificaciones.", Ui.MUTED, 13f))
+    card.addView(ui.note("Hora y batería al instante.",
+        "Batería al instante y hora con la letra del tema. Android exige mostrar una notificación fija " +
+        "mientras está activa; al encenderla te pedirá el permiso de notificaciones."))
     return card
 }
 
@@ -490,7 +509,7 @@ internal fun MainActivity.widgetBgPlate(): View {
     if (gs != "orig") card.addView(colorSwatches(Prefs.widgetColor(this)) {
         Prefs.setWidgetColor(this, it); RockWidget.updateAll(this); build()
     })
-    card.addView(ui.bodyText("Con colores claros, las letras del widget pasan a oscuras solas.", Ui.MUTED, 13f),
+    card.addView(ui.note("Las letras se ajustan solas al color.", "Con colores claros, las letras del widget pasan a oscuras solas."),
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
     return card
 }

@@ -219,7 +219,57 @@ class Ui(val ctx: Context, val accent: Int) {
         typeface = cond
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
         setTextColor(MUTED)
-        minHeight = dp(40); minimumHeight = dp(40)
+        minHeight = dp(48); minimumHeight = dp(48)
+    }
+
+    /**
+     * Opción de un selector. La elegida va en un tono suave del acento con borde
+     * (el rojo relleno queda solo para las acciones principales).
+     */
+    fun option(label: String, on: Boolean) = baseButton(label).apply {
+        val pressed = rect(veil(0x14), 10f)
+        val normal = if (on) rect(ColorUtils.setAlphaComponent(accent, if (light) 0x26 else 0x33), 10f, accent, 1.5f)
+                     else rect(Color.TRANSPARENT, 10f)
+        background = StateListDrawable().apply {
+            addState(intArrayOf(android.R.attr.state_pressed), pressed)
+            addState(intArrayOf(), normal)
+        }
+        typeface = if (on) condSemi else cond
+        setTextColor(if (on) HEAD else MUTED)
+        pressDown(this)
+    }
+
+    /** El texto se achica (hasta 11 sp) solo si no cabe; si cabe, queda a su tamaño. */
+    fun fitText(tv: TextView, maxSp: Int) {
+        tv.maxLines = 1
+        androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
+            tv, 11, maxSp, 1, TypedValue.COMPLEX_UNIT_SP)
+    }
+
+    /**
+     * Descripción de una línea; si hay más que contar, un botón ⓘ la abre en una ventana.
+     */
+    fun note(short: String, more: String? = null, color: Int = MUTED, sp: Float = 13f): View {
+        val t = bodyText(short, color, sp)
+        if (more == null) return t
+        return LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            addView(t, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(text("ⓘ", body, 20f, MUTED).apply {
+                gravity = Gravity.CENTER
+                background = rowBg()
+                contentDescription = "Más información"
+                setOnClickListener {
+                    android.app.AlertDialog.Builder(ctx,
+                        if (light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert
+                        else android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                        .setMessage(more)
+                        .setPositiveButton("Entendido", null)
+                        .show()
+                }
+            }, LinearLayout.LayoutParams(dp(48), dp(48)))
+        }
     }
 
     /**
@@ -245,10 +295,9 @@ class Ui(val ctx: Context, val accent: Int) {
             val on = value == selected
             // Mismo tamaño de letra en todas y centrada; el ancho de cada opción se reparte
             // según lo largo de su texto (así "Desvanecido" cabe junto a "Fijo").
-            val size = 15f
-            val b = (if (on) primary(label) else textButton(label).apply { setTextColor(MUTED) }).apply {
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, size)
-                maxLines = 1
+            val b = option(label, on).apply {
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                fitText(this, 15)
                 includeFontPadding = false
                 gravity = Gravity.CENTER
                 setPadding(dp(2), 0, dp(2), 0)
@@ -263,11 +312,16 @@ class Ui(val ctx: Context, val accent: Int) {
     }
 
     /** Encabezado de grupo (Estilo, Contenido, Reproductor). */
-    fun groupHeader(title: String, sub: String): View = LinearLayout(ctx).apply {
+    fun groupHeader(title: String): View = LinearLayout(ctx).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(20), dp(14), dp(20), dp(10))
+        setPadding(dp(20), dp(16), dp(20), dp(10))
         addView(text(title.uppercase(), condSemi, 13f, accent, 0.16f))
-        addView(text(sub, cond, 14f, MUTED).apply { setPadding(0, dp(2), 0, 0) })
+        isFocusable = false
+        accessibilityHeading()
+    }
+
+    private fun View.accessibilityHeading() {
+        if (android.os.Build.VERSION.SDK_INT >= 28) isAccessibilityHeading = true
     }
 
     // ---------------- Secciones ----------------

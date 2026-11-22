@@ -36,14 +36,9 @@ internal fun MainActivity.weatherPlate(): View {
         }
     }
     val save = ui.primary("Guardar")
-    card.addView(LinearLayout(this).apply {
-        orientation = LinearLayout.HORIZONTAL
-        isBaselineAligned = false
-        gravity = Gravity.CENTER_VERTICAL
-        addView(field, LinearLayout.LayoutParams(0, ui.dp(48), 1f))
-        addView(save.apply { minWidth = ui.dp(96); minimumWidth = ui.dp(96); maxLines = 1 },
-            LinearLayout.LayoutParams(-2, ui.dp(48)).apply { marginStart = ui.dp(10) })
-    })
+    // Campo a todo el ancho y Guardar debajo: con letra grande nada se corta
+    card.addView(field, LinearLayout.LayoutParams(-1, ui.dp(52)))
+    card.addView(save, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(10) })
     val dot = ui.dot(Ui.DIM)
     val status = ui.bodyText("")
     cityDot = dot; cityStatus = status
@@ -127,7 +122,7 @@ internal fun MainActivity.setlistPlate(): View {
     val card = ui.plateCard()
     val filled = (0 until Prefs.SLOTS).count { Prefs.app(this, it).isNotBlank() }
     card.addView(ui.sectionTitle("Apps", "$filled de ${Prefs.SLOTS}"))
-    card.addView(ui.bodyText("Mantén presionada una app para ponerle un nombre corto.", Ui.MUTED, 13f).apply {
+    card.addView(ui.bodyText("Mantén presionada una app para renombrarla.", Ui.MUTED, 13f).apply {
         setPadding(0, 0, 0, ui.dp(8))
     })
 
@@ -206,13 +201,13 @@ internal fun MainActivity.designPlate(): View {
     card.addView(ui.segmented(names.entries.map { it.key to it.value }, preset) { k ->
         Prefs.applyPreset(this, k); RockWidget.updateAll(this); build()
     })
-    val desc = when (preset) {
-        "completo" -> "Hora, clima, batería y 6 apps. Cuando suena música, el reproductor aparece compacto y quedan 3 apps para que no se apriete."
-        "musica" -> "Reproductor grande siempre a la vista, cabecera compacta y 3 apps."
-        "minimal" -> "Solo día, hora, clima y 3 apps. Se luce el fondo."
-        else -> "Elementos elegidos por ti. Se respeta el número de apps aunque suene música."
+    val (short, more) = when (preset) {
+        "completo" -> "Hora, clima, batería y 6 apps." to "Hora, clima, batería y 6 apps. Cuando suena música, el reproductor aparece compacto y quedan 3 apps para que no se apriete."
+        "musica" -> "Reproductor grande y 3 apps." to "Reproductor grande siempre a la vista, cabecera compacta y 3 apps."
+        "minimal" -> "Día, hora, clima y 3 apps." to "Solo día, hora, clima y 3 apps. Se luce el fondo."
+        else -> "Elementos elegidos por ti." to "Elementos elegidos por ti. Se respeta el número de apps aunque suene música."
     }
-    card.addView(ui.bodyText(desc, Ui.MUTED, 14f), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+    card.addView(ui.note(short, more), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
 
     val more = ui.textButton(if (customOpen) "Personalizar elementos  ▾" else "Personalizar elementos  ▸").apply {
         setTextColor(Ui.HEAD)

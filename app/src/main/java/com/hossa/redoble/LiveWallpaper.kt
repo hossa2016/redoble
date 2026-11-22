@@ -59,6 +59,31 @@ object VideoScenes {
         Info("brasas", "Brasas", "Chispas naranjas saltando en la oscuridad", R.raw.vid_brasas, null, true),
     )
     fun find(id: String) = ALL.firstOrNull { it.id == id } ?: ALL[0]
+    /** Miniatura (un cuadro del video, con su capa delantera) para elegir la escena. */
+    private val THUMBS = mapOf(
+        "fogata" to R.drawable.thumb_fogata,
+        "brasero" to R.drawable.thumb_brasero,
+        "chispas" to R.drawable.thumb_chispas,
+        "ciudad" to R.drawable.thumb_ciudad,
+        "cafe" to R.drawable.thumb_cafe,
+        "ventana" to R.drawable.thumb_ventana,
+        "bateria" to R.drawable.thumb_bateria,
+        "concierto" to R.drawable.thumb_concierto,
+        "neon" to R.drawable.thumb_neon,
+        "cristal" to R.drawable.thumb_cristal,
+        "oro" to R.drawable.thumb_oro,
+        "luces" to R.drawable.thumb_luces,
+        "aurora" to R.drawable.thumb_aurora,
+        "nieve" to R.drawable.thumb_nieve,
+        "hojas" to R.drawable.thumb_hojas,
+        "estallido" to R.drawable.thumb_estallido,
+        "ambar" to R.drawable.thumb_ambar,
+        "brasas" to R.drawable.thumb_brasas,
+        "escenario" to R.drawable.thumb_escenario,
+        "ondas" to R.drawable.thumb_ondas,
+        "agua" to R.drawable.thumb_agua
+    )
+    fun thumb(id: String): Int? = THUMBS[id]
 }
 
 /**

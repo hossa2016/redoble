@@ -119,7 +119,8 @@ object Prefs {
 
     /** Escena del fondo animado de video (fogata, brasero, chispas, ciudad, cafe, ventana). */
     /** Secciones de la configuración que el usuario dejó abiertas. */
-    fun openSections(ctx: Context): Set<String> = p(ctx).getStringSet("openSections", emptySet()) ?: emptySet()
+    fun openSections(ctx: Context): Set<String> =
+        p(ctx).getStringSet("openSections", null) ?: setOf("tema")   // la primera vez, Tema abierto
     fun setOpenSections(ctx: Context, v: Set<String>) = p(ctx).edit().putStringSet("openSections", HashSet(v)).apply()
     /** Apariencia de la configuración: "system", "dark" o "light". */
     fun uiMode(ctx: Context) = p(ctx).getString("uiMode", "dark") ?: "dark"

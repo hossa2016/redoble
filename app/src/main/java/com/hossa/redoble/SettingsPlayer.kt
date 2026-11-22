@@ -15,25 +15,10 @@ import android.widget.Toast
 // Ajustes · Reproductor, permisos y agregar el widget.
 // Son extensiones de MainActivity para no tener un solo archivo de 1200 líneas.
 
-internal fun MainActivity.widgetDonePlate(): View {
-    val card = ui.plateCard()
-    card.addView(LinearLayout(this).apply {
-        orientation = LinearLayout.HORIZONTAL
-        gravity = Gravity.CENTER_VERTICAL
-        addView(ui.dot(Ui.OK), LinearLayout.LayoutParams(ui.dp(8), ui.dp(8)))
-        addView(ui.text("Widget en pantalla", ui.condMedium, 16f, Ui.HEAD).apply { setPadding(ui.dp(10), 0, 0, 0) },
-            LinearLayout.LayoutParams(0, -2, 1f))
-        addView(ui.textButton("Agregar otro").apply {
-            setOnClickListener { tryPin() }
-        })
-    })
-    return card
-}
-
 internal fun MainActivity.playerPlate(): View {
     val card = ui.plateCard()
     card.addView(ui.sectionTitle("Reproductor"))
-    card.addView(ui.bodyText("Cuando suena música, el widget muestra la canción con los botones ⏮ ⏯ ⏭. Sin música se oculta."))
+    card.addView(ui.note("Muestra la canción que suena.", "Cuando suena música, el widget muestra la canción con los botones ⏮ ⏯ ⏭. Sin música se oculta."))
 
     val on = Player.enabled(this)
     card.addView(LinearLayout(this).apply {
@@ -41,15 +26,15 @@ internal fun MainActivity.playerPlate(): View {
         gravity = Gravity.CENTER_VERTICAL
         addView(ui.dot(if (on) Ui.OK else ui.accent), LinearLayout.LayoutParams(ui.dp(7), ui.dp(7)))
         addView(ui.text(
-            if (on) "Activo: Prisma Widgets puede ver qué está sonando."
-            else "Falta el permiso de acceso a notificaciones.",
+            if (on) "Activo: puede ver qué suena."
+            else "Falta un permiso de Android.",
             ui.cond, 15f, Ui.MUTED
         ).apply { setPadding(ui.dp(8), 0, 0, 0) })
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
 
     if (!on) {
-        card.addView(ui.bodyText("Android pide este permiso para mostrar la música en un widget. Prisma Widgets solo lo usa para " +
-            "leer la canción y los controles; no lee ni guarda tus mensajes.", Ui.MUTED, 13f),
+        card.addView(ui.note("No lee ni guarda tus mensajes.", "Android pide este permiso para mostrar la música en un widget. Prisma Widgets solo lo usa para " +
+            "leer la canción y los controles; no lee ni guarda tus mensajes."),
             LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
     }
     val btn = if (on) ui.secondary("Revisar permiso") else ui.primary("Dar permiso")
@@ -93,17 +78,6 @@ internal fun MainActivity.playerPlate(): View {
         Prefs.setOnlyMusicApp(this, m); Player.updateAll(this); build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12); bottomMargin = ui.dp(4) })
 
-    // Guía de inicio otra vez
-    card.addView(ui.textButton("Ver la guía de inicio").apply {
-        setOnClickListener { restartOnboarding() }
-    }, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(8) })
-    card.addView(ui.textButton("Política de privacidad").apply {
-        setOnClickListener {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/hossa2016/redoble/blob/main/PRIVACY.md")))
-            } catch (e: Exception) { }
-        }
-    }, LinearLayout.LayoutParams(-1, ui.dp(48)))
     return card
 }
 
@@ -129,7 +103,7 @@ internal fun MainActivity.widgetPlate(): View {
     val card = ui.plateCard()
     card.layoutTransition = LayoutTransition()
     card.addView(ui.sectionTitle("Widget"))
-    card.addView(ui.bodyText("Toca Agregar widget. Si tu teléfono no lo permite desde aquí, agrégalo tú en cuatro pasos."))
+    card.addView(ui.note("Agrégalo a tu pantalla de inicio.", "Toca Agregar widget. Si tu teléfono no lo permite desde aquí, agrégalo tú en cuatro pasos."))
 
     val steps = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
@@ -186,13 +160,29 @@ internal fun MainActivity.tryPin(): Boolean {
 }
 
 /** Modo claro u oscuro de esta pantalla de configuración (no cambia el widget). */
-internal fun MainActivity.appearancePlate(): View {
+internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
     val card = ui.plateCard()
-    card.addView(ui.sectionTitle("Apariencia"))
-    card.addView(ui.bodyText("Cómo se ve esta configuración. El widget conserva los colores de su tema."))
+    card.addView(ui.sectionTitle("Apariencia y ayuda"))
+    card.addView(ui.note("Solo cambia esta pantalla, no el widget."))
     card.addView(ui.segmented(listOf("system" to "Sistema", "dark" to "Oscuro", "light" to "Claro"), Prefs.uiMode(this)) {
         Prefs.setUiMode(this, it)
         build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
+
+    // Ayuda y datos de la app, en un solo lugar
+    card.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0F)) },
+        LinearLayout.LayoutParams(-1, ui.dp(1)).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(4) })
+    fun link(label: String, action: () -> Unit) = card.addView(ui.textButton(label).apply {
+        gravity = Gravity.CENTER_VERTICAL or Gravity.START
+        setPadding(ui.dp(4), 0, ui.dp(4), 0)
+        setOnClickListener { action() }
+    }, LinearLayout.LayoutParams(-1, ui.dp(48)))
+    if (hasWidget) link("Agregar otro widget") { tryPin() }
+    link("Ver la guía de inicio") { restartOnboarding() }
+    link("Política de privacidad") {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/hossa2016/redoble/blob/main/PRIVACY.md")))
+        } catch (e: Exception) { }
+    }
     return card
 }
