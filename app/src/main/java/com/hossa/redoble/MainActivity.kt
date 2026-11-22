@@ -1,46 +1,20 @@
 package com.hossa.redoble
 
-import android.animation.LayoutTransition
-import android.app.WallpaperManager
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.LinearGradient
-import android.graphics.Outline
 import android.graphics.Shader
-import android.graphics.drawable.ClipDrawable
-import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.LayerDrawable
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.OpenableColumns
-import android.provider.Settings
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
-import android.text.style.TypefaceSpan
 import android.view.Gravity
 import android.view.View
-import android.view.ViewOutlineProvider
-import android.view.WindowManager
-import android.view.inputmethod.EditorInfo
-import android.widget.Button
-import android.widget.EditText
-import android.widget.FrameLayout
-import android.widget.HorizontalScrollView
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsControllerCompat
@@ -48,7 +22,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.activity.enableEdgeToEdge
 import java.io.File
-import java.io.IOException
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
@@ -59,10 +32,9 @@ class MainActivity : AppCompatActivity() {
     internal lateinit var ui: Ui
     internal var scroll: ScrollView? = null
     internal var photo: Bitmap? = null
-    internal var photoSmall: Bitmap? = null
+    @Volatile internal var photoSmall: Bitmap? = null
     internal var cityStatus: TextView? = null
     internal var cityDot: View? = null
-    internal var pinRequestedAt = 0L
     internal var customOpen = false
     internal var photoOpen = false
     internal var onbStep = 0
@@ -96,9 +68,20 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
         // La foto se lee fuera del hilo principal para no trabar la apertura
+        // reducida a ~4 MP por si una versión anterior guardó una foto más grande.
         if (photoFile.exists()) io.execute {
-            val bmp = try { BitmapFactory.decodeFile(photoFile.path) } catch (e: Throwable) { null }
-            onUi { photo = bmp; if (Prefs.onboarded(this)) build() }
+            val bmp = try {
+                val o = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeFile(photoFile.path, o)
+                var s = 1
+                while ((o.outWidth.toLong() / s) * (o.outHeight.toLong() / s) > 4_000_000L) s *= 2
+                BitmapFactory.decodeFile(photoFile.path, BitmapFactory.Options().apply { inSampleSize = s })
+            } catch (e: Throwable) { null }
+            onUi {
+                photo = bmp
+                // Solo se reconstruye si la foto se ve en pantalla (evita construir dos veces)
+                if (Prefs.onboarded(this) && Prefs.wallStyle(this) == "photo") build()
+            }
         }
         if (Prefs.city(this).isNotBlank() && (System.currentTimeMillis() - Prefs.weatherAt(this) > 30 * 60_000L ||
                 Prefs.weatherTomorrow(this).contains(" a "))) {
@@ -106,7 +89,7 @@ class MainActivity : AppCompatActivity() {
             WeatherWorker.schedule(this)
             onUiDelayed(5000) { refreshCityStatus() }
         }
-        if (Prefs.onboarded(this)) askNotifications()
+        if (Prefs.onboarded(this) && Prefs.liveUpdates(this)) askNotifications()
         // build() se hace en onResume (antes se construía dos veces al abrir)
     }
 
@@ -124,7 +107,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        RockWidget.updateAll(this)
+        // El widget se redibuja fuera del hilo principal para que la app abra fluida
+        val app = applicationContext
+        io.execute { try { RockWidget.updateAll(app) } catch (e: Exception) { } }
         BatteryMonitor.check(this)
         LiveService.start(this)
         build()

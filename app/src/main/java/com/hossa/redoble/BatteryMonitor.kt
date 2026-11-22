@@ -50,7 +50,9 @@ object BatteryMonitor {
     }
 
     /** Actualiza solo el medidor y el texto de batería en todos los widgets. */
-    fun refresh(ctx: Context) {
+    fun refresh(ctx: Context) = synchronized(RockWidget) { refreshLocked(ctx) }
+
+    private fun refreshLocked(ctx: Context) {
         val mgr = AppWidgetManager.getInstance(ctx)
         val ids = mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))
         if (ids.isEmpty()) return

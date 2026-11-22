@@ -150,8 +150,12 @@ class RockWidget : AppWidgetProvider() {
         private fun bitmapClock(ctx: Context) = Prefs.themeFonts(ctx) && LiveService.running
 
         /** Cada minuto (desde el servicio en vivo): solo la hora dibujada. */
+        @Synchronized
         fun updateClock(ctx: Context) {
-            if (!bitmapClock(ctx) || !Prefs.el(ctx, "hora") || !screenOn(ctx)) return
+            if (!bitmapClock(ctx)) return
+            // La alarma de respaldo se vuelve a armar siempre, aunque la pantalla esté apagada
+            armClockCheck(ctx)
+            if (!Prefs.el(ctx, "hora") || !screenOn(ctx)) return
             val mgr = AppWidgetManager.getInstance(ctx)
             val th = Themes.widget(ctx)
             val playing = Prefs.lastPlaying(ctx)
@@ -162,7 +166,6 @@ class RockWidget : AppWidgetProvider() {
                     mgr.partiallyUpdateAppWidget(id, v)
                 } catch (e: Exception) { }
             }
-            armClockCheck(ctx)
         }
 
         /**
@@ -206,7 +209,7 @@ class RockWidget : AppWidgetProvider() {
             val fonts = Prefs.themeFonts(ctx)
 
             // Reproductor primero: de él depende cuánto espacio queda.
-            val playing = Player.apply(ctx, v, fonts, W)
+            val playing = Player.apply(ctx, v, fonts, W, preview)
             if (!preview) Prefs.setLastPlaying(ctx, playing)
 
             headerSection(ctx, v, th, W, playing, fonts, preview)
@@ -225,6 +228,7 @@ class RockWidget : AppWidgetProvider() {
          * solo se redibuja la tarjeta del reproductor; si cambió, todo (la hora y
          * las apps se acomodan según haya música).
          */
+        @Synchronized
         fun updatePlayer(ctx: Context) {
             val mgr = AppWidgetManager.getInstance(ctx)
             val ids = mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))
@@ -388,7 +392,7 @@ class RockWidget : AppWidgetProvider() {
             twin(v, R.id.setlist_title, R.id.setlist_title_bmp, true, fonts) {
                 TextArt.render(ctx, if (rock) "SETLIST" else "APPS", S.title, if (rock) 15f else 12f, th.head, S.tls, shadow = S.shadow)
             }
-            val word = if (rock) (if (filled.size == 1) "pista" else "pistas") else (if (filled.size == 1) "app" else "apps")
+            val word = if (filled.size == 1) "app" else "apps"
             v.setTextViewText(R.id.count, "${filled.size} $word")
         }
 

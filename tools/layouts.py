@@ -125,7 +125,7 @@ def build(name,p):
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
 <View android:id="@+id/top_space" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
 {header}
-<FrameLayout android:id="@+id/middle" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="2" android:minHeight="10dp">
+<FrameLayout android:id="@+id/middle" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:minHeight="10dp">
 {large}
 {compact}
 </FrameLayout>

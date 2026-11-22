@@ -88,7 +88,7 @@ object Player {
      * Carátula: primero la imagen que trae la sesión; si solo trae la dirección
      * (como RockPlay), se descarga en segundo plano y se redibuja el widget.
      */
-    private fun artFor(ctx: Context, md: MediaMetadata): Bitmap? {
+    private fun artFor(ctx: Context, md: MediaMetadata, download: Boolean = true): Bitmap? {
         md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)?.let { return it }
         md.getBitmap(MediaMetadata.METADATA_KEY_ART)?.let { return it }
         md.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)?.let { return it }
@@ -104,7 +104,7 @@ object Player {
             if (Regex("^[A-Za-z0-9_-]{11}$").matches(id)) "https://i.ytimg.com/vi/$id/hqdefault.jpg" else null
         } ?: return null
         artCache.get(uri)?.let { return it }
-        if (loading.add(uri)) {
+        if (download && loading.add(uri)) {
             val app = ctx.applicationContext
             Thread {
                 val bmp = try { loadArt(app, uri) } catch (e: Throwable) { null }
@@ -163,7 +163,7 @@ object Player {
         )
 
     /** Llena (u oculta) la tarjeta del reproductor. Devuelve si quedó visible. */
-    fun apply(ctx: Context, v: RemoteViews, fonts: Boolean = false, widthPx: Int = 0): Boolean {
+    fun apply(ctx: Context, v: RemoteViews, fonts: Boolean = false, widthPx: Int = 0, preview: Boolean = false): Boolean {
         v.setViewVisibility(R.id.player, View.GONE)
         v.setViewVisibility(R.id.player_c, View.GONE)
         if (!Prefs.el(ctx, "player")) return false
@@ -181,11 +181,11 @@ object Player {
 
         val dismissed = Prefs.playerDismissed(ctx)
         if (dismissed.isNotEmpty()) {
-            if (playing) Prefs.setPlayerDismissed(ctx, "")
+            if (playing) { if (!preview) Prefs.setPlayerDismissed(ctx, "") }
             else if (dismissed == key(c)) return false
         }
 
-        val art = artFor(ctx, md)
+        val art = artFor(ctx, md, download = !preview)  // la vista previa no descarga nada
         val open = c.sessionActivity ?: ctx.packageManager.getLaunchIntentForPackage(c.packageName)?.let {
             PendingIntent.getActivity(
                 ctx, 204, it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),

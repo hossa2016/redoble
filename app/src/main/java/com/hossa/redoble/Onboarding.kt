@@ -52,7 +52,6 @@ internal fun MainActivity.onboardingView(): View {
             val add = if (has) ui.secondary("Widget agregado ✓") else ui.primary("Agregar widget")
             add.setOnClickListener {
                 if (!tryPin()) toast("Mantén presionada la pantalla de inicio → Widgets → Prisma Widgets")
-                else pinRequestedAt = System.currentTimeMillis()
             }
             content.addView(add, LinearLayout.LayoutParams(-1, ui.dp(52)))
             content.addView(ui.bodyText("Si tu teléfono no lo permite desde aquí: mantén presionado un espacio vacío de la " +
@@ -94,7 +93,6 @@ internal fun MainActivity.onboardingView(): View {
 internal fun MainActivity.finishOnboarding() {
     Prefs.setOnboarded(this, true)
     onbStep = 0
-    askNotifications()
     build()
 }
 

@@ -11,7 +11,7 @@ object Prefs {
         Color.parseColor("#E24B4A"), // Rojo
         Color.parseColor("#378ADD"), // Azul
         Color.parseColor("#D3D1C7"), // Plata
-        Color.parseColor("#B93A31"), // Rojo RockPlay
+        Color.parseColor("#B93A31"), // Rojo rock
         Color.parseColor("#E8A33D"), // Ámbar
         Color.parseColor("#5FD07A"), // Verde vúmetro
         Color.parseColor("#FF6A2B"), // Naranja fuego
@@ -100,7 +100,17 @@ object Prefs {
      * con la letra del tema. Apagado: sin notificación fija; la hora usa el reloj
      * del sistema y la batería se actualiza cada 15 minutos.
      */
-    fun liveUpdates(ctx: Context) = p(ctx).getBoolean("liveUpdates", true)
+    fun liveUpdates(ctx: Context): Boolean {
+        val sp = p(ctx)
+        // Instalaciones nuevas: apagada (sin servicio en primer plano). Quien ya usaba la app: encendida, como antes.
+        if (!sp.contains("liveUpdates")) {
+            // Se decide una sola vez y se guarda, para que elegir tema después no lo cambie
+            val existing = sp.contains("theme") || sp.contains("preset")
+            sp.edit().putBoolean("liveUpdates", existing).apply()
+            return existing
+        }
+        return sp.getBoolean("liveUpdates", false)
+    }
     fun setLiveUpdates(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("liveUpdates", v).apply()
 
     /** Ya vio la guía de inicio (quien ya tenía el widget puesto no la necesita). */

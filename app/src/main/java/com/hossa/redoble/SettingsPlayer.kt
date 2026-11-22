@@ -1,52 +1,16 @@
 package com.hossa.redoble
 
 import android.animation.LayoutTransition
-import android.app.WallpaperManager
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.LinearGradient
-import android.graphics.Outline
-import android.graphics.Shader
-import android.graphics.drawable.ClipDrawable
-import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.LayerDrawable
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.provider.OpenableColumns
 import android.provider.Settings
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
-import android.text.style.TypefaceSpan
 import android.view.Gravity
 import android.view.View
-import android.view.ViewOutlineProvider
-import android.view.WindowManager
-import android.view.inputmethod.EditorInfo
-import android.widget.Button
-import android.widget.EditText
-import android.widget.FrameLayout
-import android.widget.HorizontalScrollView
-import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.SeekBar
-import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.WindowInsetsControllerCompat
-import java.io.File
-import java.io.IOException
-import java.util.concurrent.Executors
 
 // Ajustes · Reproductor, permisos y agregar el widget.
 // Son extensiones de MainActivity para no tener un solo archivo de 1200 líneas.
@@ -159,7 +123,7 @@ internal fun MainActivity.widgetPlate(): View {
     val card = ui.plateCard()
     card.layoutTransition = LayoutTransition()
     card.addView(ui.sectionTitle("Widget"))
-    card.addView(ui.bodyText("HyperOS no deja que una app ponga widgets por su cuenta. Agrégalo tú en cuatro pasos."))
+    card.addView(ui.bodyText("Toca Agregar widget. Si tu teléfono no lo permite desde aquí, agrégalo tú en cuatro pasos."))
 
     val steps = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
@@ -195,7 +159,6 @@ internal fun MainActivity.widgetPlate(): View {
         if (!ok) {
             steps.visibility = View.VISIBLE
         } else {
-            pinRequestedAt = System.currentTimeMillis()
             onUiDelayed(3000) {
                 if (RockWidget.hasWidgets(this) == before) steps.visibility = View.VISIBLE
             }

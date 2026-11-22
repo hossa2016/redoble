@@ -54,21 +54,22 @@ internal fun MainActivity.previewPlate(): View {
         onUi { bg.setImageBitmap(small) }
     }
 
-    // El widget real, a su tamaño, reducido con escala
-    try {
-        val rv = RockWidget.buildViews(this, wPx, preview = true)
-        val holder = FrameLayout(this)
-        val real = rv.apply(this, holder)
-        holder.addView(real, FrameLayout.LayoutParams(wPx, hPx))
-        holder.pivotX = 0f; holder.pivotY = 0f
-        holder.scaleX = scale; holder.scaleY = scale
-        frame.addView(holder, FrameLayout.LayoutParams(wPx, hPx).apply {
-            leftMargin = ((sw - wPx) / 2f * scale).toInt()
-            topMargin = (sh * 0.1f * scale).toInt()
-        })
-    } catch (e: Exception) { }
+    // El widget real, a su tamaño, reducido con escala. Se arma fuera del hilo
+    // principal (dibuja varias imágenes) y luego se muestra.
+    val holder = FrameLayout(this).apply { pivotX = 0f; pivotY = 0f; scaleX = scale; scaleY = scale }
+    frame.addView(holder, FrameLayout.LayoutParams(wPx, hPx).apply {
+        leftMargin = ((sw - wPx) / 2f * scale).toInt()
+        topMargin = (sh * 0.1f * scale).toInt()
+    })
     // Capa que evita que los toques lleguen a los botones del widget de muestra
     frame.addView(View(this).apply { isClickable = true }, FrameLayout.LayoutParams(-1, -1))
+    val appCtx = applicationContext
+    io.execute {
+        val rv = try { RockWidget.buildViews(appCtx, wPx, preview = true) } catch (e: Exception) { null }
+        onUi {
+            try { rv?.let { holder.addView(it.apply(this, holder), FrameLayout.LayoutParams(wPx, hPx)) } } catch (e: Exception) { }
+        }
+    }
 
     card.addView(frame, LinearLayout.LayoutParams(boxW, boxH).apply { gravity = Gravity.CENTER_HORIZONTAL })
     card.addView(ui.bodyText("Se actualiza al cambiar el tema, los fondos o lo que muestra.", Ui.MUTED, 13f).apply {
