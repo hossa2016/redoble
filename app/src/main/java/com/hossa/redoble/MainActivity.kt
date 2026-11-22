@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     /** Miniaturas de los temas (se dibujan una sola vez, no en cada toque). */
     internal val themeThumbs = HashMap<Int, Bitmap>()
     /** Última vista previa, para mostrarla mientras se arma la nueva (sin parpadeo). */
+    internal val openSections: MutableSet<String> by lazy { Prefs.openSections(this).toMutableSet() }
     internal var lastPreviewWidget: View? = null
     internal var lastPreviewBg: Bitmap? = null
 
@@ -142,21 +143,28 @@ class MainActivity : AppCompatActivity() {
         col.addView(previewPlate())
 
         col.addView(ui.groupHeader("Estilo", "Cómo se ve tu widget"))
-        col.addView(themePlate())
-        col.addView(wallpaperPlate())
-        col.addView(widgetBgPlate())
-        if (th.usesUserAccent) col.addView(accentPlate())
+        val ws = Prefs.wallStyle(this)
+        val wallName = when (ws) {
+            "fade" -> "Desvanecido"; "solid" -> "Fijo"; "photo" -> "Foto"
+            "anim" -> VideoScenes.find(Prefs.liveScene(this)).name; else -> "Del tema"
+        }
+        val widgetBgName = when (Prefs.widgetStyle(this)) { "fade" -> "Desvanecido"; "solid" -> "Fijo"; else -> "Normal" }
+        col.addView(fold(themePlate(), "tema"))
+        col.addView(fold(wallpaperPlate(), "fondo", wallName))
+        col.addView(fold(widgetBgPlate(), "fondoWidget", widgetBgName))
+        if (th.usesUserAccent) col.addView(fold(accentPlate(), "acento"))
 
         col.addView(ui.groupHeader("Contenido", "Qué muestra"))
-        col.addView(designPlate())
-        col.addView(setlistPlate())
-        col.addView(weatherPlate())
+        col.addView(fold(designPlate(), "diseno"))
+        col.addView(fold(setlistPlate(), "apps"))
+        col.addView(fold(weatherPlate(), "clima", Prefs.city(this).substringBefore(",").ifBlank { "Sin ciudad" }))
 
         col.addView(ui.groupHeader("Reproductor y permisos", "Tu música en el widget"))
-        col.addView(playerPlate())
+        col.addView(fold(playerPlate(), "reproductor", if (Player.enabled(this)) "Activo" else "Sin permiso"))
 
         col.addView(ui.groupHeader("App", "Modo claro u oscuro"))
-        col.addView(appearancePlate())
+        col.addView(fold(appearancePlate(), "apariencia",
+            when (Prefs.uiMode(this)) { "system" -> "Sistema"; "light" -> "Claro"; else -> "Oscuro" }))
         if (hasWidget) col.addView(widgetDonePlate())
 
         col.addView(ui.text("Prisma Widgets " + BuildConfig.VERSION_NAME, ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },

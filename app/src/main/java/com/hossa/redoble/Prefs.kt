@@ -118,6 +118,9 @@ object Prefs {
     fun setPlayerTop(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("playerTop", v).apply()
 
     /** Escena del fondo animado de video (fogata, brasero, chispas, ciudad, cafe, ventana). */
+    /** Secciones de la configuración que el usuario dejó abiertas. */
+    fun openSections(ctx: Context): Set<String> = p(ctx).getStringSet("openSections", emptySet()) ?: emptySet()
+    fun setOpenSections(ctx: Context, v: Set<String>) = p(ctx).edit().putStringSet("openSections", HashSet(v)).apply()
     /** Apariencia de la configuración: "system", "dark" o "light". */
     fun uiMode(ctx: Context) = p(ctx).getString("uiMode", "dark") ?: "dark"
     fun setUiMode(ctx: Context, v: String) = p(ctx).edit().putString("uiMode", v).apply()
