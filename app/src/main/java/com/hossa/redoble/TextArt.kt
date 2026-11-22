@@ -59,9 +59,17 @@ object TextArt {
         spacing: Float = 0f, caps: Boolean = false, shadow: Boolean = false, glow: Int = 0,
         maxWidthPx: Int = 0,
     ): Bitmap {
-        val p = paint(ctx, font, sp, color, spacing, shadow, glow)
         var t: CharSequence = if (caps) text.uppercase(es) else text
         val pad = pad(ctx, shadow, glow)
+        var p = paint(ctx, font, sp, color, spacing, shadow, glow)
+        // Si no cabe, primero se achica (hasta 72 %); solo después se corta con "…"
+        if (maxWidthPx > 0) {
+            var size = sp
+            while (p.measureText(t.toString()) + pad * 2 > maxWidthPx && size > sp * 0.72f) {
+                size -= 0.5f
+                p = paint(ctx, font, size, color, spacing, shadow, glow)
+            }
+        }
         if (maxWidthPx > 0 && p.measureText(t.toString()) + pad * 2 > maxWidthPx) {
             t = TextUtils.ellipsize(t, p, (maxWidthPx - pad * 2).toFloat().coerceAtLeast(1f), TextUtils.TruncateAt.END)
         }
