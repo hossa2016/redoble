@@ -66,7 +66,7 @@ class RockWidget : AppWidgetProvider() {
 
         /** Tamaño base de la hora por familia de tema (sp). */
         private fun timeSize(family: String) = when (family) {
-            "claro" -> 76f; "neon" -> 54f; "lujo" -> 80f; else -> 64f
+            "claro" -> 76f; "cristal" -> 76f; "neon" -> 54f; "lujo" -> 80f; else -> 64f
         }
 
         fun update(ctx: Context, mgr: AppWidgetManager, widgetId: Int) {
@@ -91,7 +91,9 @@ class RockWidget : AppWidgetProvider() {
             }
             v.setViewVisibility(R.id.day_img, vis(rock && dia))
             v.setViewVisibility(R.id.day_txt, vis(!rock && dia))
-            if (!rock) v.setTextColor(R.id.day_txt, if (th.family == "claro") th.head else accent)
+            if (!rock) v.setTextColor(R.id.day_txt, when (th.family) {
+                "claro", "cristal" -> th.head; "neon" -> th.accent2; else -> accent
+            })
             v.setViewVisibility(R.id.date, vis(dia))
 
             // Hora (más pequeña cuando suena música)
@@ -149,7 +151,7 @@ class RockWidget : AppWidgetProvider() {
                 v.setTextViewText(LABELS[i], Prefs.displayName(ctx, slot))
                 Graphics.appIcon(ctx, pkg, mono = iconColor)?.let { v.setImageViewBitmap(ICONS[i], it) }
                 if (Build.VERSION.SDK_INT >= 31) {
-                    val big = th.family == "claro" || th.family == "lujo"
+                    val big = th.family == "claro" || th.family == "lujo" || th.family == "cristal"
                     val s = if (Prefs.originalIcons(ctx)) (if (big) 34f else 30f) else (if (big) 22f else 18f)
                     v.setViewLayoutWidth(ICONS[i], s, TypedValue.COMPLEX_UNIT_DIP)
                     v.setViewLayoutHeight(ICONS[i], s, TypedValue.COMPLEX_UNIT_DIP)
