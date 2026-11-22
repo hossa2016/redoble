@@ -50,11 +50,23 @@ internal fun MainActivity.fold(card: View, key: String, summary: String? = null)
     var open = key in openSections
     if (!open) show(false, false) else show(true, false)
     c.layoutTransition = LayoutTransition().apply { setDuration(180) }
+    folds[key] = { o -> if (o != open) { open = o; show(o, true) } }
     title.setOnClickListener {
         open = !open
-        if (open) openSections.add(key) else openSections.remove(key)
+        if (open) {
+            // Solo una abierta a la vez: se cierra la que estaba abierta
+            openSections.filter { it != key }.forEach { folds[it]?.invoke(false) }
+            openSections.clear(); openSections.add(key)
+        } else openSections.remove(key)
         Prefs.setOpenSections(this, openSections)
         show(open, true)
+        // Al cerrarse una de arriba, la que se abre sube: se lleva su título a la vista
+        if (open) scroll?.let { sv ->
+            sv.postDelayed({
+                val top = c.top - ui.dp(8)
+                if (top < sv.scrollY || top > sv.scrollY + sv.height / 2) sv.smoothScrollTo(0, top.coerceAtLeast(0))
+            }, 230)
+        }
     }
     return c
 }

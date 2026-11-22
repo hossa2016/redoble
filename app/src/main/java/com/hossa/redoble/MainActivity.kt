@@ -42,7 +42,9 @@ class MainActivity : AppCompatActivity() {
     /** Miniaturas de los temas (se dibujan una sola vez, no en cada toque). */
     internal val themeThumbs = HashMap<Int, Bitmap>()
     /** Última vista previa, para mostrarla mientras se arma la nueva (sin parpadeo). */
-    internal val openSections: MutableSet<String> by lazy { Prefs.openSections(this).toMutableSet() }
+    internal val openSections: MutableSet<String> by lazy { Prefs.openSections(this).take(1).toMutableSet() }
+    /** Para cerrar las demás secciones cuando se abre una (solo una abierta a la vez). */
+    internal val folds = HashMap<String, (Boolean) -> Unit>()
     internal var lastPreviewWidget: View? = null
     internal var lastPreviewBg: Bitmap? = null
 
