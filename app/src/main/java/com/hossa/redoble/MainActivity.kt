@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(setlistPlate())
         col.addView(playerPlate())
         if (hasWidget) col.addView(widgetDonePlate())
-        col.addView(ui.text("Prisma 8.2", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Prisma 8.3", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -865,12 +865,17 @@ class MainActivity : AppCompatActivity() {
                 background = ui.rect(Ui.WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
                 setPadding(ui.dp(4), ui.dp(4), ui.dp(4), ui.dp(4))
             }
-            listOf("orig" to "Como está", "fade" to "Desvanecido", "solid" to "Fijo").forEachIndexed { i, (k, label) ->
+            listOf("orig" to "Normal", "fade" to "Desvanecido", "solid" to "Fijo").forEachIndexed { i, (k, label) ->
                 val b = (if (k == cur) ui.primary(label) else ui.textButton(label).apply { setTextColor(Ui.MUTED) }).apply {
-                    textSize = 14f
+                    textSize = 13f
+                    isAllCaps = false
+                    maxLines = 1
+                    setPadding(ui.dp(2), 0, ui.dp(2), 0)
+                    minWidth = 0; minimumWidth = 0
+                    minHeight = ui.dp(44); minimumHeight = ui.dp(44)
                     setOnClickListener { if (k != cur) onPick(k) }
                 }
-                row.addView(b, LinearLayout.LayoutParams(0, ui.dp(40), 1f).apply { if (i > 0) marginStart = ui.dp(4) })
+                row.addView(b, LinearLayout.LayoutParams(0, ui.dp(44), if (k == "fade") 1.4f else 1f).apply { if (i > 0) marginStart = ui.dp(4) })
             }
             return row
         }
