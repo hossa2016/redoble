@@ -151,8 +151,8 @@ class AppPicker(
         dialog.setContentView(sheet)
         // Android 15+: la hoja llega hasta abajo; se deja espacio para la barra de navegación y el teclado
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(sheet) { v, insets ->
-            val t = androidx.core.view.WindowInsetsCompat.Type
-            val b = insets.getInsets(t.navigationBars() or t.ime())
+            val b = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars() or
+                androidx.core.view.WindowInsetsCompat.Type.ime())
             v.setPadding(v.paddingLeft, v.paddingTop, v.paddingRight, b.bottom)
             insets
         }

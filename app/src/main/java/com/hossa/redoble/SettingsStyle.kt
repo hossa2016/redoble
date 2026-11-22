@@ -84,7 +84,7 @@ internal fun MainActivity.useSuggested(res: Int, name: String) {
         val bmp = try { BitmapFactory.decodeResource(resources, res, BitmapFactory.Options().apply { inScaled = false }) } catch (e: Throwable) { null }
         if (bmp != null) {
             try { photoFile.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 95, it) } } catch (e: Exception) { }
-            getSharedPreferences("redoble", MODE_PRIVATE).edit().putString("photoName", name).apply()
+            getSharedPreferences("redoble", android.content.Context.MODE_PRIVATE).edit().putString("photoName", name).apply()
         }
         onUi {
             if (bmp == null) toast("No pudimos abrir ese fondo") else {
@@ -97,7 +97,7 @@ internal fun MainActivity.useSuggested(res: Int, name: String) {
 }
 
 internal fun MainActivity.suggestedRow(): View {
-    val current = if (photo != null) getSharedPreferences("redoble", MODE_PRIVATE).getString("photoName", "") else ""
+    val current = if (photo != null) getSharedPreferences("redoble", android.content.Context.MODE_PRIVATE).getString("photoName", "") else ""
     val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
     suggested.forEachIndexed { i, (res, name) ->
         val on = name == current
@@ -193,7 +193,7 @@ internal fun MainActivity.photoSection(card: LinearLayout) {
     }
     card.addView(preview, LinearLayout.LayoutParams(pvW, pvH).apply { gravity = Gravity.CENTER_HORIZONTAL })
     if (hasPhoto) {
-        val name = getSharedPreferences("redoble", MODE_PRIVATE).getString("photoName", "Tu foto") ?: "Tu foto"
+        val name = getSharedPreferences("redoble", android.content.Context.MODE_PRIVATE).getString("photoName", "Tu foto") ?: "Tu foto"
         card.addView(ui.ellipsize(ui.text(name, ui.cond, 14f, Ui.MUTED)).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
 
@@ -551,7 +551,7 @@ internal fun MainActivity.loadPhoto(uri: Uri) {
         } catch (e: Exception) { }
         if (bmp != null) {
             try { photoFile.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 92, it) } } catch (e: Exception) { }
-            getSharedPreferences("redoble", MODE_PRIVATE).edit().putString("photoName", name).apply()
+            getSharedPreferences("redoble", android.content.Context.MODE_PRIVATE).edit().putString("photoName", name).apply()
         }
         onUi {
             if (bmp == null) toast("No pudimos abrir esa foto") else {
