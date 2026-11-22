@@ -115,7 +115,8 @@ internal fun MainActivity.themeTile(t: Theme, on: Boolean, onPick: () -> Unit): 
     }
     val img = android.widget.ImageView(this).apply {
         scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
-        setImageBitmap(if (t.family == "rock") thumb(R.drawable.fondo_bateria) else Themes.wallpaper(t, tw, thH))
+        setImageBitmap(if (t.family == "rock") thumb(R.drawable.fondo_bateria)
+            else themeThumbs.getOrPut(t.id) { Themes.wallpaper(t, tw, thH) })
         clipToOutline = true
         outlineProvider = object : android.view.ViewOutlineProvider() {
             override fun getOutline(view: View, outline: android.graphics.Outline) {

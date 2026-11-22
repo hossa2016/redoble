@@ -36,7 +36,7 @@ internal fun MainActivity.previewPlate(): View {
         contentDescription = "Vista previa del widget"
     }
     // Fondo: el que tendrá la pantalla con lo elegido
-    val bg = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP }
+    val bg = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageBitmap(lastPreviewBg) }
     frame.addView(bg, FrameLayout.LayoutParams(-1, -1))
     io.execute {
         val th = Themes.current(this)
@@ -51,7 +51,7 @@ internal fun MainActivity.previewPlate(): View {
                 else -> Themes.styledWallpaper(this, th, w, h)
             }
         } catch (e: Throwable) { null }
-        onUi { bg.setImageBitmap(small) }
+        onUi { if (small != null) { lastPreviewBg = small; bg.setImageBitmap(small) } }
     }
 
     // El widget real, a su tamaño, reducido con escala. Se arma fuera del hilo
@@ -61,13 +61,25 @@ internal fun MainActivity.previewPlate(): View {
         leftMargin = ((sw - wPx) / 2f * scale).toInt()
         topMargin = (sh * 0.1f * scale).toInt()
     })
+    // Mientras se arma la nueva, se ve la anterior
+    lastPreviewWidget?.let { old ->
+        (old.parent as? android.view.ViewGroup)?.removeView(old)
+        holder.addView(old, FrameLayout.LayoutParams(wPx, hPx))
+    }
     // Capa que evita que los toques lleguen a los botones del widget de muestra
     frame.addView(View(this).apply { isClickable = true }, FrameLayout.LayoutParams(-1, -1))
     val appCtx = applicationContext
     io.execute {
         val rv = try { RockWidget.buildViews(appCtx, wPx, preview = true) } catch (e: Exception) { null }
         onUi {
-            try { rv?.let { holder.addView(it.apply(this, holder), FrameLayout.LayoutParams(wPx, hPx)) } } catch (e: Exception) { }
+            try {
+                rv?.let {
+                    val fresh = it.apply(this, holder)
+                    holder.removeAllViews()
+                    holder.addView(fresh, FrameLayout.LayoutParams(wPx, hPx))
+                    lastPreviewWidget = fresh
+                }
+            } catch (e: Exception) { }
         }
     }
 

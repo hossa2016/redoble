@@ -39,6 +39,11 @@ class MainActivity : AppCompatActivity() {
     internal var photoOpen = false
     internal var onbStep = 0
     internal val thumbs = java.util.concurrent.ConcurrentHashMap<Int, Bitmap>()
+    /** Miniaturas de los temas (se dibujan una sola vez, no en cada toque). */
+    internal val themeThumbs = HashMap<Int, Bitmap>()
+    /** Última vista previa, para mostrarla mientras se arma la nueva (sin parpadeo). */
+    internal var lastPreviewWidget: View? = null
+    internal var lastPreviewBg: Bitmap? = null
 
     internal val suggested = listOf(
         R.drawable.fondo_bateria to "Batería",
@@ -157,6 +162,16 @@ class MainActivity : AppCompatActivity() {
     /** Pone la pantalla dentro de un scroll que respeta barras del sistema y teclado. */
     internal fun setScreen(content: View, keepScroll: Boolean) {
         val y = if (keepScroll) scroll?.scrollY ?: 0 else 0
+        // Si ya hay pantalla, solo se cambia su contenido (sin reemplazar la ventana
+        // ni saltar el scroll): así tocar un botón no produce destellos.
+        scroll?.let { sv ->
+            if (sv.parent != null) {
+                sv.removeAllViews()
+                sv.addView(content)
+                if (keepScroll) sv.scrollTo(0, y) else sv.scrollTo(0, 0)
+                return
+            }
+        }
         val sv = ScrollView(this).apply {
             setBackgroundColor(Ui.INK)
             isFillViewport = true
