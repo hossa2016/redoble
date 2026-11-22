@@ -362,6 +362,11 @@ class RockWidget : AppWidgetProvider() {
             val filled = (0 until Prefs.usedSlots(ctx)).filter { it in launches }.take(maxApps)
             // Con 3 por fila, el cuarto lugar de cada fila desaparece (no ocupa espacio)
             if (perRow == 3) { v.setViewVisibility(PADS[6], View.GONE); v.setViewVisibility(PADS[7], View.GONE) }
+            // Todos los nombres del mismo tamaño: si uno largo tiene que achicarse, los demás también
+            val labelMax = W / perRow - (10 * dens).toInt()
+            val labelCaps = th.family == "neon" || th.family == "lujo"
+            val labelSp = TextArt.commonSize(ctx, filled.map { Prefs.displayName(ctx, it) }, S.label,
+                if (perRow == 4) S.lsize * 0.86f else S.lsize, S.lls, labelCaps, S.shadow, maxWidthPx = labelMax)
             for (pos in order.indices) {
                 val i = order[pos]
                 val slot = filled.getOrNull(pos)
@@ -378,9 +383,8 @@ class RockWidget : AppWidgetProvider() {
                 v.setTextViewText(LABELS[i], name)
                 twin(v, LABELS[i], LABEL_BMPS[i], true, fonts) {
                     // Con 4 por fila, letra un poco menor para todas (así se ven parejas)
-                    TextArt.render(ctx, name, S.label, if (perRow == 4) S.lsize * 0.86f else S.lsize, th.head, S.lls,
-                        caps = th.family == "neon" || th.family == "lujo", shadow = S.shadow,
-                        maxWidthPx = W / perRow - (10 * dens).toInt())
+                    TextArt.render(ctx, name, S.label, labelSp, th.head, S.lls,
+                        caps = labelCaps, shadow = S.shadow, maxWidthPx = labelMax)
                 }
                 Graphics.appIcon(ctx, pkg, mono = iconColor)?.let { v.setImageViewBitmap(ICONS[i], it) }
                 if (Build.VERSION.SDK_INT >= 31) {

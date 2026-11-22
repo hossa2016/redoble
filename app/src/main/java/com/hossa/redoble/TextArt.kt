@@ -84,6 +84,29 @@ object TextArt {
         return bmp
     }
 
+    /**
+     * Tamaño común para varios textos que van en fila (los nombres de las apps):
+     * el que necesita el más largo para caber, así todos quedan del mismo tamaño.
+     * Nunca baja del 72 % (igual que [render]).
+     */
+    fun commonSize(
+        ctx: Context, texts: List<String>, font: Int, sp: Float, spacing: Float = 0f,
+        caps: Boolean = false, shadow: Boolean = false, glow: Int = 0, maxWidthPx: Int,
+    ): Float {
+        if (maxWidthPx <= 0 || texts.isEmpty()) return sp
+        val pad = pad(ctx, shadow, glow)
+        var size = sp
+        texts.forEach { raw ->
+            val t = if (caps) raw.uppercase(es) else raw
+            var p = paint(ctx, font, size, Color.WHITE, spacing, shadow, glow)
+            while (p.measureText(t) + pad * 2 > maxWidthPx && size > sp * 0.72f) {
+                size -= 0.5f
+                p = paint(ctx, font, size, Color.WHITE, spacing, shadow, glow)
+            }
+        }
+        return size
+    }
+
     /** La hora "8:15" con los dos puntos en otro color (y otra letra si aplica). */
     fun clock(ctx: Context, hh: String, mm: String, s: Spec, sp: Float, color: Int, colonColor: Int): Bitmap {
         val main = paint(ctx, s.time, sp, color, s.tspace, s.shadow, s.glow)
