@@ -88,6 +88,10 @@ object Prefs {
     val LIGHT_TONES = listOf("#F2C6D2", "#D9CCF0", "#C6EBD9", "#C7E2F5", "#F7D3BC", "#F3EBD8", "#E6D3EC", "#CFDCC8")
         .map { android.graphics.Color.parseColor(it) }
 
+    /** Si sonaba música en el último redibujo (sobrevive aunque el proceso muera). */
+    fun lastPlaying(ctx: Context) = p(ctx).getBoolean("lastPlaying", false)
+    fun setLastPlaying(ctx: Context, v: Boolean) { if (lastPlaying(ctx) != v) p(ctx).edit().putBoolean("lastPlaying", v).apply() }
+
     /** Dibujar los textos con las letras del tema (como imagen). */
     fun themeFonts(ctx: Context) = p(ctx).getBoolean("themeFonts", true)
     fun setThemeFonts(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("themeFonts", on).apply()

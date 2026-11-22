@@ -62,10 +62,20 @@ class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
                 .enqueueUniquePeriodicWork("clima", ExistingPeriodicWorkPolicy.KEEP, req)
         }
 
-        fun runNow(ctx: Context) {
+        @Volatile private var lastAsk = 0L
+
+        /**
+         * Pide el clima ya. REPLACE: si había un reintento esperando (por ejemplo de
+         * la ciudad anterior), se reemplaza. Los pedidos automáticos del widget se
+         * espacian 2 minutos para no cancelarse entre sí.
+         */
+        fun runNow(ctx: Context, force: Boolean = false) {
+            val now = System.currentTimeMillis()
+            if (!force && now - lastAsk < 120_000L) return
+            lastAsk = now
             val req = OneTimeWorkRequestBuilder<WeatherWorker>().setConstraints(NET).build()
             WorkManager.getInstance(ctx)
-                .enqueueUniqueWork("clima-ahora", androidx.work.ExistingWorkPolicy.KEEP, req)
+                .enqueueUniqueWork("clima-ahora", androidx.work.ExistingWorkPolicy.REPLACE, req)
         }
 
         fun get(url: String): String {

@@ -11,8 +11,8 @@ android {
         applicationId = "com.hossa.redoble"
         minSdk = 26
         targetSdk = 34
-        versionCode = 33
-        versionName = "8.4"
+        versionCode = 34
+        versionName = "8.5"
     }
 
     signingConfigs {
@@ -29,6 +29,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    buildFeatures { buildConfig = true }
     lint { abortOnError = false; checkReleaseBuilds = false }
 }
 

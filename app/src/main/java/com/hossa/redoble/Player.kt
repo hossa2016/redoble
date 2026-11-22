@@ -108,7 +108,7 @@ object Player {
                 val bmp = try { loadArt(app, uri) } catch (e: Throwable) { null }
                 if (bmp != null) {
                     artCache.put(uri, bmp)
-                    main.post { updateAll(app) }
+                    RockWidget.requestUpdate(app, 100)
                 }
                 loading.remove(uri)
             }.start()
@@ -148,8 +148,7 @@ object Player {
             }
             else -> return
         }
-        val app = ctx.applicationContext
-        main.postDelayed({ updateAll(app) }, 350)
+        RockWidget.requestUpdate(ctx, 350)
     }
 
     /** Redibuja los widgets (el tamaño de la cabecera depende del reproductor). */
@@ -157,7 +156,7 @@ object Player {
 
     private fun broadcast(ctx: Context, action: String, code: Int): PendingIntent =
         PendingIntent.getBroadcast(
-            ctx, code, Intent(ctx, RockWidget::class.java).setAction(action),
+            ctx, code, RockWidget.internal(ctx, action),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
@@ -393,7 +392,7 @@ class MediaListener : NotificationListenerService() {
     private val handler = Handler(Looper.getMainLooper())
     private val attached = mutableListOf<Pair<MediaController, MediaController.Callback>>()
     private var msm: MediaSessionManager? = null
-    private val refresh = Runnable { Player.updateAll(this) }
+
 
     private val sessions = MediaSessionManager.OnActiveSessionsChangedListener { list ->
         attach(list); schedule()
@@ -435,8 +434,6 @@ class MediaListener : NotificationListenerService() {
         attached.clear()
     }
 
-    private fun schedule() {
-        handler.removeCallbacks(refresh)
-        handler.postDelayed(refresh, 250)
-    }
+    /** Agrupa cambios seguidos y no redibuja con la pantalla apagada. */
+    private fun schedule() = RockWidget.requestUpdate(this, 600)
 }

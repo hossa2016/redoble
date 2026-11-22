@@ -46,7 +46,7 @@ object TextArt {
 
     fun spec(family: String): Spec = SPECS[family] ?: SPECS.getValue("rock")
 
-    private val faces = HashMap<Int, Typeface>()
+    private val faces = java.util.concurrent.ConcurrentHashMap<Int, Typeface>()
     private fun face(ctx: Context, id: Int): Typeface = faces.getOrPut(id) {
         try { ResourcesCompat.getFont(ctx, id) } catch (e: Exception) { null } ?: Typeface.DEFAULT
     }

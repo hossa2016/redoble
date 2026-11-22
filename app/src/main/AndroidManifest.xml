@@ -3,13 +3,10 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission
-        android:name="android.permission.SCHEDULE_EXACT_ALARM"
-        android:maxSdkVersion="32" />
 
     <queries>
         <intent>
@@ -47,6 +44,11 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/rock_widget_info" />
         </receiver>
+        <!-- Botones del reproductor y alarmas propias: privado, otras apps no pueden usarlo -->
+        <receiver
+            android:name=".ActionReceiver"
+            android:exported="false" />
+
         <service
             android:name=".LiveService"
             android:exported="false"

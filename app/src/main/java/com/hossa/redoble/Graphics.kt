@@ -236,11 +236,14 @@ object Graphics {
     // ------------------------------------------------------------------
     // Ícono monocromo
     // ------------------------------------------------------------------
-    private val iconCache = HashMap<String, Bitmap>()
+    /** Caché con límite (antes crecía sin fin con cada color y tamaño). Sincronizada. */
+    private val iconCache = object : android.util.LruCache<String, Bitmap>(4 * 1024 * 1024) {
+        override fun sizeOf(key: String, value: Bitmap) = value.byteCount
+    }
 
     fun monoIcon(ctx: Context, pkg: String, color: Int = HEAD, sizePx: Int = 48): Bitmap? {
         val key = "$pkg@$color@$sizePx"
-        iconCache[key]?.let { return it }
+        iconCache.get(key)?.let { return it }
         val pm = ctx.packageManager
         val icon: Drawable = try { pm.getApplicationIcon(pkg) } catch (e: Exception) { return null }
 
@@ -294,14 +297,14 @@ object Graphics {
             }
         }
         raw.recycle()
-        iconCache[key] = out
+        iconCache.put(key, out)
         return out
     }
 
     /** Ícono con su color original, recortado en círculo para que encaje en la placa. */
     fun colorIcon(ctx: Context, pkg: String, sizePx: Int = 96): Bitmap? {
         val key = "$pkg@color@$sizePx"
-        iconCache[key]?.let { return it }
+        iconCache.get(key)?.let { return it }
         val icon: Drawable = try { ctx.packageManager.getApplicationIcon(pkg) } catch (e: Exception) { return null }
         val out = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
         val c = Canvas(out)
@@ -320,7 +323,7 @@ object Graphics {
             icon.setBounds(0, 0, sizePx, sizePx)
             icon.draw(c)
         }
-        iconCache[key] = out
+        iconCache.put(key, out)
         return out
     }
 
@@ -398,7 +401,4 @@ object Graphics {
         c.drawColor(Color.argb(dimPercent.coerceIn(0, 100) * 255 / 100, 0, 0, 0))
         return out
     }
-
-    @Suppress("unused")
-    private val gray = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
 }

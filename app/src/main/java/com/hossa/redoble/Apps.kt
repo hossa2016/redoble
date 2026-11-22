@@ -9,7 +9,7 @@ import java.util.Locale
 data class AppEntry(val label: String, val pkg: String)
 
 object Apps {
-    private val labels = HashMap<String, String>()
+    private val labels = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     fun label(ctx: Context, pkg: String): String = labels.getOrPut(pkg) {
         val pm = ctx.packageManager

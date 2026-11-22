@@ -69,15 +69,31 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
-        if (photoFile.exists()) photo = BitmapFactory.decodeFile(photoFile.path)
+        // La foto se lee fuera del hilo principal para no trabar la apertura
+        if (photoFile.exists()) io.execute {
+            val bmp = try { BitmapFactory.decodeFile(photoFile.path) } catch (e: Throwable) { null }
+            onUi { photo = bmp; build() }
+        }
         if (Prefs.city(this).isNotBlank() && (System.currentTimeMillis() - Prefs.weatherAt(this) > 30 * 60_000L ||
                 Prefs.weatherTomorrow(this).contains(" a "))) {
             WeatherWorker.runNow(this)
             WeatherWorker.schedule(this)
-            main.postDelayed({ refreshCityStatus() }, 5000)
+            onUiDelayed(5000) { if (alive()) refreshCityStatus() }
         }
-        build()
+        // build() se hace en onResume (antes se construía dos veces al abrir)
     }
+
+    override fun onDestroy() {
+        main.removeCallbacksAndMessages(null)
+        io.shutdownNow()
+        super.onDestroy()
+    }
+
+    private fun alive() = !isFinishing && !isDestroyed
+
+    /** Vuelve al hilo principal solo si la pantalla sigue abierta. */
+    private fun onUi(block: () -> Unit) { main.post { if (alive()) block() } }
+    private fun onUiDelayed(ms: Long, block: () -> Unit) { main.postDelayed({ if (alive()) block() }, ms) }
 
     override fun onResume() {
         super.onResume()
@@ -111,7 +127,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(setlistPlate())
         col.addView(playerPlate())
         if (hasWidget) col.addView(widgetDonePlate())
-        col.addView(ui.text("Prisma 8.4", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Prisma Widgets " + BuildConfig.VERSION_NAME, ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -200,12 +216,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun useSuggested(res: Int, name: String) {
         io.execute {
-            val bmp = try { BitmapFactory.decodeResource(resources, res, BitmapFactory.Options().apply { inScaled = false }) } catch (e: Exception) { null }
+            val bmp = try { BitmapFactory.decodeResource(resources, res, BitmapFactory.Options().apply { inScaled = false }) } catch (e: Throwable) { null }
             if (bmp != null) {
                 try { photoFile.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 95, it) } } catch (e: Exception) { }
                 getSharedPreferences("redoble", MODE_PRIVATE).edit().putString("photoName", name).apply()
             }
-            main.post {
+            onUi {
                 if (bmp == null) toast("No pudimos abrir ese fondo") else {
                     photo = bmp; photoSmall = null
                     Prefs.setWpPos(this, 50); Prefs.setWpZoom(this, 0)
@@ -537,7 +553,7 @@ class MainActivity : AppCompatActivity() {
                     var result: Triple<String, Double, Double>? = null
                     var offline = false
                     try { result = WeatherWorker.geocode(name) } catch (e: IOException) { offline = true } catch (e: Exception) { }
-                    main.post {
+                    onUi {
                         val r = result
                         when {
                             offline -> setStatus(Ui.ALERT, null, "Sin conexión. Inténtalo cuando vuelva la red.")
@@ -546,10 +562,10 @@ class MainActivity : AppCompatActivity() {
                                 Prefs.setCity(this, r.first, r.second, r.third)
                                 field.setText(r.first)
                                 setStatus(Ui.DIM, r.first, " Consultando el clima…")
-                                WeatherWorker.runNow(this)
+                                WeatherWorker.runNow(this, force = true)
                                 WeatherWorker.schedule(this)
                                 RockWidget.updateAll(this)
-                                main.postDelayed({ refreshCityStatus() }, 5000)
+                                onUiDelayed(5000) { refreshCityStatus() }
                             }
                         }
                     }
@@ -982,11 +998,11 @@ class MainActivity : AppCompatActivity() {
                     wall, android.graphics.Rect(0, 0, w, h), true, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK
                 )
                 true
-            } catch (e: Exception) { false }
-            main.post {
+            } catch (e: Throwable) { false }
+            onUi {
                 btn.isEnabled = true
                 btn.text = if (ok) "Fondo aplicado" else "No se pudo aplicar"
-                main.postDelayed({ btn.text = label }, 2000)
+                onUiDelayed(2000) { btn.text = label }
             }
         }
     }
@@ -1032,7 +1048,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
             } catch (e: Exception) {
-                Toast.makeText(this, "Busca «Acceso a notificaciones» en Ajustes y activa Redoble.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Busca «Acceso a notificaciones» en Ajustes y activa Prisma Widgets.", Toast.LENGTH_LONG).show()
             }
         }
         card.addView(btn, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(12) })
@@ -1103,9 +1119,9 @@ class MainActivity : AppCompatActivity() {
                 steps.visibility = View.VISIBLE
             } else {
                 pinRequestedAt = System.currentTimeMillis()
-                main.postDelayed({
+                onUiDelayed(3000) {
                     if (RockWidget.hasWidgets(this) == before) steps.visibility = View.VISIBLE
-                }, 3000)
+                }
             }
         }
         card.addView(add, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(12) })
@@ -1141,7 +1157,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadPhoto(uri: Uri) {
         val (w, h) = screenSize()
         io.execute {
-            val bmp = try { decodeSampled(uri, w, h) } catch (e: Exception) { null }
+            val bmp = try { decodeSampled(uri, w, h) } catch (e: Throwable) { null }  // incluye falta de memoria
             var name = "Tu foto"
             try {
                 contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
@@ -1152,7 +1168,7 @@ class MainActivity : AppCompatActivity() {
                 try { photoFile.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 92, it) } } catch (e: Exception) { }
                 getSharedPreferences("redoble", MODE_PRIVATE).edit().putString("photoName", name).apply()
             }
-            main.post {
+            onUi {
                 if (bmp == null) toast("No pudimos abrir esa foto") else {
                     photo = bmp; photoSmall = null
                     Prefs.setWpPos(this, 50); Prefs.setWpZoom(this, 0)
@@ -1165,9 +1181,9 @@ class MainActivity : AppCompatActivity() {
     private fun decodeSampled(uri: Uri, reqW: Int, reqH: Int): Bitmap? {
         val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
-        // Máxima calidad posible: solo se reduce si la foto pasa de ~16 MP
+        // Se reduce hasta ~4 MP (sobra para la pantalla y evita quedarse sin memoria)
         var sample = 1
-        while ((opts.outWidth.toLong() / sample) * (opts.outHeight.toLong() / sample) > 16_000_000L) sample *= 2
+        while ((opts.outWidth.toLong() / sample) * (opts.outHeight.toLong() / sample) > 4_000_000L) sample *= 2
         val real = BitmapFactory.Options().apply { inSampleSize = sample }
         return contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, real) }
     }
@@ -1189,13 +1205,13 @@ class MainActivity : AppCompatActivity() {
                     wall, android.graphics.Rect(0, 0, w, h), true, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK
                 )
                 true
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 false
             }
-            main.post {
+            onUi {
                 btn.isEnabled = true
                 btn.text = if (ok) "Fondo aplicado" else "No se pudo aplicar"
-                main.postDelayed({ btn.text = "Aplicar fondo" }, 2000)
+                onUiDelayed(2000) { btn.text = "Aplicar fondo" }
             }
         }
     }

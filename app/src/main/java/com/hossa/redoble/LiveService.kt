@@ -44,7 +44,7 @@ class LiveService : Service() {
                 Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> RockWidget.updateAll(ctx)
                 Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
                     BatteryMonitor.refresh(ctx)
-                    RockWidget.updateClock(ctx)
+                    RockWidget.onScreenOn(ctx)
                 }
             }
         }
@@ -68,12 +68,18 @@ class LiveService : Service() {
             addAction(Intent.ACTION_TIMEZONE_CHANGED)
         }
         ContextCompat.registerReceiver(this, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        running = true
+        // Ya hay quien avance la hora: pasar al reloj con la letra del tema
+        RockWidget.updateAll(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
 
     override fun onDestroy() {
         try { unregisterReceiver(receiver) } catch (e: Exception) { }
+        running = false
+        // Sin servicio, volver al reloj del sistema (que avanza solo)
+        try { RockWidget.updateAll(applicationContext) } catch (e: Exception) { }
         super.onDestroy()
     }
 
@@ -108,6 +114,10 @@ class LiveService : Service() {
     companion object {
         private const val CHANNEL = "en_vivo"
         private const val NOTIF_ID = 42
+
+        /** Si el servicio está vivo en este proceso. */
+        @Volatile var running = false
+            private set
 
         /** Arranca el servicio si se puede (desde segundo plano Android puede negarlo). */
         fun start(ctx: Context) {
