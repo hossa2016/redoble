@@ -197,6 +197,20 @@ object Graphics {
         return bmp
     }
 
+    /** Barra fina de batería (tema Claro). */
+    fun barBitmap(ctx: Context, level: Int, color: Int, track: Int): Bitmap {
+        val w = dp(ctx, 113f).toInt(); val h = dp(ctx, 19f).toInt()
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val c = Canvas(bmp)
+        val th = dp(ctx, 4f); val y = (h - th) / 2f; val r = th / 2
+        c.drawRoundRect(RectF(0f, y, w.toFloat(), y + th), r, r, Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = track })
+        val fw = w * level.coerceIn(0, 100) / 100f
+        c.drawRoundRect(RectF(0f, y, fw, y + th), r, r, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            this.color = if (level <= 15) ALERT else color
+        })
+        return bmp
+    }
+
     /** Rayo de carga con brillo, en el color de acento. */
     fun boltBitmap(ctx: Context, color: Int): Bitmap {
         val w = dp(ctx, 11f); val h = dp(ctx, 17f)

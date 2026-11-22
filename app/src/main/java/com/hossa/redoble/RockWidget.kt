@@ -94,7 +94,9 @@ class RockWidget : AppWidgetProvider() {
             if (!rock) v.setTextColor(R.id.day_txt, when (th.family) {
                 "claro", "cristal" -> th.head; "neon" -> th.accent2; else -> accent
             })
-            v.setViewVisibility(R.id.date, vis(dia))
+            // Cristal, Neón y Lujo llevan la fecha en la misma línea del día.
+            val dateInDay = th.family == "cristal" || th.family == "neon" || th.family == "lujo"
+            v.setViewVisibility(R.id.date, vis(dia && !dateInDay))
 
             // Hora (más pequeña cuando suena música)
             v.setViewVisibility(R.id.clock, vis(hora))
@@ -131,7 +133,7 @@ class RockWidget : AppWidgetProvider() {
             val auto = Prefs.preset(ctx) == "completo"
             val maxApps = if (auto && playing && wanted > 3) 3 else wanted
             val pm = ctx.packageManager
-            val showNums = th.family == "rock" || th.family == "neon"
+            val showNums = rock
             val numColor = ColorUtils.setAlphaComponent(if (rock) accent else th.accent2, if (rock) 0x99 else 0xCC)
             val iconColor = when (th.family) { "neon" -> accent; "lujo" -> th.head; else -> th.head }
             val filled = (0 until Prefs.SLOTS)
@@ -186,14 +188,19 @@ class RockWidget : AppWidgetProvider() {
             val level = BatteryMonitor.level(ctx)
             val charging = BatteryMonitor.isCharging(ctx)
             val off = if (th.light) Color.parseColor("#1F1C1A17") else Color.parseColor("#2A231E")
-            v.setImageViewBitmap(R.id.leds_img, Graphics.ledBitmap(ctx, level, accent, charging, off))
+            when (th.family) {
+                // Claro: barra fina; Lujo: solo texto ("BATERÍA 70 %").
+                "claro" -> v.setImageViewBitmap(R.id.leds_img, Graphics.barBitmap(ctx, level, th.head, off))
+                "lujo" -> v.setViewVisibility(R.id.leds_img, View.GONE)
+                else -> v.setImageViewBitmap(R.id.leds_img, Graphics.ledBitmap(ctx, level, accent, charging, off))
+            }
             if (charging) {
                 v.setViewVisibility(R.id.batt_bolt, View.VISIBLE)
                 v.setImageViewBitmap(R.id.batt_bolt, Graphics.boltBitmap(ctx, accent))
             } else {
                 v.setViewVisibility(R.id.batt_bolt, View.GONE)
             }
-            v.setTextViewText(R.id.batt_txt, "$level %")
+            v.setTextViewText(R.id.batt_txt, if (th.family == "lujo") "BATERÍA $level %" else "$level %")
             v.setTextColor(R.id.batt_txt, if (!charging && level <= 15) Graphics.ALERT else th.head)
         }
 
