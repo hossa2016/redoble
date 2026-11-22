@@ -42,6 +42,12 @@ object VideoScenes {
         Info("ciudad", "Lluvia y ciudad", "Gotas en el vidrio y luces de ciudad desenfocadas", R.raw.vid_ciudad),
         Info("cafe", "Lluvia y café", "Ventana con lluvia, neón y el vapor de un café", R.raw.vid_cafe),
         Info("ventana", "Ventana gris", "Lluvia fuerte resbalando por el vidrio", R.raw.vid_ventana),
+        Info("bateria", "Batería en llamas", "Tambores entre humo y luz de fuego, con chispas", R.raw.vid_bateria, R.raw.vid_chispas, true),
+        Info("concierto", "Concierto", "Luces rojas y lluvia de papelitos sobre el público", R.raw.vid_concierto),
+        Info("neon", "Neón y lluvia", "Gotas en el vidrio con reflejos de neón y luces flotando", R.raw.vid_neon, R.raw.vid_luces),
+        Info("cristal", "Cristal líquido", "Vidrio iridiscente que fluye con reflejos de arcoíris", R.raw.vid_cristal),
+        Info("oro", "Polvo de oro", "Partículas doradas que suben sobre negro", R.raw.vid_oro),
+        Info("luces", "Luces flotantes", "Puntos de luz azul y ámbar flotando en la oscuridad", R.raw.vid_luces),
     )
     fun find(id: String) = ALL.firstOrNull { it.id == id } ?: ALL[0]
 }
