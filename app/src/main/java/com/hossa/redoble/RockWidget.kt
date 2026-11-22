@@ -346,7 +346,8 @@ class RockWidget : AppWidgetProvider() {
             val wanted = Prefs.appRows(ctx) * perRow
             // En "Completo", con música se deja una sola fila para dar espacio al
             // reproductor. Si el usuario eligió el número a mano, se respeta.
-            val auto = Prefs.preset(ctx) == "completo"
+            // Con el reproductor grande tampoco caben dos filas: se cortaban sus botones.
+            val auto = Prefs.preset(ctx) == "completo" || Prefs.playerLarge(ctx)
             val maxApps = if (auto && playing && wanted > perRow) perRow else wanted
             val pm = ctx.packageManager
             val showNums = false  // los números 01/02/03 se leían poco y no aportaban
@@ -376,7 +377,8 @@ class RockWidget : AppWidgetProvider() {
                 val name = Prefs.displayName(ctx, slot)
                 v.setTextViewText(LABELS[i], name)
                 twin(v, LABELS[i], LABEL_BMPS[i], true, fonts) {
-                    TextArt.render(ctx, name, S.label, S.lsize, th.head, S.lls,
+                    // Con 4 por fila, letra un poco menor para todas (así se ven parejas)
+                    TextArt.render(ctx, name, S.label, if (perRow == 4) S.lsize * 0.86f else S.lsize, th.head, S.lls,
                         caps = th.family == "neon" || th.family == "lujo", shadow = S.shadow,
                         maxWidthPx = W / perRow - (10 * dens).toInt())
                 }
