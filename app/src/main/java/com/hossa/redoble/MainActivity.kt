@@ -220,11 +220,17 @@ class MainActivity : AppCompatActivity() {
 
     internal fun topBar(): View {
         val brand = ui.text("Prisma", ui.anton, 34f, Ui.HEAD, 0.03f).apply {
-            setShadowLayer(ui.dp(3).toFloat(), 0f, ui.dp(2).toFloat(), Color.parseColor("#E6000000"))
+            setShadowLayer(ui.dp(3).toFloat(), 0f, ui.dp(2).toFloat(), Color.parseColor(if (Ui.light) "#26000000" else "#E6000000"))
         }
         brand.post {
             val w = brand.paint.measureText(brand.text.toString())
-            brand.paint.shader = LinearGradient(0f, 0f, w, 0f, Graphics.METAL_COLORS, Graphics.METAL_STOPS, Shader.TileMode.CLAMP)
+            // En modo claro, metal oscuro (acero pavonado) para que no se pierda sobre el fondo claro
+            val colors = if (Ui.light) intArrayOf(
+                Color.parseColor("#3A342E"), Color.parseColor("#7A7168"), Color.parseColor("#5E564E"),
+                Color.parseColor("#2A2521"), Color.parseColor("#14110E"), Color.parseColor("#7A5532"),
+                Color.parseColor("#4A433C"), Color.parseColor("#8A8178"), Color.parseColor("#2A2521")
+            ) else Graphics.METAL_COLORS
+            brand.paint.shader = LinearGradient(0f, 0f, w, 0f, colors, Graphics.METAL_STOPS, Shader.TileMode.CLAMP)
             brand.invalidate()
         }
         val left = LinearLayout(this).apply {

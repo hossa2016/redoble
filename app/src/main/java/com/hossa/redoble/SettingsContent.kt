@@ -38,8 +38,11 @@ internal fun MainActivity.weatherPlate(): View {
     val save = ui.primary("Guardar")
     card.addView(LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
+        isBaselineAligned = false
+        gravity = Gravity.CENTER_VERTICAL
         addView(field, LinearLayout.LayoutParams(0, ui.dp(48), 1f))
-        addView(save, LinearLayout.LayoutParams(ui.dp(96), ui.dp(48)).apply { marginStart = ui.dp(10) })
+        addView(save.apply { minWidth = ui.dp(96); minimumWidth = ui.dp(96); maxLines = 1 },
+            LinearLayout.LayoutParams(-2, ui.dp(48)).apply { marginStart = ui.dp(10) })
     })
     val dot = ui.dot(Ui.DIM)
     val status = ui.bodyText("")

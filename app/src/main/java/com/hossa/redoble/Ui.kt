@@ -227,16 +227,25 @@ class Ui(val ctx: Context, val accent: Int) {
      * El texto se achica solo si no cabe, también con letra grande del sistema.
      */
     fun <T> segmented(options: List<Pair<T, String>>, selected: T, onPick: (T) -> Unit): LinearLayout {
-        val row = LinearLayout(ctx).apply {
-            orientation = LinearLayout.HORIZONTAL
+        // Con 5 o más opciones van en filas de 3 para que ningún texto se corte,
+        // aunque el teléfono tenga la letra grande.
+        val perRow = if (options.size >= 5) 3 else options.size
+        val well = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
             background = rect(WELL, 12f, veil(0x12), 1f)
             setPadding(dp(4), dp(4), dp(4), dp(4))
         }
-        options.forEachIndexed { i, (value, label) ->
+        var row = LinearLayout(ctx)
+        options.forEachIndexed { idx, (value, label) ->
+            val i = idx % perRow
+            if (i == 0) {
+                row = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; isBaselineAligned = false }
+                well.addView(row, LinearLayout.LayoutParams(-1, -2).apply { if (idx > 0) topMargin = dp(3) })
+            }
             val on = value == selected
             // Mismo tamaño de letra en todas y centrada; el ancho de cada opción se reparte
             // según lo largo de su texto (así "Desvanecido" cabe junto a "Fijo").
-            val size = if (options.size >= 5) 14f else 15f
+            val size = 15f
             val b = (if (on) primary(label) else textButton(label).apply { setTextColor(MUTED) }).apply {
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, size)
                 maxLines = 1
@@ -247,9 +256,15 @@ class Ui(val ctx: Context, val accent: Int) {
                 contentDescription = if (on) "$label, seleccionado" else label
                 setOnClickListener { if (!on) onPick(value) }
             }
-            row.addView(b, LinearLayout.LayoutParams(0, dp(48), label.length + 3f).apply { if (i > 0) marginStart = dp(3) })
+            val weight = if (perRow < options.size) 1f else label.length + 3f
+            row.addView(b, LinearLayout.LayoutParams(0, dp(48), weight).apply { if (i > 0) marginStart = dp(3) })
         }
-        return row
+        // La última fila incompleta se rellena para que sus botones midan igual que los de arriba
+        val left = (perRow - options.size % perRow) % perRow
+        if (perRow < options.size) repeat(left) {
+            row.addView(View(ctx), LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginStart = dp(3) })
+        }
+        return well
     }
 
     /** Encabezado de grupo (Estilo, Contenido, Reproductor). */
