@@ -48,6 +48,12 @@ object VideoScenes {
         Info("cristal", "Cristal líquido", "Vidrio iridiscente que fluye con reflejos de arcoíris", R.raw.vid_cristal),
         Info("oro", "Polvo de oro", "Partículas doradas que suben sobre negro", R.raw.vid_oro),
         Info("luces", "Luces flotantes", "Puntos de luz azul y ámbar flotando en la oscuridad", R.raw.vid_luces),
+        Info("aurora", "Aurora boreal", "Aurora verde y magenta sobre los pinos", R.raw.vid_aurora),
+        Info("nieve", "Nieve en el bosque", "Copos cayendo sobre un claro del bosque", R.raw.vid_nieve),
+        Info("hojas", "Hojas y gotas", "Hojas verdes con gotas de lluvia", R.raw.vid_hojas),
+        Info("estallido", "Estallido de color", "Cristal líquido que estalla y cambia de color", R.raw.vid_estallido),
+        Info("ambar", "Vidrio ámbar", "Vidrio quebrado con luces cálidas y brasas al frente", R.raw.vid_ambar, R.raw.vid_brasas, true),
+        Info("brasas", "Brasas", "Chispas naranjas saltando en la oscuridad", R.raw.vid_brasas, null, true),
     )
     fun find(id: String) = ALL.firstOrNull { it.id == id } ?: ALL[0]
 }
