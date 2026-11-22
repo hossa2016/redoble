@@ -175,7 +175,7 @@ object Player {
             ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
             ?: md.description?.subtitle?.toString() ?: "")
         val playing = isPlaying(c)
-        val th = Themes.current(ctx)
+        val th = Themes.widget(ctx)
         val accent = th.accent(ctx)
 
         val dismissed = Prefs.playerDismissed(ctx)

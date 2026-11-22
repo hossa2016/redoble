@@ -66,7 +66,7 @@ object BatteryMonitor {
         val mgr = AppWidgetManager.getInstance(ctx)
         val ids = mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))
         if (ids.isEmpty()) return
-        val v = RemoteViews(ctx.packageName, Themes.current(ctx).layout)
+        val v = RemoteViews(ctx.packageName, Themes.widget(ctx).layout)
         RockWidget.applyBattery(ctx, v)
         for (id in ids) mgr.partiallyUpdateAppWidget(id, v)
     }

@@ -106,7 +106,7 @@ class RockWidget : AppWidgetProvider() {
         fun updateClock(ctx: Context) {
             if (!Prefs.themeFonts(ctx) || !Prefs.el(ctx, "hora")) return
             val mgr = AppWidgetManager.getInstance(ctx)
-            val th = Themes.current(ctx)
+            val th = Themes.widget(ctx)
             for (id in mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))) {
                 try {
                     val v = RemoteViews(ctx.packageName, th.layout)
@@ -122,10 +122,11 @@ class RockWidget : AppWidgetProvider() {
         }
 
         fun update(ctx: Context, mgr: AppWidgetManager, widgetId: Int) {
-            val th = Themes.current(ctx)
+            val th = Themes.widget(ctx)
             val v = RemoteViews(ctx.packageName, th.layout)
             val accent = th.accent(ctx)
             val rock = th.family == "rock"
+            applyBackground(ctx, v, th)
 
             val fonts = Prefs.themeFonts(ctx)
             val S = TextArt.spec(th.family)
@@ -273,11 +274,32 @@ class RockWidget : AppWidgetProvider() {
         }
 
         /** Medidor LED y texto de batería (también se usa en actualizaciones parciales). */
+        /** Fondo del widget (como está, desvanecido o fijo) y colores de texto acordes. */
+        private fun applyBackground(ctx: Context, v: RemoteViews, th: Theme) {
+            when (Prefs.widgetStyle(ctx)) {
+                "fade", "solid" -> {
+                    val col = Themes.widgetColor(ctx, th)
+                    if (android.os.Build.VERSION.SDK_INT >= 31) {
+                        v.setInt(R.id.root, "setBackgroundResource",
+                            if (Prefs.widgetStyle(ctx) == "fade") R.drawable.wbg_fade else R.drawable.wbg_solid)
+                        v.setColorStateList(R.id.root, "setBackgroundTintList", android.content.res.ColorStateList.valueOf(col))
+                    } else v.setInt(R.id.root, "setBackgroundColor", col)
+                }
+                else -> v.setInt(R.id.root, "setBackgroundResource", 0)
+            }
+            // Si el texto cambió (fondo claro/oscuro), también la letra del sistema
+            if (th.head != Themes.current(ctx).head) {
+                for (id in intArrayOf(R.id.hh, R.id.mm, R.id.wx_now, R.id.batt_txt, R.id.pc_title, R.id.player_title,
+                        R.id.setlist_title, R.id.day_txt, R.id.empty_txt) + LABELS) v.setTextColor(id, th.head)
+                for (id in intArrayOf(R.id.date, R.id.wx_tomorrow, R.id.pc_artist, R.id.player_artist, R.id.count)) v.setTextColor(id, th.dim)
+            }
+        }
+
         private fun now0(ctx: Context, d: java.util.Date?): String =
             Prefs.weatherNow(ctx).ifBlank { if (Prefs.city(ctx).isBlank()) "Elige tu ciudad" else "Cargando clima…" }
 
         fun applyBattery(ctx: Context, v: RemoteViews, fonts: Boolean = Prefs.themeFonts(ctx)) {
-            val th = Themes.current(ctx)
+            val th = Themes.widget(ctx)
             val accent = th.accent(ctx)
             val level = BatteryMonitor.level(ctx)
             val charging = BatteryMonitor.isCharging(ctx)

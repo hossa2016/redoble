@@ -104,13 +104,14 @@ class MainActivity : AppCompatActivity() {
         if (!hasWidget) col.addView(widgetPlate())
         col.addView(designPlate())
         col.addView(themePlate())
+        col.addView(bgColorsPlate())
         col.addView(wallpaperPlate())
         if (th.usesUserAccent) col.addView(accentPlate())
         col.addView(weatherPlate())
         col.addView(setlistPlate())
         col.addView(playerPlate())
         if (hasWidget) col.addView(widgetDonePlate())
-        col.addView(ui.text("Prisma 8.1", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Prisma 8.2", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -842,7 +843,7 @@ class MainActivity : AppCompatActivity() {
             RockWidget.updateAll(this)
         }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
         card.addView(ui.bodyText("Encendido: el widget usa las letras exactas de cada tema. Apagado: la letra del sistema.", Ui.MUTED, 13f))
-        if (cur.hasOwnWallpaper) {
+        if (false) {
             card.addView(ui.bodyText("Este tema tiene su propio fondo de pantalla. También puedes usar tu foto en Fondo.", Ui.MUTED, 13f),
                 LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
             val apply = ui.primary("Poner el fondo del tema")
@@ -852,13 +853,122 @@ class MainActivity : AppCompatActivity() {
         return card
     }
 
+    // ---------------- Colores de fondo ----------------
+    private fun bgColorsPlate(): View {
+        val card = ui.plateCard()
+        val th = Themes.current(this)
+        card.addView(ui.sectionTitle("Colores de fondo"))
+
+        fun styleRow(cur: String, onPick: (String) -> Unit): View {
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                background = ui.rect(Ui.WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+                setPadding(ui.dp(4), ui.dp(4), ui.dp(4), ui.dp(4))
+            }
+            listOf("orig" to "Como está", "fade" to "Desvanecido", "solid" to "Fijo").forEachIndexed { i, (k, label) ->
+                val b = (if (k == cur) ui.primary(label) else ui.textButton(label).apply { setTextColor(Ui.MUTED) }).apply {
+                    textSize = 14f
+                    setOnClickListener { if (k != cur) onPick(k) }
+                }
+                row.addView(b, LinearLayout.LayoutParams(0, ui.dp(40), 1f).apply { if (i > 0) marginStart = ui.dp(4) })
+            }
+            return row
+        }
+
+        fun swatches(cur: Int, onPick: (Int) -> Unit): View {
+            val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            fun line(title: String, colors: List<Int>) {
+                box.addView(ui.text(title, ui.cond, 13f, Ui.DIM), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(10) })
+                val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+                colors.forEach { c ->
+                    val on = c == cur
+                    row.addView(View(this).apply {
+                        background = ui.oval(c, if (on) Color.WHITE else Color.parseColor("#33FFFFFF"), if (on) 3f else 1f)
+                        setOnClickListener { onPick(c) }
+                    }, LinearLayout.LayoutParams(0, ui.dp(34), 1f).apply { marginEnd = ui.dp(6) })
+                }
+                box.addView(row, LinearLayout.LayoutParams(-1, ui.dp(34)).apply { topMargin = ui.dp(6) })
+            }
+            line("Oscuros", Prefs.DARK_TONES)
+            line("Claros", Prefs.LIGHT_TONES)
+            val custom = cur != 0 && cur !in Prefs.DARK_TONES && cur !in Prefs.LIGHT_TONES
+            val bottom = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            bottom.addView(ui.textButton(if (custom) "Personalizado ✓" else "Personalizado…").apply {
+                setOnClickListener { customColor(if (cur != 0) cur else Themes.defaultBg(th), onPick) }
+            }, LinearLayout.LayoutParams(0, ui.dp(44), 1f))
+            bottom.addView(ui.textButton(if (cur == 0) "Del tema ✓" else "Del tema").apply {
+                setOnClickListener { onPick(0) }
+            }, LinearLayout.LayoutParams(0, ui.dp(44), 1f))
+            box.addView(bottom, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
+            return box
+        }
+
+        // Fondo de pantalla
+        card.addView(ui.text("Fondo de pantalla", ui.cond, 16f, Ui.HEAD), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(6) })
+        val ws = Prefs.wallStyle(this)
+        card.addView(styleRow(ws) { Prefs.setWallStyle(this, it); RockWidget.updateAll(this); build() },
+            LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+        if (ws != "orig") card.addView(swatches(Prefs.wallColor(this)) { Prefs.setWallColor(this, it); RockWidget.updateAll(this); build() })
+        val apply = ui.primary("Poner este fondo")
+        apply.setOnClickListener { applyThemeWallpaper(apply, th) }
+        if (ws != "orig" || th.hasOwnWallpaper)
+            card.addView(apply, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(12) })
+
+        // Fondo del widget
+        card.addView(ui.text("Fondo del widget", ui.cond, 16f, Ui.HEAD), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(20) })
+        val gs = Prefs.widgetStyle(this)
+        card.addView(styleRow(gs) { Prefs.setWidgetStyle(this, it); RockWidget.updateAll(this); build() },
+            LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+        if (gs != "orig") card.addView(swatches(Prefs.widgetColor(this)) { Prefs.setWidgetColor(this, it); RockWidget.updateAll(this); build() })
+        card.addView(ui.bodyText("Con colores claros, las letras del widget pasan a oscuras solas.", Ui.MUTED, 13f),
+            LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+        return card
+    }
+
+    /** Selector de color libre: tono y brillo, con muestra. */
+    private fun customColor(start: Int, onPick: (Int) -> Unit) {
+        val hsv = FloatArray(3); Color.colorToHSV(start, hsv)
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(ui.dp(24), ui.dp(16), ui.dp(24), 0) }
+        val preview = View(this)
+        fun col() = Color.HSVToColor(hsv)
+        fun refresh() { preview.background = ui.rect(col(), 14f) }
+        box.addView(preview, LinearLayout.LayoutParams(-1, ui.dp(64)))
+        fun bar(label: String, max: Int, value: Int, set: (Int) -> Unit) {
+            box.addView(ui.text(label, ui.cond, 14f, Ui.DIM), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(14) })
+            box.addView(android.widget.SeekBar(this).apply {
+                this.max = max; progress = value
+                setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(s: android.widget.SeekBar, p: Int, u: Boolean) { set(p); refresh() }
+                    override fun onStartTrackingTouch(s: android.widget.SeekBar) {}
+                    override fun onStopTrackingTouch(s: android.widget.SeekBar) {}
+                })
+            })
+        }
+        // Brillo: de oscuro (0) a claro (100) jugando con valor y saturación
+        val light0 = if (hsv[2] < 0.95f) (hsv[2] * 50).toInt() else (50 + (1 - hsv[1]) * 50).toInt()
+        fun setLight(p: Int) {
+            if (p <= 50) { hsv[2] = (p / 50f).coerceAtLeast(0.08f); hsv[1] = maxOf(hsv[1], 0.35f) }
+            else { hsv[2] = 1f; hsv[1] = (1 - (p - 50) / 50f * 0.8f) }
+        }
+        if (hsv[1] < 0.15f) hsv[1] = 0.5f
+        bar("Tono", 360, hsv[0].toInt()) { hsv[0] = it.toFloat() }
+        bar("Brillo", 100, light0) { setLight(it) }
+        refresh()
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Color personalizado")
+            .setView(box)
+            .setPositiveButton("Usar") { _, _ -> onPick(col() or 0xFF000000.toInt()) }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
     private fun applyThemeWallpaper(btn: Button, t: Theme) {
         val (w, h) = screenSize()
         btn.isEnabled = false
         btn.text = "Aplicando…"
         io.execute {
             val ok = try {
-                val wall = Themes.wallpaper(t, w, h)
+                val wall = Themes.styledWallpaper(this, t, w, h)
                 WallpaperManager.getInstance(this).setBitmap(
                     wall, android.graphics.Rect(0, 0, w, h), true, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK
                 )
@@ -867,7 +977,7 @@ class MainActivity : AppCompatActivity() {
             main.post {
                 btn.isEnabled = true
                 btn.text = if (ok) "Fondo aplicado" else "No se pudo aplicar"
-                main.postDelayed({ btn.text = "Poner el fondo del tema" }, 2000)
+                main.postDelayed({ btn.text = "Poner este fondo" }, 2000)
             }
         }
     }

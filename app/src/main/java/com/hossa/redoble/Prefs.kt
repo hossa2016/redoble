@@ -72,6 +72,22 @@ object Prefs {
     fun appsCount(ctx: Context) = p(ctx).getInt("appsCount", 6)
     fun setAppsCount(ctx: Context, n: Int) =
         p(ctx).edit().putInt("appsCount", n).putString("preset", "custom").apply()
+    // ---- Colores de fondo ----
+    /** Estilo: "orig" (como está), "fade" (desvanecido) o "solid" (fijo). */
+    fun wallStyle(ctx: Context) = p(ctx).getString("wallStyle", "orig") ?: "orig"
+    fun setWallStyle(ctx: Context, s: String) = p(ctx).edit().putString("wallStyle", s).apply()
+    fun wallColor(ctx: Context) = p(ctx).getInt("wallColor", 0)
+    fun setWallColor(ctx: Context, c: Int) = p(ctx).edit().putInt("wallColor", c).apply()
+    fun widgetStyle(ctx: Context) = p(ctx).getString("widgetStyle", "orig") ?: "orig"
+    fun setWidgetStyle(ctx: Context, s: String) = p(ctx).edit().putString("widgetStyle", s).apply()
+    fun widgetColor(ctx: Context) = p(ctx).getInt("widgetColor", 0)
+    fun setWidgetColor(ctx: Context, c: Int) = p(ctx).edit().putInt("widgetColor", c).apply()
+
+    val DARK_TONES = listOf("#0E3B5C", "#0B4F57", "#0F4A33", "#5A1622", "#6B3A1E", "#6E5520", "#3A2163", "#2A2A2E")
+        .map { android.graphics.Color.parseColor(it) }
+    val LIGHT_TONES = listOf("#F2C6D2", "#D9CCF0", "#C6EBD9", "#C7E2F5", "#F7D3BC", "#F3EBD8", "#E6D3EC", "#CFDCC8")
+        .map { android.graphics.Color.parseColor(it) }
+
     /** Dibujar los textos con las letras del tema (como imagen). */
     fun themeFonts(ctx: Context) = p(ctx).getBoolean("themeFonts", true)
     fun setThemeFonts(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("themeFonts", on).apply()

@@ -27,6 +27,10 @@ class Theme(
     fun accent(ctx: Context): Int = fixedAccent ?: Prefs.accent(ctx)
     val usesUserAccent get() = fixedAccent == null
     val hasOwnWallpaper get() = family != "rock"
+
+    /** Mismo tema con otros colores de texto (para fondos claros u oscuros). */
+    fun withText(head: Int, dim: Int, light: Boolean) =
+        Theme(id, name, family, layout, head, dim, fixedAccent, accent2, bg, orbs, light)
 }
 
 object Themes {
@@ -46,6 +50,48 @@ object Themes {
     )
 
     fun current(ctx: Context): Theme = ALL.getOrNull(Prefs.theme(ctx)) ?: ALL[0]
+
+    fun isLight(c: Int) = ColorUtils.calculateLuminance(c) > 0.45
+
+    /** Color por defecto de los fondos: uno oscuro sacado del tema. */
+    fun defaultBg(t: Theme): Int = if (t.light) Color.parseColor("#E8E1D6")
+        else t.orbs.firstOrNull() ?: ColorUtils.blendARGB(t.accent2, Color.BLACK, 0.55f)
+
+    fun wallColor(ctx: Context, t: Theme) = Prefs.wallColor(ctx).takeIf { it != 0 } ?: defaultBg(t)
+    fun widgetColor(ctx: Context, t: Theme) = Prefs.widgetColor(ctx).takeIf { it != 0 } ?: defaultBg(t)
+
+    /**
+     * Tema que usa el widget: si el fondo elegido es claro, letras oscuras;
+     * si es oscuro, letras claras. Así cualquier color se lee bien.
+     */
+    fun widget(ctx: Context): Theme {
+        val t = current(ctx)
+        val bg = when {
+            Prefs.widgetStyle(ctx) != "orig" -> widgetColor(ctx, t)
+            Prefs.wallStyle(ctx) != "orig" -> wallColor(ctx, t)
+            else -> return t
+        }
+        val light = isLight(bg)
+        if (light == t.light) return t
+        return if (light) t.withText(c("#1C1A17"), c("#5E584F"), true)
+        else t.withText(c("#F5F2EC"), c("#B9B2A7"), false)
+    }
+
+    /** Fondo de pantalla según el estilo elegido (como está, desvanecido o fijo). */
+    fun styledWallpaper(ctx: Context, t: Theme, w: Int, h: Int): Bitmap {
+        val style = Prefs.wallStyle(ctx)
+        if (style == "orig") return wallpaper(t, w, h)
+        val col = wallColor(ctx, t)
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val cv = Canvas(bmp)
+        if (style == "solid") { cv.drawColor(col); return bmp }
+        val end = if (isLight(col)) Color.parseColor("#FBF8F3") else Color.parseColor("#050505")
+        val p = Paint(Paint.ANTI_ALIAS_FLAG)
+        p.shader = LinearGradient(0f, 0f, 0f, h.toFloat(),
+            intArrayOf(col, ColorUtils.blendARGB(col, end, 0.45f), end), floatArrayOf(0f, 0.45f, 1f), Shader.TileMode.CLAMP)
+        cv.drawRect(0f, 0f, w.toFloat(), h.toFloat(), p)
+        return bmp
+    }
 
     /** Fondo de pantalla propio del tema (para los que no usan foto). */
     fun wallpaper(t: Theme, w: Int, h: Int): Bitmap {
