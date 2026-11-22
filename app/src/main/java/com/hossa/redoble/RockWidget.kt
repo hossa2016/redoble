@@ -108,7 +108,7 @@ class RockWidget : AppWidgetProvider() {
             v.setViewVisibility(R.id.wx_now, vis(clima))
             v.setViewVisibility(R.id.wx_tomorrow, vis(manana && tomorrow.isNotBlank()))
             v.setViewVisibility(R.id.batt_row, vis(bateria))
-            v.setViewVisibility(R.id.status_row, vis(clima || bateria))
+            v.setViewVisibility(R.id.status_row, vis(clima))
             v.setViewVisibility(R.id.hairline, vis((dia || hora) && (clima || bateria || manana)))
             v.setViewVisibility(R.id.header, vis(dia || hora || clima || manana || bateria))
             if (bateria) applyBattery(ctx, v)

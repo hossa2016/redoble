@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(setlistPlate())
         col.addView(playerPlate())
         if (hasWidget) col.addView(widgetDonePlate())
-        col.addView(ui.text("Prisma 7.2", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Prisma 7.3", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -700,6 +700,9 @@ class MainActivity : AppCompatActivity() {
         val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         names.entries.forEachIndexed { idx, (k, label) ->
             val b = (if (k == preset) ui.primary(label) else ui.secondary(label)).apply {
+                textSize = 15f
+                setPadding(ui.dp(4), 0, ui.dp(4), 0)
+                maxLines = 1
                 setOnClickListener {
                     Prefs.applyPreset(this@MainActivity, k)
                     RockWidget.updateAll(this@MainActivity)

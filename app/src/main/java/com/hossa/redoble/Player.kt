@@ -96,7 +96,11 @@ object Player {
             md.getString(MediaMetadata.METADATA_KEY_ART_URI),
             md.getString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI),
             md.description?.iconUri?.toString()
-        ).firstOrNull { !it.isNullOrBlank() } ?: return null
+        ).firstOrNull { !it.isNullOrBlank() } ?: run {
+            // RockPlay: el id de la canción es el del video de YouTube.
+            val id = md.getString(MediaMetadata.METADATA_KEY_MEDIA_ID) ?: ""
+            if (Regex("^[A-Za-z0-9_-]{11}$").matches(id)) "https://i.ytimg.com/vi/$id/hqdefault.jpg" else null
+        } ?: return null
         artCache.get(uri)?.let { return it }
         if (loading.add(uri)) {
             val app = ctx.applicationContext
