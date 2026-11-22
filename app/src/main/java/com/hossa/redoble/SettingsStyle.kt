@@ -68,7 +68,7 @@ internal fun MainActivity.useSuggested(res: Int, name: String) {
             if (bmp == null) toast("No pudimos abrir ese fondo") else {
                 photo = bmp; photoSmall = null
                 Prefs.setWpPos(this, 50); Prefs.setWpZoom(this, 0)
-                build()
+                buildAndShowPreview()
             }
         }
     }
@@ -117,11 +117,11 @@ internal fun MainActivity.wallpaperPlate(): View {
     card.addView(ui.sectionTitle("Fondo de pantalla"))
     val ws = Prefs.wallStyle(this)
     card.addView(ui.segmented(listOf("orig" to "Tema", "fade" to "Desvanecido", "solid" to "Fijo", "photo" to "Foto", "anim" to "Animado"), ws) {
-        Prefs.setWallStyle(this, it); RockWidget.updateAll(this); build()
+        Prefs.setWallStyle(this, it); RockWidget.updateAll(this); buildAndShowPreview()
     })
 
     if (ws == "fade" || ws == "solid") {
-        card.addView(colorSwatches(Prefs.wallColor(this)) { Prefs.setWallColor(this, it); RockWidget.updateAll(this); build() })
+        card.addView(colorSwatches(Prefs.wallColor(this)) { Prefs.setWallColor(this, it); RockWidget.updateAll(this); buildAndShowPreview() })
     }
     if (ws == "anim") {
         animSection(card)
@@ -197,7 +197,7 @@ internal fun MainActivity.sceneTile(s: VideoScenes.Info, on: Boolean, w: Int, h:
         isClickable = true
         foreground = ui.rowBg()
         contentDescription = "${s.name}: ${s.desc}" + if (on) ", elegido" else ""
-        setOnClickListener { if (!on) { Prefs.setLiveScene(this@sceneTile, s.id); RockWidget.updateAll(this@sceneTile); build() } }
+        setOnClickListener { if (!on) { Prefs.setLiveScene(this@sceneTile, s.id); RockWidget.updateAll(this@sceneTile); buildAndShowPreview() } }
     }
 }
 
@@ -505,10 +505,10 @@ internal fun MainActivity.widgetBgPlate(): View {
     card.addView(ui.sectionTitle("Fondo del widget"))
     val gs = Prefs.widgetStyle(this)
     card.addView(ui.segmented(listOf("orig" to "Normal", "fade" to "Desvanecido", "solid" to "Fijo"), gs) {
-        Prefs.setWidgetStyle(this, it); RockWidget.updateAll(this); build()
+        Prefs.setWidgetStyle(this, it); RockWidget.updateAll(this); buildAndShowPreview()
     })
     if (gs != "orig") card.addView(colorSwatches(Prefs.widgetColor(this)) {
-        Prefs.setWidgetColor(this, it); RockWidget.updateAll(this); build()
+        Prefs.setWidgetColor(this, it); RockWidget.updateAll(this); buildAndShowPreview()
     })
     card.addView(ui.note("Las letras se ajustan solas al color.", "Con colores claros, las letras del widget pasan a oscuras solas."),
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
@@ -606,7 +606,7 @@ internal fun MainActivity.loadPhoto(uri: Uri) {
             if (bmp == null) toast("No pudimos abrir esa foto") else {
                 photo = bmp; photoSmall = null
                 Prefs.setWpPos(this, 50); Prefs.setWpZoom(this, 0)
-                build()
+                buildAndShowPreview()
             }
         }
     }

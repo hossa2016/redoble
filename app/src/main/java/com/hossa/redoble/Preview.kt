@@ -139,3 +139,17 @@ internal fun MainActivity.showPreviewError(p: PreviewParts, msg: String?) {
         setBackgroundColor(Color.argb(0xCC, 0, 0, 0)); setPadding(ui.dp(6), ui.dp(6), ui.dp(6), ui.dp(6))
     }, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
 }
+
+/**
+ * Al elegir un fondo: se aplica y la pantalla sube con suavidad hasta la vista
+ * previa, para ver enseguida cómo queda.
+ */
+internal fun MainActivity.buildAndShowPreview() {
+    build()
+    val sv = scroll ?: return
+    val card = preview?.card ?: return
+    sv.postDelayed({
+        val top = (card.top - ui.dp(8)).coerceAtLeast(0)
+        if (sv.scrollY > top) sv.smoothScrollTo(0, top)
+    }, 120)
+}
