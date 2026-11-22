@@ -31,6 +31,9 @@ class Theme(
     /** Mismo tema con otros colores de texto (para fondos claros u oscuros). */
     fun withText(head: Int, dim: Int, light: Boolean) =
         Theme(id, name, family, layout, head, dim, fixedAccent, accent2, bg, orbs, light)
+
+    /** Mismo tema con otro diseño (por ejemplo, el reproductor debajo del clima). */
+    fun withLayout(l: Int) = Theme(id, name, family, l, head, dim, fixedAccent, accent2, bg, orbs, light)
 }
 
 object Themes {
@@ -64,7 +67,18 @@ object Themes {
      * Tema que usa el widget: si el fondo elegido es claro, letras oscuras;
      * si es oscuro, letras claras. Así cualquier color se lee bien.
      */
+    private val UP = mapOf(
+        R.layout.widget_rock to R.layout.widget_rock_up, R.layout.widget_cristal to R.layout.widget_cristal_up,
+        R.layout.widget_claro to R.layout.widget_claro_up, R.layout.widget_neon to R.layout.widget_neon_up,
+        R.layout.widget_lujo to R.layout.widget_lujo_up,
+    )
+
     fun widget(ctx: Context): Theme {
+        val t = textTheme(ctx)
+        return if (Prefs.playerTop(ctx)) t.withLayout(UP[t.layout] ?: t.layout) else t
+    }
+
+    private fun textTheme(ctx: Context): Theme {
         val t = current(ctx)
         val bg = when {
             Prefs.widgetStyle(ctx) != "orig" -> widgetColor(ctx, t)

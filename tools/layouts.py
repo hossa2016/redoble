@@ -134,6 +134,11 @@ def build(name,p):
 '''
     xml=add_bmps(xml, name)
     open(f'{RES}/layout/widget_{name}.xml','w',encoding='utf-8').write(xml)
+    # Variante con el reproductor justo debajo del clima (opción "Debajo del clima")
+    old='android:layout_gravity="bottom" android:layout_marginStart="2dp" android:layout_marginEnd="2dp" android:layout_marginBottom="12dp"'
+    assert xml.count(old)==2, name
+    up=xml.replace(old,'android:layout_gravity="top" android:layout_marginStart="2dp" android:layout_marginEnd="2dp" android:layout_marginTop="16dp"')
+    open(f'{RES}/layout/widget_{name}_up.xml','w',encoding='utf-8').write(up)
 
 import re as _re
 BMP_IDS=['day_txt','date','wx_now','wx_tomorrow','batt_txt','setlist_title','player_src','player_state','player_title','player_artist','pc_title','pc_artist']+[f'label{i}' for i in range(6)]
@@ -151,10 +156,14 @@ def add_bmps(xml, name):
         else:
             sc='fitStart'
         attrs=attrs.replace('layout_height="match_parent"','layout_height="wrap_content"')
+        had_weight='layout_weight' in attrs
         attrs=attrs.replace('layout_width="match_parent"','layout_width="wrap_content"').replace('layout_width="0dp"','layout_width="wrap_content"')
         attrs=_re.sub(r'android:layout_weight="[^"]*"\s*','',attrs)
         if name=='claro' and i=='date': attrs+=' android:layout_marginStart="12dp"'
         img=f'<ImageView android:id="@+id/{i}_bmp" {attrs} android:adjustViewBounds="true" android:scaleType="{sc}" android:contentDescription="@null" android:visibility="gone" />'
+        # Si el texto ocupaba el espacio sobrante (peso), un relleno lo ocupa para que
+        # lo que viene después (por ejemplo la X de cerrar) siga pegado a la derecha
+        if had_weight: img+='<FrameLayout android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />'
         xml=xml[:m.end()]+img+xml[m.end():]
     # Reloj: imagen gemela después del contenedor de la hora
     k=xml.index('android:id="@+id/clock"'); e=xml.index('</LinearLayout>',k)+len('</LinearLayout>')

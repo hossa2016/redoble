@@ -82,6 +82,12 @@ internal fun MainActivity.playerPlate(): View {
         setOnClickListener { pickMusicApp() }
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
 
+    // Dónde va en el widget
+    card.addView(ui.text("Posición en el widget", ui.cond, 15f, Ui.MUTED), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
+    card.addView(ui.segmented(listOf(false to "Abajo", true to "Debajo del clima"), Prefs.playerTop(this)) { top ->
+        Prefs.setPlayerTop(this, top); RockWidget.updateAll(this); build()
+    })
+
     // Qué música mostrar
     card.addView(ui.segmented(listOf(true to "Solo tu app", false to "Cualquier app"), Prefs.onlyMusicApp(this)) { m ->
         Prefs.setOnlyMusicApp(this, m); Player.updateAll(this); build()
