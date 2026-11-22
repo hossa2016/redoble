@@ -39,7 +39,7 @@ internal fun MainActivity.previewPlate(): View {
     val bg = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageBitmap(lastPreviewBg) }
     if (Prefs.wallStyle(this) == "anim") {
         // Fondo animado: la escena viva detrás del widget de muestra
-        frame.addView(SceneView(this).apply { sceneId = Prefs.liveScene(this@previewPlate) }, FrameLayout.LayoutParams(-1, -1))
+        frame.addView(VideoPreview(this).apply { scene = VideoScenes.find(Prefs.liveScene(this@previewPlate)) }, FrameLayout.LayoutParams(-1, -1))
     } else frame.addView(bg, FrameLayout.LayoutParams(-1, -1))
     if (Prefs.wallStyle(this) != "anim") io.execute {
         val th = Themes.current(this)

@@ -117,8 +117,8 @@ object Prefs {
     fun playerTop(ctx: Context) = p(ctx).getBoolean("playerTop", false)
     fun setPlayerTop(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("playerTop", v).apply()
 
-    /** Escena del fondo animado (metal, arena, prisma, lluvia, fuego, aurora, rock, cristal, neon, lujo). */
-    fun liveScene(ctx: Context) = p(ctx).getString("liveScene", "metal") ?: "metal"
+    /** Escena del fondo animado de video (fogata, brasero, chispas, ciudad, cafe, ventana). */
+    fun liveScene(ctx: Context) = p(ctx).getString("liveScene", "fogata") ?: "fogata"
     fun setLiveScene(ctx: Context, id: String) = p(ctx).edit().putString("liveScene", id).apply()
 
     /** Ya vio la guía de inicio (quien ya tenía el widget puesto no la necesita). */
