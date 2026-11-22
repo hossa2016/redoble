@@ -74,6 +74,57 @@ object Player {
             ?: pool.firstOrNull()
     }
 
+    // ---------------------------------------------------------------- carátula
+    private val artCache = android.util.LruCache<String, Bitmap>(12)
+    private val loading = java.util.Collections.synchronizedSet(HashSet<String>())
+
+    /**
+     * Carátula: primero la imagen que trae la sesión; si solo trae la dirección
+     * (como RockPlay), se descarga en segundo plano y se redibuja el widget.
+     */
+    private fun artFor(ctx: Context, md: MediaMetadata): Bitmap? {
+        md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)?.let { return it }
+        md.getBitmap(MediaMetadata.METADATA_KEY_ART)?.let { return it }
+        md.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)?.let { return it }
+        md.description?.iconBitmap?.let { return it }
+        val uri = listOf(
+            md.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI),
+            md.getString(MediaMetadata.METADATA_KEY_ART_URI),
+            md.getString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI),
+            md.description?.iconUri?.toString()
+        ).firstOrNull { !it.isNullOrBlank() } ?: return null
+        artCache.get(uri)?.let { return it }
+        if (loading.add(uri)) {
+            val app = ctx.applicationContext
+            Thread {
+                val bmp = try { loadArt(app, uri) } catch (e: Throwable) { null }
+                if (bmp != null) {
+                    artCache.put(uri, bmp)
+                    main.post { updateAll(app) }
+                }
+                loading.remove(uri)
+            }.start()
+        }
+        return null
+    }
+
+    private fun loadArt(ctx: Context, uri: String): Bitmap? {
+        val bytes: ByteArray = if (uri.startsWith("http://") || uri.startsWith("https://")) {
+            val con = java.net.URL(uri).openConnection() as java.net.HttpURLConnection
+            con.connectTimeout = 8000; con.readTimeout = 8000
+            con.instanceFollowRedirects = true
+            try { con.inputStream.use { it.readBytes() } } finally { con.disconnect() }
+        } else {
+            ctx.contentResolver.openInputStream(android.net.Uri.parse(uri))?.use { it.readBytes() } ?: return null
+        }
+        val o = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, o)
+        var sample = 1
+        while (maxOf(o.outWidth, o.outHeight) / (sample * 2) >= 256) sample *= 2
+        return android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size,
+            android.graphics.BitmapFactory.Options().apply { inSampleSize = sample })
+    }
+
     /** Botones del widget. */
     fun handle(ctx: Context, action: String?) {
         val c = controller(ctx) ?: return
@@ -125,10 +176,7 @@ object Player {
             else if (dismissed == key(c)) return false
         }
 
-        val art = md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
-            ?: md.getBitmap(MediaMetadata.METADATA_KEY_ART)
-            ?: md.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
-            ?: md.description?.iconBitmap
+        val art = artFor(ctx, md)
         val open = c.sessionActivity ?: ctx.packageManager.getLaunchIntentForPackage(c.packageName)?.let {
             PendingIntent.getActivity(
                 ctx, 204, it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
