@@ -111,7 +111,10 @@ internal fun MainActivity.updatePreview() {
         onUi {
             try {
                 rv?.let {
-                    val fresh = it.apply(this, p.holder)
+                    // Con el contexto de la app (no el de la pantalla de ajustes): así se usan las
+                    // vistas normales de Android, como en la pantalla de inicio. Las de AppCompat
+                    // rechazan setImageBitmap desde RemoteViews y el widget no se dibujaba.
+                    val fresh = it.apply(applicationContext, p.holder)
                     p.holder.removeAllViews()
                     p.holder.addView(fresh, FrameLayout.LayoutParams(p.wPx, p.hPx))
                     fresh.post {
