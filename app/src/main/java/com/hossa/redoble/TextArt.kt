@@ -116,7 +116,7 @@ object TextArt {
             parts += twoLines(ctx, sub, s.med, s.body, 13f, 11f, color, dim,
                 (maxWidthPx - iconPx - gap * 2 - parts[0].width).toInt().coerceAtLeast(40))
         } else {
-            val line = if (extra.isBlank()) "$desc, $temp°" else "$desc, $temp°  ·  ${extra.replace("Mañana:", "Mañana")}"
+            val line = if (extra.isBlank()) "$desc, $temp°" else "$desc, $temp° · ${extra.replace("Mañana:", "Mañana").replace("°–", "–")}"
             parts += render(ctx, line, s.med, s.wsize, color, maxWidthPx = (maxWidthPx - iconPx - gap).toInt().coerceAtLeast(40))
         }
         val w = (iconPx + gap * parts.size + parts.sumOf { it.width }).toInt()
