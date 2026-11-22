@@ -106,7 +106,7 @@ object TextArt {
     fun weather(ctx: Context, code: Int, temp: Int, desc: String, extra: String, s: Spec,
                 big: Boolean, color: Int, dim: Int, accent: Int, maxWidthPx: Int): Bitmap {
         val d = ctx.resources.displayMetrics.density
-        val iconPx = ((if (big) 30f else 18f) * d).toInt()
+        val iconPx = ((if (big) 30f else if (extra.isNotBlank()) 24f else 18f) * d).toInt()
         val icon = icon(code, iconPx, color, accent)
         val gap = (if (big) 10f else 7f) * d
         val parts = ArrayList<Bitmap>()
@@ -116,8 +116,11 @@ object TextArt {
             parts += twoLines(ctx, sub, s.med, s.body, 13f, 11f, color, dim,
                 (maxWidthPx - iconPx - gap * 2 - parts[0].width).toInt().coerceAtLeast(40))
         } else {
-            val line = if (extra.isBlank()) "$desc, $temp°" else "$desc, $temp° · ${extra.replace("Mañana:", "Mañana").replace("°–", "–")}"
-            parts += render(ctx, line, s.med, s.wsize, color, maxWidthPx = (maxWidthPx - iconPx - gap).toInt().coerceAtLeast(40))
+            val avail = (maxWidthPx - iconPx - gap).toInt().coerceAtLeast(40)
+            val one = if (extra.isBlank()) "$desc, $temp°" else "$desc, $temp° · ${extra.replace("Mañana:", "Mañana")}"
+            val fits = paint(ctx, s.med, s.wsize, color, 0f, false, 0).measureText(one) + pad(ctx, false, 0) * 2 <= avail
+            parts += if (extra.isBlank() || fits) render(ctx, one, s.med, s.wsize, color, maxWidthPx = avail)
+                else twoLines(ctx, "$desc, $temp°\n$extra", s.med, s.body, s.wsize, s.tomsize, color, dim, avail)
         }
         val w = (iconPx + gap * parts.size + parts.sumOf { it.width }).toInt()
         val h = maxOf(iconPx, parts.maxOf { it.height })
