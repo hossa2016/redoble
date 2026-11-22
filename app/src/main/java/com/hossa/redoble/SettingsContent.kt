@@ -201,13 +201,13 @@ internal fun MainActivity.designPlate(): View {
     card.addView(ui.segmented(names.entries.map { it.key to it.value }, preset) { k ->
         Prefs.applyPreset(this, k); RockWidget.updateAll(this); build()
     })
-    val (short, more) = when (preset) {
+    val (short, longDesc) = when (preset) {
         "completo" -> "Hora, clima, batería y 6 apps." to "Hora, clima, batería y 6 apps. Cuando suena música, el reproductor aparece compacto y quedan 3 apps para que no se apriete."
         "musica" -> "Reproductor grande y 3 apps." to "Reproductor grande siempre a la vista, cabecera compacta y 3 apps."
         "minimal" -> "Día, hora, clima y 3 apps." to "Solo día, hora, clima y 3 apps. Se luce el fondo."
         else -> "Elementos elegidos por ti." to "Elementos elegidos por ti. Se respeta el número de apps aunque suene música."
     }
-    card.addView(ui.note(short, more), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+    card.addView(ui.note(short, longDesc), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
 
     val more = ui.textButton(if (customOpen) "Personalizar elementos  ▾" else "Personalizar elementos  ▸").apply {
         setTextColor(Ui.HEAD)
