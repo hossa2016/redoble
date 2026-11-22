@@ -12,7 +12,7 @@ internal fun MainActivity.fold(card: View, key: String, summary: String? = null)
     val c = card as? LinearLayout ?: return card
     val title = c.getChildAt(0) as? LinearLayout ?: return card
     if (summary != null && title.findViewWithTag<View>("hint") == null) {
-        title.addView(ui.text(summary, ui.cond, 14f, Ui.DIM).apply { tag = "hint"; ui.hintStyle(this) })
+        title.findViewWithTag<LinearLayout>("titleCol")?.addView(ui.hintText(summary))
     }
     // Flecha dibujada en dp (no en letra): no se corta con letra grande del sistema
     val chev = android.widget.ImageView(this).apply {
@@ -45,7 +45,7 @@ internal fun MainActivity.fold(card: View, key: String, summary: String? = null)
         }
         val angle = if (open) -90f else 90f
         if (animate) chev.animate().rotation(angle).setDuration(180).start() else chev.rotation = angle
-        val name = (title.getChildAt(1) as? android.widget.TextView)?.text ?: ""
+        val name = title.findViewWithTag<android.widget.TextView>("titleText")?.text ?: ""
         title.contentDescription = "$name, " + if (open) "abierto, toca para cerrar" else "cerrado, toca para abrir"
     }
 

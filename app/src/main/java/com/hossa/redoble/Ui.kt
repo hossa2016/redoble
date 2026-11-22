@@ -339,19 +339,24 @@ class Ui(val ctx: Context, val accent: Int) {
         gravity = Gravity.CENTER_VERTICAL
         val bar = View(ctx).apply { background = rect(accent, 2f) }
         addView(bar, LinearLayout.LayoutParams(dp(3), dp(18)))
-        // Título siempre en una línea: si no cabe junto al resumen, se achica un poco
-        addView(
-            text(title.uppercase(), anton, 21f, HEAD, 0.03f).apply {
-                // Una sola línea real (sin saltos): se achica hasta caber y, en último caso, "…"
-                isSingleLine = true; ellipsize = TextUtils.TruncateAt.END
-                fitText(this, 21, 12)
-            },
-            LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginStart = dp(10) }
-        )
-        if (hint != null) addView(text(hint, cond, 14f, DIM).apply { tag = "hint"; hintStyle(this) })
+        // Título a todo el ancho y el resumen (lo elegido) debajo, en pequeño:
+        // así el título nunca se corta, aunque la letra del teléfono sea grande
+        val col = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; tag = "titleCol" }
+        col.addView(text(title.uppercase(), anton, 21f, HEAD, 0.03f).apply {
+            tag = "titleText"
+            isSingleLine = true
+            fitText(this, 21, 14)
+        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36)))
+        if (hint != null) col.addView(hintText(hint))
+        addView(col, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(10) })
         layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         ).apply { bottomMargin = dp(14) }
+    }
+
+    /** Resumen bajo el título (por ejemplo "Rock" o "Animado: Fogata"). */
+    fun hintText(s: String) = text(s, cond, 14f, DIM).apply {
+        tag = "hint"; maxLines = 1; ellipsize = TextUtils.TruncateAt.END
     }
 
     fun dot(color: Int) = View(ctx).apply { background = oval(color) }
@@ -374,12 +379,6 @@ class Ui(val ctx: Context, val accent: Int) {
             }
             layoutParams = LinearLayout.LayoutParams(dp(sizeDp), dp(sizeDp))
         }
-
-    /** Resumen a la derecha del título: una línea y con "…" si es largo. */
-    fun hintStyle(tv: TextView) {
-        tv.maxLines = 1; tv.ellipsize = TextUtils.TruncateAt.END; tv.maxWidth = dp(112)
-        tv.setPadding(dp(8), 0, 0, 0)
-    }
 
     fun ellipsize(tv: TextView) = tv.apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END }
 }

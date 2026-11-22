@@ -164,7 +164,8 @@ class MainActivity : AppCompatActivity() {
         col.addView(fold(themePlate(), "tema"))
         col.addView(fold(wallpaperPlate(), "fondo", wallName))
         col.addView(fold(widgetBgPlate(), "fondoWidget", widgetBgName))
-        if (th.usesUserAccent) col.addView(fold(accentPlate(), "acento"))
+        if (th.usesUserAccent) col.addView(fold(accentPlate(), "acento",
+            Prefs.NAMES[Prefs.accentIndex(this).coerceIn(0, Prefs.NAMES.size - 1)]))
 
         col.addView(ui.groupHeader("Contenido"))
         col.addView(fold(designPlate(), "diseno"))
