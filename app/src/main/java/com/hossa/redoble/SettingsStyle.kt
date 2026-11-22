@@ -157,11 +157,11 @@ internal fun MainActivity.animSection(card: LinearLayout) {
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
     val grid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
     VideoScenes.ALL.chunked(2).forEach { pair ->
-        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; isBaselineAligned = false }
         pair.forEachIndexed { i, s ->
             val on = s.id == info.id
             val b = (if (on) ui.primary(s.name) else ui.secondary(s.name)).apply {
-                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f); maxLines = 1; includeFontPadding = false; gravity = Gravity.CENTER
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f); isSingleLine = true; ellipsize = android.text.TextUtils.TruncateAt.END; includeFontPadding = false; gravity = Gravity.CENTER
                 setPadding(ui.dp(6), 0, ui.dp(6), 0)
                 contentDescription = if (on) "${s.name}, elegido" else s.name
                 setOnClickListener { if (!on) { Prefs.setLiveScene(this@animSection, s.id); build() } }
