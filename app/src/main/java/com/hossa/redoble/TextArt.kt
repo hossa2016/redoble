@@ -197,7 +197,9 @@ object TextArt {
     private fun paint(ctx: Context, font: Int, sp: Float, color: Int, spacing: Float, shadow: Boolean, glow: Int) =
         TextPaint(TextPaint.ANTI_ALIAS_FLAG or TextPaint.SUBPIXEL_TEXT_FLAG).apply {
             typeface = face(ctx, font)
-            textSize = sp * ctx.resources.displayMetrics.scaledDensity
+            // Respeta un poco la letra grande del sistema, con tope para no desbordar el widget
+            val dm = ctx.resources.displayMetrics
+            textSize = sp * dm.density * minOf(ctx.resources.configuration.fontScale, 1.15f)
             this.color = color
             letterSpacing = spacing
             if (font == R.font.cormorant_light || font == R.font.cormorant_medium || font == R.font.cormorant_italic)

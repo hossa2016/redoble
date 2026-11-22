@@ -37,16 +37,16 @@ object Themes {
     private fun c(s: String) = Color.parseColor(s)
 
     val ALL = listOf(
-        Theme(0, "Rock oscuro", "rock", R.layout.widget_rock, c("#EDE6DC"), c("#B5AA9F"), null, c("#8E2A22"), c("#0A0807")),
-        Theme(1, "Cristal glaciar", "cristal", R.layout.widget_cristal, c("#FFFFFF"), c("#B4C3CC"), c("#4FD8F0"), c("#2F8CFF"), c("#030305"),
+        Theme(0, "Rock", "rock", R.layout.widget_rock, c("#EDE6DC"), c("#B5AA9F"), null, c("#8E2A22"), c("#0A0807")),
+        Theme(1, "Glaciar", "cristal", R.layout.widget_cristal, c("#FFFFFF"), c("#B4C3CC"), c("#4FD8F0"), c("#2F8CFF"), c("#030305"),
             intArrayOf(c("#0E3B5C"), c("#0B5563"), c("#123A5A"))),
-        Theme(2, "Cristal ámbar", "cristal", R.layout.widget_cristal, c("#FFFFFF"), c("#CDBFAE"), c("#F2B66B"), c("#D9783A"), c("#030305"),
+        Theme(2, "Ámbar", "cristal", R.layout.widget_cristal, c("#FFFFFF"), c("#CDBFAE"), c("#F2B66B"), c("#D9783A"), c("#030305"),
             intArrayOf(c("#5A3510"), c("#6B2E12"), c("#3D2A14"))),
-        Theme(3, "Cristal esmeralda", "cristal", R.layout.widget_cristal, c("#FFFFFF"), c("#B5CCC2"), c("#6FF0C0"), c("#2FBF8A"), c("#030305"),
+        Theme(3, "Esmeralda", "cristal", R.layout.widget_cristal, c("#FFFFFF"), c("#B5CCC2"), c("#6FF0C0"), c("#2FBF8A"), c("#030305"),
             intArrayOf(c("#0E4A35"), c("#0D3D3F"), c("#1F4A22"))),
-        Theme(4, "Claro", "claro", R.layout.widget_claro, c("#1C1A17"), c("#6B655C"), c("#1C1A17"), c("#3A362F"), c("#F3EFE8"), light = true),
+        Theme(4, "Claro", "claro", R.layout.widget_claro, c("#1C1A17"), c("#4F4A43"), c("#1C1A17"), c("#3A362F"), c("#F3EFE8"), light = true),
         Theme(5, "Neón", "neon", R.layout.widget_neon, c("#EFFFFF"), c("#A3A5CC"), c("#3DF2FF"), c("#FF3DCB"), c("#07060D")),
-        Theme(6, "Lujo dorado", "lujo", R.layout.widget_lujo, c("#EBD9AE"), c("#A8987A"), c("#D4B06A"), c("#A98545"), c("#0E0D0B")),
+        Theme(6, "Lujo", "lujo", R.layout.widget_lujo, c("#EBD9AE"), c("#A8987A"), c("#D4B06A"), c("#A98545"), c("#0E0D0B")),
     )
 
     fun current(ctx: Context): Theme = ALL.getOrNull(Prefs.theme(ctx)) ?: ALL[0]
@@ -68,7 +68,7 @@ object Themes {
         val t = current(ctx)
         val bg = when {
             Prefs.widgetStyle(ctx) != "orig" -> widgetColor(ctx, t)
-            Prefs.wallStyle(ctx) != "orig" -> wallColor(ctx, t)
+            Prefs.wallStyle(ctx) == "fade" || Prefs.wallStyle(ctx) == "solid" -> wallColor(ctx, t)
             else -> return t
         }
         val light = isLight(bg)
@@ -80,7 +80,7 @@ object Themes {
     /** Fondo de pantalla según el estilo elegido (como está, desvanecido o fijo). */
     fun styledWallpaper(ctx: Context, t: Theme, w: Int, h: Int): Bitmap {
         val style = Prefs.wallStyle(ctx)
-        if (style == "orig") return wallpaper(t, w, h)
+        if (style != "fade" && style != "solid") return wallpaper(t, w, h)
         val col = wallColor(ctx, t)
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val cv = Canvas(bmp)

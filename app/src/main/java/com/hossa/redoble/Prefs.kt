@@ -19,7 +19,7 @@ object Prefs {
         Color.parseColor("#3FD0E0"), // Cian eléctrico
         Color.parseColor("#FF3D7F")  // Magenta punk
     )
-    val NAMES = arrayOf("Rojo", "Azul", "Plata", "Rojo RockPlay", "Ámbar", "Verde vúmetro",
+    val NAMES = arrayOf("Rojo", "Azul", "Plata", "Rojo rock", "Ámbar", "Verde vúmetro",
         "Naranja fuego", "Morado neón", "Cian eléctrico", "Magenta punk")
 
     // Apps por defecto (solo se muestran si están instaladas)
@@ -55,9 +55,16 @@ object Prefs {
     fun wpZoom(ctx: Context) = p(ctx).getInt("wpZoom", 0)
     fun setWpZoom(ctx: Context, v: Int) = p(ctx).edit().putInt("wpZoom", v).apply()
 
-    /** Reproductor: true = solo RockPlay IA; false = cualquier app de música. */
-    fun onlyRockPlay(ctx: Context) = p(ctx).getBoolean("onlyRockPlay", true)
-    fun setOnlyRockPlay(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("onlyRockPlay", v).apply()
+    /** Reproductor: true = solo tu app de música; false = cualquier app de música. */
+    fun onlyMusicApp(ctx: Context) = p(ctx).getBoolean("onlyRockPlay", false)
+    fun setOnlyMusicApp(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("onlyRockPlay", v).apply()
+
+    /** Tu app de música preferida (paquete). Por defecto, la de rock si está instalada. */
+    fun musicApp(ctx: Context): String = p(ctx).getString("musicApp", null) ?: run {
+        val d = Player.DEFAULT_MUSIC_APP
+        if (ctx.packageManager.getLaunchIntentForPackage(d) != null) d else ""
+    }
+    fun setMusicApp(ctx: Context, pkg: String) = p(ctx).edit().putString("musicApp", pkg).apply()
 
     // ---- Tema y distribución ----
     fun theme(ctx: Context) = p(ctx).getInt("theme", 0)
@@ -87,6 +94,18 @@ object Prefs {
         .map { android.graphics.Color.parseColor(it) }
     val LIGHT_TONES = listOf("#F2C6D2", "#D9CCF0", "#C6EBD9", "#C7E2F5", "#F7D3BC", "#F3EBD8", "#E6D3EC", "#CFDCC8")
         .map { android.graphics.Color.parseColor(it) }
+
+    /**
+     * Actualización en vivo (servicio en primer plano): batería al instante y hora
+     * con la letra del tema. Apagado: sin notificación fija; la hora usa el reloj
+     * del sistema y la batería se actualiza cada 15 minutos.
+     */
+    fun liveUpdates(ctx: Context) = p(ctx).getBoolean("liveUpdates", true)
+    fun setLiveUpdates(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("liveUpdates", v).apply()
+
+    /** Ya vio la guía de inicio (quien ya tenía el widget puesto no la necesita). */
+    fun onboarded(ctx: Context) = p(ctx).getBoolean("onboarded", RockWidget.hasWidgets(ctx))
+    fun setOnboarded(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("onboarded", v).apply()
 
     /** Si sonaba música en el último redibujo (sobrevive aunque el proceso muera). */
     fun lastPlaying(ctx: Context) = p(ctx).getBoolean("lastPlaying", false)
@@ -148,7 +167,7 @@ object Prefs {
     fun setApp(ctx: Context, slot: Int, pkg: String) =
         p(ctx).edit().putString("app$slot", pkg).remove("label$slot").apply()
 
-    /** Nombre corto opcional para el pad; si no hay, se usa el nombre de la app. */
+    /** Nombre corto opcional para el acceso; si no hay, se usa el nombre de la app. */
     fun label(ctx: Context, slot: Int): String? = p(ctx).getString("label$slot", null)?.takeIf { it.isNotBlank() }
     fun setLabel(ctx: Context, slot: Int, name: String?) =
         p(ctx).edit().apply { if (name.isNullOrBlank()) remove("label$slot") else putString("label$slot", name.trim()) }.apply()

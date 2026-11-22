@@ -25,11 +25,12 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.ColorUtils
 
 /**
- * Reproductor del widget: lee la sesión multimedia activa (RockPlay IA u
- * otra app) y la muestra encima de la foto, con ⏮ ⏯ ⏭.
+ * Reproductor del widget: lee la sesión multimedia activa (tu app de música
+ * preferida u otra) y la muestra en el widget, con ⏮ ⏯ ⏭.
  */
 object Player {
-    const val ROCKPLAY = "com.rockplayia.rockplay"
+    /** App de música preferida por defecto (si está instalada). */
+    const val DEFAULT_MUSIC_APP = "com.rockplayia.rockplay"
 
     const val ACTION_PLAY_PAUSE = "com.hossa.redoble.PLAYER_PLAY_PAUSE"
     const val ACTION_NEXT = "com.hossa.redoble.PLAYER_NEXT"
@@ -57,7 +58,7 @@ object Player {
             s == PlaybackState.STATE_CONNECTING
     }
 
-    /** La sesión a mostrar: primero RockPlay sonando, luego cualquiera sonando, luego en pausa. */
+    /** La sesión a mostrar: primero tu app preferida sonando, luego cualquiera sonando, luego en pausa. */
     fun controller(ctx: Context): MediaController? {
         if (!enabled(ctx)) return null
         val msm = ctx.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
@@ -66,11 +67,12 @@ object Player {
         } catch (e: SecurityException) {
             return null
         }
+        val fav = Prefs.musicApp(ctx)
         var pool = all.filter { isActive(it) }
-        if (Prefs.onlyRockPlay(ctx)) pool = pool.filter { it.packageName == ROCKPLAY }
-        return pool.firstOrNull { it.packageName == ROCKPLAY && isPlaying(it) }
+        if (Prefs.onlyMusicApp(ctx) && fav.isNotBlank()) pool = pool.filter { it.packageName == fav }
+        return pool.firstOrNull { it.packageName == fav && isPlaying(it) }
             ?: pool.firstOrNull { isPlaying(it) }
-            ?: pool.firstOrNull { it.packageName == ROCKPLAY }
+            ?: pool.firstOrNull { it.packageName == fav }
             ?: pool.firstOrNull()
     }
 
@@ -108,7 +110,7 @@ object Player {
                 val bmp = try { loadArt(app, uri) } catch (e: Throwable) { null }
                 if (bmp != null) {
                     artCache.put(uri, bmp)
-                    RockWidget.requestUpdate(app, 100)
+                    RockWidget.requestUpdate(app, 100, playerOnly = true)
                 }
                 loading.remove(uri)
             }.start()
@@ -202,7 +204,7 @@ object Player {
 
         if (Prefs.playerLarge(ctx)) {
             v.setViewVisibility(R.id.player, View.VISIBLE)
-            val src = if (c.packageName == ROCKPLAY) "ROCKPLAY" else try {
+            val src = try {
                 val pm = ctx.packageManager
                 pm.getApplicationLabel(pm.getApplicationInfo(c.packageName, 0)).toString().uppercase()
             } catch (e: Exception) { "MÚSICA" }
@@ -435,5 +437,5 @@ class MediaListener : NotificationListenerService() {
     }
 
     /** Agrupa cambios seguidos y no redibuja con la pantalla apagada. */
-    private fun schedule() = RockWidget.requestUpdate(this, 600)
+    private fun schedule() = RockWidget.requestUpdate(this, 600, playerOnly = true)
 }

@@ -5,22 +5,41 @@ plugins {
 
 android {
     namespace = "com.hossa.redoble"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.hossa.redoble"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 34
-        versionName = "8.5"
+        targetSdk = 36
+        versionCode = 35
+        versionName = "9.0"
     }
 
+    // Firma: si existen las variables (GitHub Secrets), se usan; si no, la clave
+    // actual del repo para que las actualizaciones sigan instalándose encima.
+    // PENDIENTE antes de publicar: clave nueva solo en Secrets y Play App Signing.
     signingConfigs {
+        val ksFile = System.getenv("PRISMA_KEYSTORE")
+        create("release") {
+            storeFile = file(ksFile ?: "redoble.keystore")
+            storePassword = System.getenv("PRISMA_KEYSTORE_PASSWORD") ?: "redoble123"
+            keyAlias = System.getenv("PRISMA_KEY_ALIAS") ?: "redoble"
+            keyPassword = System.getenv("PRISMA_KEY_PASSWORD") ?: "redoble123"
+        }
         getByName("debug") {
             storeFile = file("redoble.keystore")
             storePassword = "redoble123"
             keyAlias = "redoble"
             keyPassword = "redoble123"
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
@@ -30,7 +49,7 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { buildConfig = true }
-    lint { abortOnError = false; checkReleaseBuilds = false }
+    lint { abortOnError = true; checkReleaseBuilds = true; warningsAsErrors = false }
 }
 
 dependencies {

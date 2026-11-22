@@ -75,7 +75,11 @@ class RockWidget : AppWidgetProvider() {
         private val mainH = android.os.Handler(android.os.Looper.getMainLooper())
         @Volatile private var appCtx: Context? = null
         @Volatile private var pendingWhileOff = false
-        private val debounced = Runnable { appCtx?.let { updateAll(it) } }
+        @Volatile private var pendingFull = false
+        private val debounced = Runnable {
+            val c = appCtx ?: return@Runnable
+            if (pendingFull) { pendingFull = false; updateAll(c) } else updatePlayer(c)
+        }
 
         private fun screenOn(ctx: Context) = try {
             (ctx.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isInteractive
@@ -86,9 +90,10 @@ class RockWidget : AppWidgetProvider() {
          * apagada no redibuja: lo deja pendiente para cuando se encienda (si el
          * servicio en vivo está activo para avisar).
          */
-        fun requestUpdate(ctx: Context, delayMs: Long = 600) {
+        fun requestUpdate(ctx: Context, delayMs: Long = 600, playerOnly: Boolean = false) {
             val app = ctx.applicationContext
             if (!screenOn(app) && LiveService.running) { pendingWhileOff = true; return }
+            if (!playerOnly) pendingFull = true
             appCtx = app
             mainH.removeCallbacks(debounced)
             mainH.postDelayed(debounced, delayMs)
@@ -119,7 +124,7 @@ class RockWidget : AppWidgetProvider() {
             }
         }
 
-        private fun widthPx(ctx: Context, mgr: AppWidgetManager, id: Int): Int {
+        internal fun widthPx(ctx: Context, mgr: AppWidgetManager, id: Int): Int {
             val dp = try { mgr.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) } catch (e: Exception) { 0 }
             val dm = ctx.resources.displayMetrics
             val screen = minOf(dm.widthPixels, dm.heightPixels) - (16 * dm.density).toInt()
@@ -186,21 +191,62 @@ class RockWidget : AppWidgetProvider() {
         }
 
         fun update(ctx: Context, mgr: AppWidgetManager, widgetId: Int) {
+            mgr.updateAppWidget(widgetId, buildViews(ctx, widthPx(ctx, mgr, widgetId)))
+        }
+
+        /**
+         * Arma el widget completo. Lo usan el widget real y la vista previa de los
+         * ajustes ([preview] = true: sin efectos secundarios como pedir el clima).
+         * Está dividido por secciones: cabecera, clima/batería y apps.
+         */
+        fun buildViews(ctx: Context, W: Int, preview: Boolean = false): RemoteViews {
             val th = Themes.widget(ctx)
             val v = RemoteViews(ctx.packageName, th.layout)
-            val accent = th.accent(ctx)
-            val rock = th.family == "rock"
             applyBackground(ctx, v, th)
-
             val fonts = Prefs.themeFonts(ctx)
-            val S = TextArt.spec(th.family)
-            val W = widthPx(ctx, mgr, widgetId)
-            val dens = ctx.resources.displayMetrics.density
-            val colW = W - ((if (rock) 96 else 24) * dens).toInt()
 
             // Reproductor primero: de él depende cuánto espacio queda.
             val playing = Player.apply(ctx, v, fonts, W)
-            Prefs.setLastPlaying(ctx, playing)
+            if (!preview) Prefs.setLastPlaying(ctx, playing)
+
+            headerSection(ctx, v, th, W, playing, fonts, preview)
+            appsSection(ctx, v, th, W, playing, fonts)
+
+            // Si hay ciudad pero el clima es viejo o falta el tipo de clima, pedirlo ya
+            if (!preview && Prefs.city(ctx).isNotBlank() && (Prefs.weatherCode(ctx) < 0 ||
+                System.currentTimeMillis() - Prefs.weatherAt(ctx) > 45 * 60_000L)) {
+                WeatherWorker.runNow(ctx)
+            }
+            return v
+        }
+
+        /**
+         * Cambió algo del reproductor. Si el estado (sonando o no) es el mismo,
+         * solo se redibuja la tarjeta del reproductor; si cambió, todo (la hora y
+         * las apps se acomodan según haya música).
+         */
+        fun updatePlayer(ctx: Context) {
+            val mgr = AppWidgetManager.getInstance(ctx)
+            val ids = mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))
+            if (ids.isEmpty()) return
+            val th = Themes.widget(ctx)
+            for (id in ids) {
+                try {
+                    val v = RemoteViews(ctx.packageName, th.layout)
+                    val playing = Player.apply(ctx, v, Prefs.themeFonts(ctx), widthPx(ctx, mgr, id))
+                    if (playing != Prefs.lastPlaying(ctx)) { updateAll(ctx); return }
+                    mgr.partiallyUpdateAppWidget(id, v)
+                } catch (e: Exception) { }
+            }
+        }
+
+        /** Día, fecha, hora, clima y batería. */
+        private fun headerSection(ctx: Context, v: RemoteViews, th: Theme, W: Int, playing: Boolean, fonts: Boolean, preview: Boolean) {
+            val accent = th.accent(ctx)
+            val rock = th.family == "rock"
+            val S = TextArt.spec(th.family)
+            val dens = ctx.resources.displayMetrics.density
+            val colW = W - ((if (rock) 96 else 24) * dens).toInt()
 
             val dia = Prefs.el(ctx, "dia"); val hora = Prefs.el(ctx, "hora")
             val clima = Prefs.el(ctx, "clima"); val manana = Prefs.el(ctx, "manana")
@@ -236,9 +282,12 @@ class RockWidget : AppWidgetProvider() {
             val bmpClock = bitmapClock(ctx)
             v.setViewVisibility(R.id.clock, vis(hora && !bmpClock))
             v.setViewVisibility(R.id.clock_bmp, vis(hora && bmpClock))
-            if (hora && bmpClock) { v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, playing)); armClockCheck(ctx) }
+            if (hora && bmpClock) {
+                v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, playing))
+                if (!preview) armClockCheck(ctx)
+            }
             val ts = timeSize(th.family) * (if (playing) 0.875f else 1f)
-            for (id in intArrayOf(R.id.hh, R.id.colon, R.id.mm)) v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_SP, ts)
+            for (id in intArrayOf(R.id.hh, R.id.colon, R.id.mm)) v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_DIP, ts)
             v.setTextColor(R.id.colon, when (th.family) { "claro" -> th.head; "neon" -> th.accent2; else -> accent })
 
             // Clima
@@ -263,15 +312,25 @@ class RockWidget : AppWidgetProvider() {
             v.setViewVisibility(R.id.hairline, vis((dia || hora) && (clima || bateria || manana)))
             v.setViewVisibility(R.id.header, vis(dia || hora || clima || manana || bateria))
             if (bateria) applyBattery(ctx, v, fonts)
+            if (!preview) {
+                // Abrir ajustes desde la cabecera y la lista vacía
+                val open = PendingIntent.getActivity(
+                    ctx, 100, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+                v.setOnClickPendingIntent(R.id.header, open)
+                v.setOnClickPendingIntent(R.id.day_img, open)
+                v.setOnClickPendingIntent(R.id.empty, open)
+            }
+        }
 
-            // Abrir ajustes desde la cabecera y la lista vacía
-            val open = PendingIntent.getActivity(
-                ctx, 100, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-            v.setOnClickPendingIntent(R.id.header, open)
-            v.setOnClickPendingIntent(R.id.day_img, open)
-            v.setOnClickPendingIntent(R.id.empty, open)
+        /** Accesos a apps (una o dos filas según la distribución y la música). */
+        private fun appsSection(ctx: Context, v: RemoteViews, th: Theme, W: Int, playing: Boolean, fonts: Boolean) {
+            val accent = th.accent(ctx)
+            val rock = th.family == "rock"
+            val S = TextArt.spec(th.family)
+            val dens = ctx.resources.displayMetrics.density
+
 
             // Apps: cuántas mostrar según la distribución (con música, solo una fila)
             val wanted = Prefs.appsCount(ctx)
@@ -280,7 +339,7 @@ class RockWidget : AppWidgetProvider() {
             val auto = Prefs.preset(ctx) == "completo"
             val maxApps = if (auto && playing && wanted > 3) 3 else wanted
             val pm = ctx.packageManager
-            val showNums = rock
+            val showNums = false  // los números 01/02/03 se leían poco y no aportaban
             val numColor = ColorUtils.setAlphaComponent(if (rock) accent else th.accent2, if (rock) 0x99 else 0xCC)
             val iconColor = when (th.family) { "neon" -> accent; "lujo" -> th.head; else -> th.head }
             // Una sola consulta por app (antes se hacían dos)
@@ -331,14 +390,6 @@ class RockWidget : AppWidgetProvider() {
             }
             val word = if (rock) (if (filled.size == 1) "pista" else "pistas") else (if (filled.size == 1) "app" else "apps")
             v.setTextViewText(R.id.count, "${filled.size} $word")
-
-            // Si hay ciudad pero el clima es viejo o falta el tipo de clima, pedirlo ya
-            if (Prefs.city(ctx).isNotBlank() && (Prefs.weatherCode(ctx) < 0 ||
-                System.currentTimeMillis() - Prefs.weatherAt(ctx) > 45 * 60_000L)) {
-                WeatherWorker.runNow(ctx)
-            }
-
-            mgr.updateAppWidget(widgetId, v)
         }
 
         /** Fondo del widget (como está, desvanecido o fijo) y colores de texto acordes. */
@@ -371,7 +422,7 @@ class RockWidget : AppWidgetProvider() {
             val accent = th.accent(ctx)
             val level = BatteryMonitor.level(ctx)
             val charging = BatteryMonitor.isCharging(ctx)
-            val off = if (th.light) Color.parseColor("#1F1C1A17") else Color.parseColor("#2A231E")
+            val off = if (th.light) Color.parseColor("#381C1A17") else Color.parseColor("#2A231E")
             when (th.family) {
                 // Claro: barra fina; Lujo: solo texto ("BATERÍA 70 %").
                 "claro" -> v.setImageViewBitmap(R.id.leds_img, Graphics.barBitmap(ctx, level, th.head, off))

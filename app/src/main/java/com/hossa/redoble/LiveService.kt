@@ -101,7 +101,7 @@ class LiveService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat)
-            .setContentTitle("Prisma")
+            .setContentTitle("Prisma Widgets")
             .setContentText("Widget en vivo")
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .setOngoing(true)
@@ -119,8 +119,13 @@ class LiveService : Service() {
         @Volatile var running = false
             private set
 
+        fun stop(ctx: Context) {
+            try { ctx.stopService(Intent(ctx, LiveService::class.java)) } catch (e: Exception) { }
+        }
+
         /** Arranca el servicio si se puede (desde segundo plano Android puede negarlo). */
         fun start(ctx: Context) {
+            if (!Prefs.liveUpdates(ctx)) return
             try {
                 ContextCompat.startForegroundService(ctx, Intent(ctx, LiveService::class.java))
             } catch (e: Exception) { }

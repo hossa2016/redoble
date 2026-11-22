@@ -19,13 +19,30 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
+          gradle-version: '8.11.1'
+      # Versión release (la que acepta Play), optimizada con R8. Si existen los
+      # secretos de firma se usan; si no, la clave actual del repo.
+      - name: Preparar clave de firma
+        env:
+          KS_B64: ${{ secrets.PRISMA_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS_B64" ]; then echo "$KS_B64" | base64 -d > $RUNNER_TEMP/prisma.jks; echo "PRISMA_KEYSTORE=$RUNNER_TEMP/prisma.jks" >> $GITHUB_ENV; fi
       - name: Compilar
-        run: gradle assembleDebug --no-daemon --stacktrace
-      - run: cp app/build/outputs/apk/debug/app-debug.apk Prisma.apk
+        env:
+          PRISMA_KEYSTORE_PASSWORD: ${{ secrets.PRISMA_KEYSTORE_PASSWORD }}
+          PRISMA_KEY_ALIAS: ${{ secrets.PRISMA_KEY_ALIAS }}
+          PRISMA_KEY_PASSWORD: ${{ secrets.PRISMA_KEY_PASSWORD }}
+        run: |
+          if [ -z "$PRISMA_KEYSTORE_PASSWORD" ]; then unset PRISMA_KEYSTORE_PASSWORD PRISMA_KEY_ALIAS PRISMA_KEY_PASSWORD; fi
+          gradle assembleRelease bundleRelease --no-daemon --stacktrace
+      - run: |
+          cp app/build/outputs/apk/release/app-release.apk Prisma.apk
+          cp app/build/outputs/bundle/release/app-release.aab PrismaWidgets.aab
       - name: Publicar APK
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
           name: Prisma v${{ github.run_number }}
-          files: Prisma.apk
+          files: |
+            Prisma.apk
+            PrismaWidgets.aab

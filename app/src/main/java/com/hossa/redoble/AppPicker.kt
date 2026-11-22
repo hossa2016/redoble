@@ -81,8 +81,8 @@ class AppPicker(
 
         // Título
         val num = String.format("%02d", slot + 1)
-        val title = SpannableString("PISTA $num").apply {
-            setSpan(ForegroundColorSpan(ui.accent), 6, 6 + num.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        val title = SpannableString("APP $num").apply {
+            setSpan(ForegroundColorSpan(ui.accent), 4, 4 + num.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         val head = LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -93,7 +93,7 @@ class AppPicker(
             addView(ui.textButton("Cerrar").apply { setOnClickListener { dialog.dismiss() } })
         }
         sheet.addView(head)
-        sheet.addView(ui.bodyText("Elige la app que se abrirá desde esta pista.").apply {
+        sheet.addView(ui.bodyText("Elige la app que se abrirá desde este acceso.").apply {
             setPadding(ui.dp(20), ui.dp(6), ui.dp(20), ui.dp(14))
         })
 
@@ -143,12 +143,19 @@ class AppPicker(
         })
 
         // Pie
-        sheet.addView(ui.secondary("Dejar pista libre").apply { setOnClickListener { choose("") } },
+        sheet.addView(ui.secondary("Dejar espacio libre").apply { setOnClickListener { choose("") } },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, ui.dp(48)).apply {
                 setMargins(ui.dp(20), ui.dp(12), ui.dp(20), ui.dp(20))
             })
 
         dialog.setContentView(sheet)
+        // Android 15+: la hoja llega hasta abajo; se deja espacio para la barra de navegación y el teclado
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(sheet) { v, insets ->
+            val t = androidx.core.view.WindowInsetsCompat.Type
+            val b = insets.getInsets(t.navigationBars() or t.ime())
+            v.setPadding(v.paddingLeft, v.paddingTop, v.paddingRight, b.bottom)
+            insets
+        }
         val screenH = ctx.resources.displayMetrics.heightPixels
         val h = minOf(ui.dp(640), (screenH * 0.8f).toInt())
         dialog.window?.apply {
@@ -203,7 +210,7 @@ class AppPicker(
             addView(ui.ellipsize(ui.text(a.label, ui.cond, 19f, Ui.HEAD)),
                 LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = ui.dp(14) })
             usedIn[a.pkg]?.let { other ->
-                addView(ui.text("En pista %02d".format(other + 1), ui.cond, 14f, Ui.DIM).apply {
+                addView(ui.text("En el acceso %d".format(other + 1), ui.cond, 14f, Ui.DIM).apply {
                     setPadding(ui.dp(8), 0, 0, 0)
                 })
             }

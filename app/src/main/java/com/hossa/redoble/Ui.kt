@@ -33,7 +33,7 @@ class Ui(val ctx: Context, val accent: Int) {
         val GROOVE = Color.parseColor("#2A231E")
         val HEAD = Color.parseColor("#EDE6DC")
         val MUTED = Color.parseColor("#9C9187")
-        val DIM = Color.parseColor("#645A52")
+        val DIM = Color.parseColor("#8A7F75")  // contraste ≥ 4.5:1 sobre las tarjetas
         val OK = Color.parseColor("#7FB38A")
         val ALERT = Color.parseColor("#E24B4A")
     }
@@ -195,6 +195,41 @@ class Ui(val ctx: Context, val accent: Int) {
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
         setTextColor(MUTED)
         minHeight = dp(40); minimumHeight = dp(40)
+    }
+
+    /**
+     * Selector segmentado único de la app (48 dp, el mínimo táctil recomendado).
+     * El texto se achica solo si no cabe, también con letra grande del sistema.
+     */
+    fun <T> segmented(options: List<Pair<T, String>>, selected: T, onPick: (T) -> Unit): LinearLayout {
+        val row = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            background = rect(WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+            setPadding(dp(4), dp(4), dp(4), dp(4))
+        }
+        options.forEachIndexed { i, (value, label) ->
+            val on = value == selected
+            val b = (if (on) primary(label) else textButton(label).apply { setTextColor(MUTED) }).apply {
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                maxLines = 1
+                setPadding(dp(4), 0, dp(4), 0)
+                minHeight = dp(48); minimumHeight = dp(48)
+                androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
+                    this, 10, 15, 1, TypedValue.COMPLEX_UNIT_SP)
+                contentDescription = if (on) "$label, seleccionado" else label
+                setOnClickListener { if (!on) onPick(value) }
+            }
+            row.addView(b, LinearLayout.LayoutParams(0, dp(48), 1f).apply { if (i > 0) marginStart = dp(4) })
+        }
+        return row
+    }
+
+    /** Encabezado de grupo (Estilo, Contenido, Reproductor). */
+    fun groupHeader(title: String, sub: String): View = LinearLayout(ctx).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(dp(20), dp(14), dp(20), dp(10))
+        addView(text(title.uppercase(), condSemi, 13f, accent, 0.16f))
+        addView(text(sub, cond, 14f, MUTED).apply { setPadding(0, dp(2), 0, 0) })
     }
 
     // ---------------- Secciones ----------------
