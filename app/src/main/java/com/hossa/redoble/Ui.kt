@@ -240,10 +240,10 @@ class Ui(val ctx: Context, val accent: Int) {
     }
 
     /** El texto se achica (hasta 11 sp) solo si no cabe; si cabe, queda a su tamaño. */
-    fun fitText(tv: TextView, maxSp: Int) {
+    fun fitText(tv: TextView, maxSp: Int, minSp: Int = 11) {
         tv.maxLines = 1
         androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
-            tv, 11, maxSp, 1, TypedValue.COMPLEX_UNIT_SP)
+            tv, minSp, maxSp, 1, TypedValue.COMPLEX_UNIT_SP)
     }
 
     /**
@@ -339,11 +339,12 @@ class Ui(val ctx: Context, val accent: Int) {
         gravity = Gravity.CENTER_VERTICAL
         val bar = View(ctx).apply { background = rect(accent, 2f) }
         addView(bar, LinearLayout.LayoutParams(dp(3), dp(18)))
+        // Título siempre en una línea: si no cabe junto al resumen, se achica un poco
         addView(
-            text(title.uppercase(), anton, 21f, HEAD, 0.03f),
-            LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(10) }
+            text(title.uppercase(), anton, 21f, HEAD, 0.03f).apply { fitText(this, 21, 15) },
+            LinearLayout.LayoutParams(0, dp(34), 1f).apply { marginStart = dp(10) }
         )
-        if (hint != null) addView(text(hint, cond, 14f, DIM).apply { tag = "hint" })
+        if (hint != null) addView(text(hint, cond, 14f, DIM).apply { tag = "hint"; hintStyle(this) })
         layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         ).apply { bottomMargin = dp(14) }
@@ -369,6 +370,12 @@ class Ui(val ctx: Context, val accent: Int) {
             }
             layoutParams = LinearLayout.LayoutParams(dp(sizeDp), dp(sizeDp))
         }
+
+    /** Resumen a la derecha del título: una línea y con "…" si es largo. */
+    fun hintStyle(tv: TextView) {
+        tv.maxLines = 1; tv.ellipsize = TextUtils.TruncateAt.END; tv.maxWidth = dp(140)
+        tv.setPadding(dp(8), 0, 0, 0)
+    }
 
     fun ellipsize(tv: TextView) = tv.apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END }
 }

@@ -12,7 +12,7 @@ internal fun MainActivity.fold(card: View, key: String, summary: String? = null)
     val c = card as? LinearLayout ?: return card
     val title = c.getChildAt(0) as? LinearLayout ?: return card
     if (summary != null && title.findViewWithTag<View>("hint") == null) {
-        title.addView(ui.text(summary, ui.cond, 14f, Ui.DIM).apply { tag = "hint"; maxLines = 1 })
+        title.addView(ui.text(summary, ui.cond, 14f, Ui.DIM).apply { tag = "hint"; ui.hintStyle(this) })
     }
     // Flecha dibujada en dp (no en letra): no se corta con letra grande del sistema
     val chev = android.widget.ImageView(this).apply {
