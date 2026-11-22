@@ -150,7 +150,9 @@ object Player {
             }
             else -> return
         }
-        RockWidget.requestUpdate(ctx, 350)
+        // ⏮ ⏯ ⏭ solo redibujan la tarjeta del reproductor (sin parpadeo de todo el
+        // widget). Cerrar sí redibuja todo, porque la tarjeta desaparece.
+        RockWidget.requestUpdate(ctx, 350, playerOnly = action != ACTION_CLOSE)
     }
 
     /** Redibuja los widgets (el tamaño de la cabecera depende del reproductor). */

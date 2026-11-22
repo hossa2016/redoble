@@ -133,6 +133,13 @@ def build(name,p):
 </LinearLayout>
 '''
     xml=add_bmps(xml, name)
+    # Efecto de toque de Android: onda en los botones del reproductor y en las apps
+    for bid in ('player_close','player_prev','player_play','player_next','pc_play','pc_next'):
+        xml=xml.replace(f'<ImageView android:id="@+id/{bid}" ', f'<ImageView android:id="@+id/{bid}" android:background="?android:attr/selectableItemBackgroundBorderless" ',1)
+    for i in range(6):
+        xml=xml.replace(f'<FrameLayout android:id="@+id/pad{i}" ', f'<FrameLayout android:id="@+id/pad{i}" android:foreground="?android:attr/selectableItemBackground" ',1)
+    for bid in ('player_info','pc_info'):
+        xml=xml.replace(f'android:id="@+id/{bid}" ', f'android:id="@+id/{bid}" android:foreground="?android:attr/selectableItemBackground" ',1)
     open(f'{RES}/layout/widget_{name}.xml','w',encoding='utf-8').write(xml)
     # Variante con el reproductor justo debajo del clima (opción "Debajo del clima")
     old='android:layout_gravity="bottom" android:layout_marginStart="2dp" android:layout_marginEnd="2dp" android:layout_marginBottom="12dp"'
