@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(setlistPlate())
         col.addView(playerPlate())
         if (hasWidget) col.addView(widgetDonePlate())
-        col.addView(ui.text("Prisma 7.6", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        col.addView(ui.text("Prisma 7.7", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -837,6 +837,11 @@ class MainActivity : AppCompatActivity() {
             isHorizontalScrollBarEnabled = false
             addView(strip)
         })
+        card.addView(switchRow("Letras del tema", Prefs.themeFonts(this)) { on ->
+            Prefs.setThemeFonts(this, on)
+            RockWidget.updateAll(this)
+        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+        card.addView(ui.bodyText("Encendido: el widget usa las letras exactas de cada tema. Apagado: la letra del sistema.", Ui.MUTED, 13f))
         if (cur.hasOwnWallpaper) {
             card.addView(ui.bodyText("Este tema tiene su propio fondo de pantalla. También puedes usar tu foto en Fondo.", Ui.MUTED, 13f),
                 LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })

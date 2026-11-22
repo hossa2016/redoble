@@ -40,7 +40,12 @@ class LiveService : Service() {
                         BatteryMonitor.refresh(ctx)
                     }
                 }
-                Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> BatteryMonitor.refresh(ctx)
+                Intent.ACTION_TIME_TICK -> RockWidget.updateClock(ctx)
+                Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> RockWidget.updateAll(ctx)
+                Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
+                    BatteryMonitor.refresh(ctx)
+                    RockWidget.updateClock(ctx)
+                }
             }
         }
     }
@@ -58,6 +63,9 @@ class LiveService : Service() {
             addAction(Intent.ACTION_BATTERY_CHANGED)
             addAction(Intent.ACTION_SCREEN_ON)
             addAction(Intent.ACTION_USER_PRESENT)
+            addAction(Intent.ACTION_TIME_TICK)
+            addAction(Intent.ACTION_TIME_CHANGED)
+            addAction(Intent.ACTION_TIMEZONE_CHANGED)
         }
         ContextCompat.registerReceiver(this, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
     }

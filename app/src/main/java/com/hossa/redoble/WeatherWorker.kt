@@ -44,6 +44,7 @@ class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
                 tomorrow = "Mañana: ${describe(codes.getInt(1)).lowercase()} · $mn°–$mx°"
             }
             Prefs.setWeather(ctx, "$now, $temp°", tomorrow)
+            Prefs.setWeatherExtra(ctx, current.getInt("weather_code"), temp, now)
             RockWidget.updateAll(ctx)
             Result.success()
         } catch (e: Exception) {

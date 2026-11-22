@@ -85,6 +85,25 @@ object Themes {
                 p.shader = LinearGradient(0f, h * 0.7f, 0f, h.toFloat(),
                     intArrayOf(0, Color.parseColor("#66000000")), null, Shader.TileMode.CLAMP)
                 cv.drawRect(0f, 0f, w.toFloat(), h.toFloat(), p)
+                // Marco dorado fino con esquinas en diamante
+                p.shader = null
+                p.style = Paint.Style.STROKE
+                p.strokeWidth = maxOf(1.5f, w / 720f)
+                p.color = ColorUtils.setAlphaComponent(Color.parseColor("#D4B06A"), 120)
+                val m = w * 0.04f; val top = h * 0.045f; val bot = h - h * 0.035f
+                cv.drawRect(m, top, w - m, bot, p)
+                p.color = ColorUtils.setAlphaComponent(Color.parseColor("#D4B06A"), 50)
+                val m2 = m + w * 0.012f
+                cv.drawRect(m2, top + w * 0.012f, w - m2, bot - w * 0.012f, p)
+                p.style = Paint.Style.FILL
+                p.color = Color.parseColor("#D4B06A")
+                val dsz = w * 0.012f
+                for ((cx, cy) in listOf(m to top, w - m to top, m to bot, w - m to bot)) {
+                    val path = android.graphics.Path().apply {
+                        moveTo(cx, cy - dsz); lineTo(cx + dsz, cy); lineTo(cx, cy + dsz); lineTo(cx - dsz, cy); close()
+                    }
+                    cv.drawPath(path, p)
+                }
             }
         }
         return bmp

@@ -72,6 +72,9 @@ object Prefs {
     fun appsCount(ctx: Context) = p(ctx).getInt("appsCount", 6)
     fun setAppsCount(ctx: Context, n: Int) =
         p(ctx).edit().putInt("appsCount", n).putString("preset", "custom").apply()
+    /** Dibujar los textos con las letras del tema (como imagen). */
+    fun themeFonts(ctx: Context) = p(ctx).getBoolean("themeFonts", true)
+    fun setThemeFonts(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("themeFonts", on).apply()
     fun playerLarge(ctx: Context) = p(ctx).getBoolean("playerLarge", false)
     fun setPlayerLarge(ctx: Context, v: Boolean) =
         p(ctx).edit().putBoolean("playerLarge", v).putString("preset", "custom").apply()
@@ -101,6 +104,11 @@ object Prefs {
 
     fun weatherNow(ctx: Context) = p(ctx).getString("wxNow", "") ?: ""
     fun weatherTomorrow(ctx: Context) = p(ctx).getString("wxTomorrow", "") ?: ""
+    fun weatherCode(ctx: Context) = p(ctx).getInt("wxCode", -1)
+    fun weatherTemp(ctx: Context) = p(ctx).getInt("wxTemp", 0)
+    fun weatherDesc(ctx: Context) = p(ctx).getString("wxDesc", "") ?: ""
+    fun setWeatherExtra(ctx: Context, code: Int, temp: Int, desc: String) = p(ctx).edit()
+        .putInt("wxCode", code).putInt("wxTemp", temp).putString("wxDesc", desc).apply()
     fun weatherAt(ctx: Context) = p(ctx).getLong("wxAt", 0L)
     fun setWeather(ctx: Context, now: String, tomorrow: String) = p(ctx).edit()
         .putString("wxNow", now).putString("wxTomorrow", tomorrow)

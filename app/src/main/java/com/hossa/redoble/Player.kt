@@ -162,7 +162,7 @@ object Player {
         )
 
     /** Llena (u oculta) la tarjeta del reproductor. Devuelve si quedó visible. */
-    fun apply(ctx: Context, v: RemoteViews): Boolean {
+    fun apply(ctx: Context, v: RemoteViews, fonts: Boolean = false, widthPx: Int = 0): Boolean {
         v.setViewVisibility(R.id.player, View.GONE)
         v.setViewVisibility(R.id.player_c, View.GONE)
         if (!Prefs.el(ctx, "player")) return false
@@ -192,6 +192,14 @@ object Player {
             )
         }
         val iconCol = if (th.family == "neon") accent else th.head
+        val S = TextArt.spec(th.family)
+        val d = ctx.resources.displayMetrics.density
+        val W = if (widthPx > 0) widthPx else (360 * d).toInt()
+        val glow = if (th.family == "neon") accent else 0
+        fun txt(tv: Int, bmp: Int, t: String, font: Int, sp: Float, col: Int, maxW: Int, caps: Boolean = false, sp2: Float = 0f) =
+            RockWidget.twin(v, tv, bmp, t.isNotBlank(), fonts) {
+                TextArt.render(ctx, t, font, sp, col, sp2, caps, S.shadow, if (font == S.title) glow else 0, maxW)
+            }
 
         if (Prefs.playerLarge(ctx)) {
             v.setViewVisibility(R.id.player, View.VISIBLE)
@@ -206,6 +214,11 @@ object Player {
             v.setTextViewText(R.id.player_title, title)
             v.setTextViewText(R.id.player_artist, artist)
             v.setViewVisibility(R.id.player_artist, if (artist.isBlank()) View.GONE else View.VISIBLE)
+            val tw = W - (230 * d).toInt()
+            txt(R.id.player_src, R.id.player_src_bmp, src, S.title, 10f, accent, W / 2, sp2 = 0.12f)
+            txt(R.id.player_state, R.id.player_state_bmp, if (playing) " · Sonando" else " · En pausa", S.body, 10f, th.dim, W / 3)
+            txt(R.id.player_title, R.id.player_title_bmp, title, S.semi, 15f, th.head, tw, caps = th.family == "neon")
+            txt(R.id.player_artist, R.id.player_artist_bmp, artist, S.body, 12f, th.dim, tw)
             v.setImageViewBitmap(R.id.player_art, artBitmap(ctx, art, th, 56, false))
             v.setImageViewBitmap(R.id.player_close, iconBitmap(ctx, "close", th.dim, 16))
             v.setOnClickPendingIntent(R.id.player_close, broadcast(ctx, ACTION_CLOSE, 205))
@@ -225,6 +238,9 @@ object Player {
             v.setTextViewText(R.id.pc_title, title)
             v.setTextViewText(R.id.pc_artist, artist)
             v.setViewVisibility(R.id.pc_artist, if (artist.isBlank()) View.GONE else View.VISIBLE)
+            val tw = W - (180 * d).toInt()
+            txt(R.id.pc_title, R.id.pc_title_bmp, title, S.semi, 14f, th.head, tw, caps = th.family == "neon")
+            txt(R.id.pc_artist, R.id.pc_artist_bmp, artist, S.body, 12f, th.dim, tw)
             v.setImageViewBitmap(R.id.pc_art, artBitmap(ctx, art, th, 46, playing))
             v.setImageViewBitmap(R.id.pc_play, playBitmap(ctx, playing, th, 40))
             v.setContentDescription(R.id.pc_play, if (playing) "Pausar" else "Reproducir")
