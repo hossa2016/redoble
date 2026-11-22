@@ -342,7 +342,7 @@ class Ui(val ctx: Context, val accent: Int) {
         // Título siempre en una línea: si no cabe junto al resumen, se achica un poco
         addView(
             text(title.uppercase(), anton, 21f, HEAD, 0.03f).apply { fitText(this, 21, 15) },
-            LinearLayout.LayoutParams(0, dp(34), 1f).apply { marginStart = dp(10) }
+            LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginStart = dp(10) }
         )
         if (hint != null) addView(text(hint, cond, 14f, DIM).apply { tag = "hint"; hintStyle(this) })
         layoutParams = LinearLayout.LayoutParams(
