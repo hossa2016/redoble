@@ -161,8 +161,8 @@ internal fun MainActivity.animSection(card: LinearLayout) {
         pair.forEachIndexed { i, s ->
             val on = s.id == info.id
             val b = (if (on) ui.primary(s.name) else ui.secondary(s.name)).apply {
-                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f); maxLines = 1
-                androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(this, 11, 15, 1, android.util.TypedValue.COMPLEX_UNIT_SP)
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f); maxLines = 1; includeFontPadding = false; gravity = Gravity.CENTER
+                setPadding(ui.dp(6), 0, ui.dp(6), 0)
                 contentDescription = if (on) "${s.name}, elegido" else s.name
                 setOnClickListener { if (!on) { Prefs.setLiveScene(this@animSection, s.id); build() } }
             }

@@ -209,17 +209,20 @@ class Ui(val ctx: Context, val accent: Int) {
         }
         options.forEachIndexed { i, (value, label) ->
             val on = value == selected
+            // Mismo tamaño de letra en todas y centrada; el ancho de cada opción se reparte
+            // según lo largo de su texto (así "Desvanecido" cabe junto a "Fijo").
+            val size = if (options.size >= 5) 14f else 15f
             val b = (if (on) primary(label) else textButton(label).apply { setTextColor(MUTED) }).apply {
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, size)
                 maxLines = 1
-                setPadding(dp(4), 0, dp(4), 0)
+                includeFontPadding = false
+                gravity = Gravity.CENTER
+                setPadding(dp(2), 0, dp(2), 0)
                 minHeight = dp(48); minimumHeight = dp(48)
-                androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
-                    this, 10, 15, 1, TypedValue.COMPLEX_UNIT_SP)
                 contentDescription = if (on) "$label, seleccionado" else label
                 setOnClickListener { if (!on) onPick(value) }
             }
-            row.addView(b, LinearLayout.LayoutParams(0, dp(48), 1f).apply { if (i > 0) marginStart = dp(4) })
+            row.addView(b, LinearLayout.LayoutParams(0, dp(48), label.length + 3f).apply { if (i > 0) marginStart = dp(3) })
         }
         return row
     }

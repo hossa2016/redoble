@@ -39,7 +39,7 @@ object VideoScenes {
         Info("fogata", "Fogata", "Fogata real con chispas por delante y la luz del fuego", R.raw.vid_fogata, R.raw.vid_chispas, true),
         Info("brasero", "Brasero", "Fuego intenso con chispas al frente y resplandor cálido", R.raw.vid_brasero, R.raw.vid_chispas, true),
         Info("chispas", "Chispas", "Brasas volando en la oscuridad", R.raw.vid_chispas, null, true),
-        Info("ciudad", "Lluvia en la ciudad", "Gotas en el vidrio y luces de ciudad desenfocadas", R.raw.vid_ciudad),
+        Info("ciudad", "Lluvia y ciudad", "Gotas en el vidrio y luces de ciudad desenfocadas", R.raw.vid_ciudad),
         Info("cafe", "Lluvia y café", "Ventana con lluvia, neón y el vapor de un café", R.raw.vid_cafe),
         Info("ventana", "Ventana gris", "Lluvia fuerte resbalando por el vidrio", R.raw.vid_ventana),
     )

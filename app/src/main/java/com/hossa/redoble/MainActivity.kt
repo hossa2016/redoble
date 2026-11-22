@@ -184,7 +184,7 @@ class MainActivity : AppCompatActivity() {
         val sv = ScrollView(this).apply {
             setBackgroundColor(Ui.INK)
             isFillViewport = true
-            clipToPadding = false
+            clipToPadding = true   // el contenido no pasa por detrás de la barra de estado
             addView(content)
         }
         ViewCompat.setOnApplyWindowInsetsListener(sv) { v, insets ->
