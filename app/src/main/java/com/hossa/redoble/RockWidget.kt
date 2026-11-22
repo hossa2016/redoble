@@ -53,11 +53,15 @@ class RockWidget : AppWidgetProvider() {
 
         val DAYS = arrayOf("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado")
 
-        private val PADS = intArrayOf(R.id.pad0, R.id.pad1, R.id.pad2, R.id.pad3, R.id.pad4, R.id.pad5)
-        private val NUMS = intArrayOf(R.id.num0, R.id.num1, R.id.num2, R.id.num3, R.id.num4, R.id.num5)
-        private val ICONS = intArrayOf(R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5)
-        private val LABEL_BMPS = intArrayOf(R.id.label0_bmp, R.id.label1_bmp, R.id.label2_bmp, R.id.label3_bmp, R.id.label4_bmp, R.id.label5_bmp)
-        private val LABELS = intArrayOf(R.id.label0, R.id.label1, R.id.label2, R.id.label3, R.id.label4, R.id.label5)
+        // Lugares en el orden en que se ven: fila 1 = 0,1,2,(6) · fila 2 = 3,4,5,(7).
+        // Con 3 por fila, los lugares 6 y 7 se ocultan y los demás se reparten el ancho.
+        private val ORDER3 = intArrayOf(0, 1, 2, 3, 4, 5)
+        private val ORDER4 = intArrayOf(0, 1, 2, 6, 3, 4, 5, 7)
+        private val PADS = intArrayOf(R.id.pad0, R.id.pad1, R.id.pad2, R.id.pad3, R.id.pad4, R.id.pad5, R.id.pad6, R.id.pad7)
+        private val NUMS = intArrayOf(R.id.num0, R.id.num1, R.id.num2, R.id.num3, R.id.num4, R.id.num5, R.id.num6, R.id.num7)
+        private val ICONS = intArrayOf(R.id.icon0, R.id.icon1, R.id.icon2, R.id.icon3, R.id.icon4, R.id.icon5, R.id.icon6, R.id.icon7)
+        private val LABEL_BMPS = intArrayOf(R.id.label0_bmp, R.id.label1_bmp, R.id.label2_bmp, R.id.label3_bmp, R.id.label4_bmp, R.id.label5_bmp, R.id.label6_bmp, R.id.label7_bmp)
+        private val LABELS = intArrayOf(R.id.label0, R.id.label1, R.id.label2, R.id.label3, R.id.label4, R.id.label5, R.id.label6, R.id.label7)
 
         fun hasWidgets(ctx: Context): Boolean =
             AppWidgetManager.getInstance(ctx)
@@ -337,24 +341,29 @@ class RockWidget : AppWidgetProvider() {
 
 
             // Apps: cuántas mostrar según la distribución (con música, solo una fila)
-            val wanted = Prefs.appsCount(ctx)
+            val perRow = Prefs.perRow(ctx)
+            val order = if (perRow == 4) ORDER4 else ORDER3
+            val wanted = Prefs.appRows(ctx) * perRow
             // En "Completo", con música se deja una sola fila para dar espacio al
             // reproductor. Si el usuario eligió el número a mano, se respeta.
             val auto = Prefs.preset(ctx) == "completo"
-            val maxApps = if (auto && playing && wanted > 3) 3 else wanted
+            val maxApps = if (auto && playing && wanted > perRow) perRow else wanted
             val pm = ctx.packageManager
             val showNums = false  // los números 01/02/03 se leían poco y no aportaban
             val numColor = ColorUtils.setAlphaComponent(if (rock) accent else th.accent2, if (rock) 0x99 else 0xCC)
             val iconColor = when (th.family) { "neon" -> accent; "lujo" -> th.head; else -> th.head }
             // Una sola consulta por app (antes se hacían dos)
             val launches = HashMap<Int, Intent>()
-            for (s in 0 until Prefs.SLOTS) {
+            for (s in 0 until Prefs.usedSlots(ctx)) {
                 val a = Prefs.app(ctx, s)
                 if (a.isNotBlank()) pm.getLaunchIntentForPackage(a)?.let { launches[s] = it }
             }
-            val filled = (0 until Prefs.SLOTS).filter { it in launches }.take(maxApps)
-            for (i in 0 until Prefs.SLOTS) {
-                val slot = filled.getOrNull(i)
+            val filled = (0 until Prefs.usedSlots(ctx)).filter { it in launches }.take(maxApps)
+            // Con 3 por fila, el cuarto lugar de cada fila desaparece (no ocupa espacio)
+            if (perRow == 3) { v.setViewVisibility(PADS[6], View.GONE); v.setViewVisibility(PADS[7], View.GONE) }
+            for (pos in order.indices) {
+                val i = order[pos]
+                val slot = filled.getOrNull(pos)
                 val pkg = slot?.let { Prefs.app(ctx, it) }
                 if (slot == null || pkg == null) {
                     v.setViewVisibility(PADS[i], View.INVISIBLE)
@@ -369,12 +378,13 @@ class RockWidget : AppWidgetProvider() {
                 twin(v, LABELS[i], LABEL_BMPS[i], true, fonts) {
                     TextArt.render(ctx, name, S.label, S.lsize, th.head, S.lls,
                         caps = th.family == "neon" || th.family == "lujo", shadow = S.shadow,
-                        maxWidthPx = W / 3 - (10 * dens).toInt())
+                        maxWidthPx = W / perRow - (10 * dens).toInt())
                 }
                 Graphics.appIcon(ctx, pkg, mono = iconColor)?.let { v.setImageViewBitmap(ICONS[i], it) }
                 if (Build.VERSION.SDK_INT >= 31) {
                     val big = th.family == "claro" || th.family == "lujo" || th.family == "cristal"
-                    val s = if (Prefs.originalIcons(ctx)) (if (big) 34f else 30f) else (if (big) 22f else 18f)
+                    val s0 = if (Prefs.originalIcons(ctx)) (if (big) 34f else 30f) else (if (big) 22f else 18f)
+                    val s = if (perRow == 4) s0 * 0.88f else s0
                     v.setViewLayoutWidth(ICONS[i], s, TypedValue.COMPLEX_UNIT_DIP)
                     v.setViewLayoutHeight(ICONS[i], s, TypedValue.COMPLEX_UNIT_DIP)
                 }
@@ -385,10 +395,10 @@ class RockWidget : AppWidgetProvider() {
                 )
             }
             v.setViewVisibility(R.id.setlist, vis(wanted > 0))
-            v.setViewVisibility(R.id.row2, vis(filled.size > 3))
+            v.setViewVisibility(R.id.row2, vis(filled.size > perRow))
             v.setViewVisibility(R.id.row1, vis(filled.isNotEmpty()))
             v.setViewVisibility(R.id.empty, vis(wanted > 0 && filled.isEmpty()))
-            v.setViewVisibility(R.id.setlist_head, vis(filled.size > 3))
+            v.setViewVisibility(R.id.setlist_head, vis(filled.size > perRow))
             twin(v, R.id.setlist_title, R.id.setlist_title_bmp, true, fonts) {
                 TextArt.render(ctx, if (rock) "SETLIST" else "APPS", S.title, if (rock) 15f else 12f, th.head, S.tls, shadow = S.shadow)
             }

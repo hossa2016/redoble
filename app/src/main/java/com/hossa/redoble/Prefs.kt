@@ -5,7 +5,8 @@ import android.content.SharedPreferences
 import android.graphics.Color
 
 object Prefs {
-    const val SLOTS = 6
+    /** Apps guardadas (hasta 2 filas de 4). */
+    const val SLOTS = 8
 
     val ACCENTS = intArrayOf(
         Color.parseColor("#E24B4A"), // Rojo
@@ -29,7 +30,9 @@ object Prefs {
         listOf("com.google.android.youtube"),
         listOf("com.spotify.music", "com.google.android.apps.youtube.music"),
         listOf("com.android.camera", "com.google.android.GoogleCamera"),
-        listOf("com.google.android.apps.messaging", "com.android.mms")
+        listOf("com.google.android.apps.messaging", "com.android.mms"),
+        listOf("com.google.android.gm"),
+        listOf("com.google.android.apps.maps")
     )
 
     private fun p(ctx: Context): SharedPreferences =
@@ -71,6 +74,13 @@ object Prefs {
     fun setTheme(ctx: Context, v: Int) = p(ctx).edit().putInt("theme", v).apply()
 
     /** completo | musica | minimal | custom */
+    /** Apps por fila en el widget: 3 o 4. */
+    fun perRow(ctx: Context) = if (p(ctx).getInt("perRow", 3) == 4) 4 else 3
+    fun setPerRow(ctx: Context, n: Int) = p(ctx).edit().putInt("perRow", n).apply()
+    /** Filas de apps: 0, 1 o 2 (se guarda como antes: 0, 3 o 6). */
+    fun appRows(ctx: Context) = appsCount(ctx).let { if (it <= 0) 0 else if (it <= 3) 1 else 2 }
+    /** Lugares que se usan con la forma elegida (6 con 3 por fila, 8 con 4). */
+    fun usedSlots(ctx: Context) = perRow(ctx) * 2
     fun preset(ctx: Context) = p(ctx).getString("preset", "completo") ?: "completo"
     val ELEMENTS = listOf("dia", "hora", "clima", "manana", "bateria", "player")
     fun el(ctx: Context, key: String) = p(ctx).getBoolean("el_$key", true)

@@ -120,8 +120,9 @@ internal fun MainActivity.refreshCityStatus() {
 
 internal fun MainActivity.setlistPlate(): View {
     val card = ui.plateCard()
-    val filled = (0 until Prefs.SLOTS).count { Prefs.app(this, it).isNotBlank() }
-    card.addView(ui.sectionTitle("Apps", "$filled de ${Prefs.SLOTS}"))
+    val used = Prefs.usedSlots(this)
+    val filled = (0 until used).count { Prefs.app(this, it).isNotBlank() }
+    card.addView(ui.sectionTitle("Apps", "$filled de $used · ${Prefs.perRow(this)} por fila"))
     card.addView(ui.bodyText("Mantén presionada una app para renombrarla.", Ui.MUTED, 13f).apply {
         setPadding(0, 0, 0, ui.dp(8))
     })
@@ -129,8 +130,12 @@ internal fun MainActivity.setlistPlate(): View {
     // Íconos: silueta o color original de cada app
     card.addView(ui.segmented(listOf(0 to "Silueta", 1 to "Color original"), Prefs.iconMode(this)) { m ->
         Prefs.setIconMode(this, m); RockWidget.updateAll(this); build()
+    }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(10) })
+    // Cuántas por fila: 3 (más grandes) o 4 (más apps a la mano)
+    card.addView(ui.segmented(listOf(3 to "3 por fila", 4 to "4 por fila"), Prefs.perRow(this)) { n ->
+        Prefs.setPerRow(this, n); RockWidget.updateAll(this); build()
     }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(12) })
-    for (i in 0 until Prefs.SLOTS) {
+    for (i in 0 until used) {
         if (i > 0) card.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0F)) },
             LinearLayout.LayoutParams(-1, ui.dp(1)))
         card.addView(slotRow(i), LinearLayout.LayoutParams(-1, ui.dp(56)))
@@ -201,10 +206,11 @@ internal fun MainActivity.designPlate(): View {
     card.addView(ui.segmented(names.entries.map { it.key to it.value }, preset) { k ->
         Prefs.applyPreset(this, k); RockWidget.updateAll(this); build()
     })
+    val pr = Prefs.perRow(this)
     val (short, longDesc) = when (preset) {
-        "completo" -> "Hora, clima, batería y 6 apps." to "Hora, clima, batería y 6 apps. Cuando suena música, el reproductor aparece compacto y quedan 3 apps para que no se apriete."
-        "musica" -> "Reproductor grande y 3 apps." to "Reproductor grande siempre a la vista, cabecera compacta y 3 apps."
-        "minimal" -> "Día, hora, clima y 3 apps." to "Solo día, hora, clima y 3 apps. Se luce el fondo."
+        "completo" -> "Hora, clima, batería y ${pr * 2} apps." to "Hora, clima, batería y ${pr * 2} apps. Cuando suena música, el reproductor aparece compacto y queda una fila de $pr apps para que no se apriete."
+        "musica" -> "Reproductor grande y $pr apps." to "Reproductor grande siempre a la vista, cabecera compacta y $pr apps."
+        "minimal" -> "Día, hora, clima y $pr apps." to "Solo día, hora, clima y $pr apps. Se luce el fondo."
         else -> "Elementos elegidos por ti." to "Elementos elegidos por ti. Se respeta el número de apps aunque suene música."
     }
     card.addView(ui.note(short, longDesc), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
@@ -234,7 +240,7 @@ internal fun MainActivity.designPlate(): View {
         })
         // Apps: 0 / 3 / 6
         box.addView(ui.text("Apps", ui.cond, 16f, Ui.HEAD), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(8); bottomMargin = ui.dp(6) })
-        box.addView(ui.segmented(listOf(0 to "Ninguna", 3 to "3", 6 to "6"), Prefs.appsCount(this)) { v ->
+        box.addView(ui.segmented(listOf(0 to "Ninguna", 3 to "1 fila", 6 to "2 filas"), Prefs.appRows(this) * 3) { v ->
             Prefs.setAppsCount(this, v); RockWidget.updateAll(this); build()
         }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(4) })
         card.addView(box, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(4) })

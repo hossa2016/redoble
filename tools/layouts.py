@@ -100,7 +100,7 @@ def build(name,p):
  <ImageView android:id="@+id/pc_next" android:layout_width="44dp" android:layout_height="44dp" android:padding="12dp" android:scaleType="fitCenter" android:contentDescription="Siguiente" />
 </LinearLayout>'''
     def pad(i):
-        ms='' if i%3==0 else 'android:layout_marginStart="8dp"'
+        ms='' if i in (0,3) else 'android:layout_marginStart="8dp"'
         return f'''<FrameLayout android:id="@+id/pad{i}" android:layout_width="0dp" android:layout_height="{p["padh"]}dp" android:layout_weight="1" {ms} android:background="{p["pad"]}">
  {tv(f"num{i}",p["med"],10 if name=="lujo" else 11,H,'android:layout_gravity="top|start" android:layout_marginStart="8dp" android:layout_marginTop="4dp"',text=f"0{i+1}")}
  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="center" android:gravity="center_horizontal" android:orientation="vertical" android:paddingStart="4dp" android:paddingEnd="4dp" android:paddingTop="{4 if p["pad"].startswith("@drawable") else 0}dp">
@@ -115,8 +115,8 @@ def build(name,p):
   {tv("setlist_title",p["title"],15 if name in ("rock",) else 12,H,'android:layout_weight="1" android:letterSpacing="'+p["tls"]+'" '+sh(p),w="0dp",text="SETLIST" if name=="rock" else "APPS")}
   {tv("count",p["body"] if name!="lujo" else p["med"],12 if name!="lujo" else 10,D,caps)}
  </LinearLayout>
- <LinearLayout android:id="@+id/row1" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">{pad(0)}{pad(1)}{pad(2)}</LinearLayout>
- <LinearLayout android:id="@+id/row2" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:orientation="horizontal">{pad(3)}{pad(4)}{pad(5)}</LinearLayout>
+ <LinearLayout android:id="@+id/row1" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">{pad(0)}{pad(1)}{pad(2)}{pad(6)}</LinearLayout>
+ <LinearLayout android:id="@+id/row2" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:orientation="horizontal">{pad(3)}{pad(4)}{pad(5)}{pad(7)}</LinearLayout>
  <LinearLayout android:id="@+id/empty" android:layout_width="match_parent" android:layout_height="64dp" android:background="{p["card"]}" android:gravity="center" android:visibility="gone">
   {tv("empty_txt",p["body"],15,D,'',text="Toca para elegir tus apps")}
  </LinearLayout>
@@ -137,7 +137,7 @@ def build(name,p):
     tone='light' if name=='claro' else 'dark'   # onda oscura sobre fondo claro, clara sobre oscuro
     for bid in ('player_close','player_prev','player_play','player_next','pc_play','pc_next'):
         xml=xml.replace(f'<ImageView android:id="@+id/{bid}" ', f'<ImageView android:id="@+id/{bid}" android:foreground="@drawable/ripple_round_{tone}" ',1)
-    for i in range(6):
+    for i in range(8):
         xml=xml.replace(f'<FrameLayout android:id="@+id/pad{i}" ', f'<FrameLayout android:id="@+id/pad{i}" android:foreground="@drawable/ripple_box_{tone}" ',1)
     for bid in ('player_info','pc_info'):
         xml=xml.replace(f'android:id="@+id/{bid}" ', f'android:id="@+id/{bid}" android:foreground="@drawable/ripple_box_{tone}" ',1)
@@ -149,7 +149,7 @@ def build(name,p):
     open(f'{RES}/layout/widget_{name}_up.xml','w',encoding='utf-8').write(up)
 
 import re as _re
-BMP_IDS=['day_txt','date','wx_now','wx_tomorrow','batt_txt','setlist_title','player_src','player_state','player_title','player_artist','pc_title','pc_artist']+[f'label{i}' for i in range(6)]
+BMP_IDS=['day_txt','date','wx_now','wx_tomorrow','batt_txt','setlist_title','player_src','player_state','player_title','player_artist','pc_title','pc_artist']+[f'label{i}' for i in range(8)]
 def add_bmps(xml, name):
     """Agrega, junto a cada texto, una imagen gemela (<id>_bmp) para dibujar el
     texto con la letra del tema (HyperOS ignora las fuentes en los widgets)."""
