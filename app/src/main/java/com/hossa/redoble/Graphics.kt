@@ -160,7 +160,8 @@ object Graphics {
     // ------------------------------------------------------------------
     // Vúmetro LED de 12 segmentos
     // ------------------------------------------------------------------
-    fun ledBitmap(ctx: Context, level: Int, accent: Int, charging: Boolean = false): Bitmap {
+    fun ledBitmap(ctx: Context, level: Int, accent: Int, charging: Boolean = false,
+                  offColor: Int = Color.parseColor("#2A231E")): Bitmap {
         val w = dp(ctx, 113f).toInt()
         val h = dp(ctx, 19f).toInt()
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
@@ -178,7 +179,7 @@ object Graphics {
             maskFilter = BlurMaskFilter(dp(ctx, 3f), BlurMaskFilter.Blur.NORMAL)
         }
         val fillOn = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
-        val fillOff = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = Color.parseColor("#2A231E") }
+        val fillOff = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = offColor }
         val topOn = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = Color.parseColor("#59FFFFFF") }
         val topOff = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = Color.parseColor("#0AFFFFFF") }
         for (i in 0 until 12) {
@@ -310,8 +311,8 @@ object Graphics {
     }
 
     /** Elige silueta o color original según el ajuste. */
-    fun appIcon(ctx: Context, pkg: String, monoSizePx: Int = 48, colorSizePx: Int = 96): Bitmap? =
-        if (Prefs.originalIcons(ctx)) colorIcon(ctx, pkg, colorSizePx) else monoIcon(ctx, pkg, HEAD, monoSizePx)
+    fun appIcon(ctx: Context, pkg: String, monoSizePx: Int = 48, colorSizePx: Int = 96, mono: Int = HEAD): Bitmap? =
+        if (Prefs.originalIcons(ctx)) colorIcon(ctx, pkg, colorSizePx) else monoIcon(ctx, pkg, mono, monoSizePx)
 
     private fun lum(c: Int) =
         (0.2126f * Color.red(c) + 0.7152f * Color.green(c) + 0.0722f * Color.blue(c)) / 255f

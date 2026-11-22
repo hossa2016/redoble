@@ -22,10 +22,10 @@ jobs:
           gradle-version: '8.9'
       - name: Compilar
         run: gradle assembleDebug --no-daemon --stacktrace
-      - run: cp app/build/outputs/apk/debug/app-debug.apk Redoble.apk
+      - run: cp app/build/outputs/apk/debug/app-debug.apk Prisma.apk
       - name: Publicar APK
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
-          name: Redoble v${{ github.run_number }}
-          files: Redoble.apk
+          name: Prisma v${{ github.run_number }}
+          files: Prisma.apk

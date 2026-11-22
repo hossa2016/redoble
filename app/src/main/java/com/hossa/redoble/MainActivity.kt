@@ -92,20 +92,25 @@ class MainActivity : AppCompatActivity() {
     // ==================================================================
     private fun build() {
         val y = scroll?.scrollY ?: 0
-        ui = Ui(this, Prefs.accent(this))
+        val th = Themes.current(this)
+        ui = Ui(this, if (th.light) Color.parseColor("#D8CFC2") else th.accent(this))
 
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, ui.dp(14), 0, ui.dp(40))
         }
+        val hasWidget = RockWidget.hasWidgets(this)
         col.addView(topBar())
+        if (!hasWidget) col.addView(widgetPlate())
+        col.addView(designPlate())
+        col.addView(themePlate())
         col.addView(wallpaperPlate())
-        col.addView(accentPlate())
+        if (th.usesUserAccent) col.addView(accentPlate())
         col.addView(weatherPlate())
         col.addView(setlistPlate())
         col.addView(playerPlate())
-        col.addView(widgetPlate())
-        col.addView(ui.text("Redoble 6.2", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
+        if (hasWidget) col.addView(widgetDonePlate())
+        col.addView(ui.text("Prisma 7.0", ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
@@ -122,7 +127,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun topBar(): View {
-        val brand = ui.text("Redoble", ui.anton, 34f, Ui.HEAD, 0.03f).apply {
+        val brand = ui.text("Prisma", ui.anton, 34f, Ui.HEAD, 0.03f).apply {
             setShadowLayer(ui.dp(3).toFloat(), 0f, ui.dp(2).toFloat(), Color.parseColor("#E6000000"))
         }
         brand.post {
@@ -684,6 +689,196 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ---------------- Widget ----------------
+    // ---------------- Diseño: distribuciones y elementos ----------------
+    private var customOpen = false
+
+    private fun designPlate(): View {
+        val card = ui.plateCard()
+        val preset = Prefs.preset(this)
+        val names = mapOf("completo" to "Completo", "musica" to "Música", "minimal" to "Minimal")
+        card.addView(ui.sectionTitle("Diseño", names[preset] ?: "Personalizado"))
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        names.entries.forEachIndexed { idx, (k, label) ->
+            val b = (if (k == preset) ui.primary(label) else ui.secondary(label)).apply {
+                setOnClickListener {
+                    Prefs.applyPreset(this@MainActivity, k)
+                    RockWidget.updateAll(this@MainActivity)
+                    build()
+                }
+            }
+            row.addView(b, LinearLayout.LayoutParams(0, ui.dp(46), 1f).apply { if (idx > 0) marginStart = ui.dp(8) })
+        }
+        card.addView(row)
+        val desc = when (preset) {
+            "completo" -> "Hora, clima, batería y 6 apps. Cuando suena música, el reproductor aparece compacto y quedan 3 apps."
+            "musica" -> "Reproductor grande siempre a la vista, cabecera compacta y 3 apps."
+            "minimal" -> "Solo día, hora, clima y 3 apps. Se luce el fondo."
+            else -> "Elementos elegidos por ti."
+        }
+        card.addView(ui.bodyText(desc, Ui.MUTED, 14f), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+
+        val more = ui.textButton(if (customOpen) "Personalizar elementos  ▾" else "Personalizar elementos  ▸").apply {
+            setTextColor(Ui.HEAD)
+            gravity = Gravity.CENTER_VERTICAL or Gravity.START
+            setOnClickListener { customOpen = !customOpen; build() }
+        }
+        card.addView(more, LinearLayout.LayoutParams(-1, ui.dp(46)).apply { topMargin = ui.dp(8) })
+
+        if (customOpen) {
+            val box = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                background = ui.rect(Ui.WELL, 12f, Color.parseColor("#12FFFFFF"), 1f)
+                setPadding(ui.dp(14), ui.dp(4), ui.dp(10), ui.dp(8))
+            }
+            val labels = listOf("dia" to "Día y fecha", "hora" to "Hora", "clima" to "Clima actual",
+                "manana" to "Pronóstico de mañana", "bateria" to "Batería", "player" to "Reproductor (cuando suena música)")
+            labels.forEach { (k, label) ->
+                box.addView(switchRow(label, Prefs.el(this, k)) { on ->
+                    Prefs.setEl(this, k, on); RockWidget.updateAll(this); build()
+                })
+            }
+            box.addView(switchRow("Reproductor grande", Prefs.playerLarge(this)) { on ->
+                Prefs.setPlayerLarge(this, on); RockWidget.updateAll(this); build()
+            })
+            // Apps: 0 / 3 / 6
+            val appsRow = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(0, ui.dp(8), 0, ui.dp(4))
+            }
+            appsRow.addView(ui.text("Apps", ui.cond, 16f, Ui.HEAD), LinearLayout.LayoutParams(0, -2, 1f))
+            val n = Prefs.appsCount(this)
+            listOf(0 to "Ninguna", 3 to "3", 6 to "6").forEach { (v, label) ->
+                val b = (if (v == n) ui.primary(label) else ui.textButton(label).apply { setTextColor(Ui.MUTED) }).apply {
+                    minHeight = ui.dp(38); minimumHeight = ui.dp(38)
+                    setOnClickListener { Prefs.setAppsCount(this@MainActivity, v); RockWidget.updateAll(this@MainActivity); build() }
+                }
+                appsRow.addView(b, LinearLayout.LayoutParams(-2, ui.dp(38)).apply { marginStart = ui.dp(6) })
+            }
+            box.addView(appsRow)
+            card.addView(box, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(4) })
+        }
+        return card
+    }
+
+    private fun switchRow(label: String, on: Boolean, onChange: (Boolean) -> Unit): View {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = ui.dp(48)
+        }
+        row.addView(ui.text(label, ui.cond, 16f, Ui.HEAD), LinearLayout.LayoutParams(0, -2, 1f))
+        val sw = androidx.appcompat.widget.SwitchCompat(this).apply {
+            isChecked = on
+            val states = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
+            thumbTintList = android.content.res.ColorStateList(states, intArrayOf(Color.WHITE, Color.parseColor("#9C9187")))
+            trackTintList = android.content.res.ColorStateList(states, intArrayOf(ui.accent, Color.parseColor("#3A322B")))
+            setOnCheckedChangeListener { _, v -> onChange(v) }
+        }
+        row.addView(sw)
+        row.setOnClickListener { sw.toggle() }
+        return row
+    }
+
+    // ---------------- Tema ----------------
+    private fun themePlate(): View {
+        val card = ui.plateCard()
+        val cur = Themes.current(this)
+        card.addView(ui.sectionTitle("Tema", cur.name))
+        val strip = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val tw = ui.dp(84); val thH = ui.dp(130)
+        Themes.ALL.forEach { t ->
+            val on = t.id == cur.id
+            val tile = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER_HORIZONTAL
+                setPadding(0, 0, ui.dp(10), 0)
+            }
+            val img = ImageView(this).apply {
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                val bmp = if (t.family == "rock") thumb(R.drawable.fondo_bateria) else Themes.wallpaper(t, tw, thH)
+                setImageBitmap(bmp)
+                background = ui.rect(Color.BLACK, 12f, if (on) ui.accent else Color.parseColor("#24FFFFFF"), if (on) 2f else 1f)
+                setPadding(ui.dp(2), ui.dp(2), ui.dp(2), ui.dp(2))
+                clipToOutline = true
+                outlineProvider = object : ViewOutlineProvider() {
+                    override fun getOutline(view: View, outline: Outline) {
+                        outline.setRoundRect(0, 0, view.width, view.height, ui.dp(12).toFloat())
+                    }
+                }
+            }
+            // Muestra de la hora con los colores del tema
+            val frame = FrameLayout(this)
+            frame.addView(img, FrameLayout.LayoutParams(tw, thH))
+            frame.addView(ui.text("5:43", ui.condLight, 26f, t.head).apply {
+                gravity = Gravity.CENTER
+            }, FrameLayout.LayoutParams(tw, thH))
+            frame.addView(View(this).apply { background = ui.rect(t.accent(this@MainActivity), 3f) },
+                FrameLayout.LayoutParams(ui.dp(22), ui.dp(4)).apply {
+                    gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL; bottomMargin = ui.dp(14)
+                })
+            tile.addView(frame)
+            tile.addView(ui.ellipsize(ui.text(t.name, ui.cond, 13f, if (on) Ui.HEAD else Ui.MUTED)).apply {
+                gravity = Gravity.CENTER
+            }, LinearLayout.LayoutParams(tw, -2).apply { topMargin = ui.dp(6) })
+            tile.setOnClickListener {
+                if (t.id != Prefs.theme(this)) {
+                    Prefs.setTheme(this, t.id)
+                    RockWidget.updateAll(this)
+                    build()
+                }
+            }
+            strip.addView(tile)
+        }
+        card.addView(HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(strip)
+        })
+        if (cur.hasOwnWallpaper) {
+            card.addView(ui.bodyText("Este tema tiene su propio fondo de pantalla. También puedes usar tu foto en Fondo.", Ui.MUTED, 13f),
+                LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
+            val apply = ui.primary("Poner el fondo del tema")
+            apply.setOnClickListener { applyThemeWallpaper(apply, cur) }
+            card.addView(apply, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(10) })
+        }
+        return card
+    }
+
+    private fun applyThemeWallpaper(btn: Button, t: Theme) {
+        val (w, h) = screenSize()
+        btn.isEnabled = false
+        btn.text = "Aplicando…"
+        io.execute {
+            val ok = try {
+                val wall = Themes.wallpaper(t, w, h)
+                WallpaperManager.getInstance(this).setBitmap(
+                    wall, android.graphics.Rect(0, 0, w, h), true, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK
+                )
+                true
+            } catch (e: Exception) { false }
+            main.post {
+                btn.isEnabled = true
+                btn.text = if (ok) "Fondo aplicado" else "No se pudo aplicar"
+                main.postDelayed({ btn.text = "Poner el fondo del tema" }, 2000)
+            }
+        }
+    }
+
+    private fun widgetDonePlate(): View {
+        val card = ui.plateCard()
+        card.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            addView(ui.dot(Ui.OK), LinearLayout.LayoutParams(ui.dp(8), ui.dp(8)))
+            addView(ui.text("Widget en pantalla", ui.condMedium, 16f, Ui.HEAD).apply { setPadding(ui.dp(10), 0, 0, 0) },
+                LinearLayout.LayoutParams(0, -2, 1f))
+            addView(ui.textButton("Agregar otro").apply {
+                setOnClickListener { tryPin() }
+            })
+        })
+        return card
+    }
+
     private fun playerPlate(): View {
         val card = ui.plateCard()
         card.addView(ui.sectionTitle("Reproductor"))
@@ -755,7 +950,7 @@ class MainActivity : AppCompatActivity() {
         val texts = listOf(
             "Mantén presionado un espacio vacío de la pantalla de inicio.",
             "Toca Widgets.",
-            "Busca Redoble en la lista.",
+            "Busca Prisma en la lista.",
             "Arrástralo a la pantalla y estíralo hasta ocupar el ancho."
         )
         texts.forEachIndexed { n, t ->

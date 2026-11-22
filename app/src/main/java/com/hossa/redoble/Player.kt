@@ -93,17 +93,8 @@ object Player {
         main.postDelayed({ updateAll(app) }, 350)
     }
 
-    /** Actualiza solo la parte del reproductor en todos los widgets. */
-    fun updateAll(ctx: Context) {
-        val mgr = AppWidgetManager.getInstance(ctx)
-        for (id in mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))) {
-            try {
-                val v = RemoteViews(ctx.packageName, R.layout.widget_rock)
-                apply(ctx, v)
-                mgr.partiallyUpdateAppWidget(id, v)
-            } catch (e: Exception) { }
-        }
-    }
+    /** Redibuja los widgets (el tamaño de la cabecera depende del reproductor). */
+    fun updateAll(ctx: Context) = RockWidget.updateAll(ctx)
 
     private fun broadcast(ctx: Context, action: String, code: Int): PendingIntent =
         PendingIntent.getBroadcast(
@@ -111,71 +102,82 @@ object Player {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-    /** Llena (u oculta) la tarjeta del reproductor. */
-    fun apply(ctx: Context, v: RemoteViews) {
+    /** Llena (u oculta) la tarjeta del reproductor. Devuelve si quedó visible. */
+    fun apply(ctx: Context, v: RemoteViews): Boolean {
+        v.setViewVisibility(R.id.player, View.GONE)
+        v.setViewVisibility(R.id.player_c, View.GONE)
+        if (!Prefs.el(ctx, "player")) return false
         val c = try { controller(ctx) } catch (e: Exception) { null }
         val md = c?.metadata
         val title = md?.getString(MediaMetadata.METADATA_KEY_TITLE)
             ?: md?.description?.title?.toString() ?: ""
-        if (c == null || md == null || title.isBlank()) {
-            v.setViewVisibility(R.id.player, View.GONE)
-            return
-        }
+        if (c == null || md == null || title.isBlank()) return false
         val artist = md.getString(MediaMetadata.METADATA_KEY_ARTIST)
             ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
             ?: md.description?.subtitle?.toString() ?: ""
         val playing = isPlaying(c)
-        val accent = Prefs.accent(ctx)
+        val th = Themes.current(ctx)
+        val accent = th.accent(ctx)
+
         val dismissed = Prefs.playerDismissed(ctx)
         if (dismissed.isNotEmpty()) {
             if (playing) Prefs.setPlayerDismissed(ctx, "")
-            else if (dismissed == key(c)) {
-                v.setViewVisibility(R.id.player, View.GONE)
-                return
-            }
+            else if (dismissed == key(c)) return false
         }
-
-        v.setViewVisibility(R.id.player, View.VISIBLE)
-        val src = if (c.packageName == ROCKPLAY) "ROCKPLAY" else try {
-            val pm = ctx.packageManager
-            pm.getApplicationLabel(pm.getApplicationInfo(c.packageName, 0)).toString().uppercase()
-        } catch (e: Exception) { "MÚSICA" }
-        v.setTextViewText(R.id.player_src, src)
-        v.setTextViewText(R.id.player_state, if (playing) " · Sonando" else " · En pausa")
-        v.setViewVisibility(R.id.player_eq, if (playing) View.VISIBLE else View.GONE)
-        v.setImageViewBitmap(R.id.player_eq, eqBitmap(ctx, accent))
-        v.setTextViewText(R.id.player_title, title)
-        v.setTextViewText(R.id.player_artist, artist)
-        v.setViewVisibility(R.id.player_artist, if (artist.isBlank()) View.GONE else View.VISIBLE)
 
         val art = md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
             ?: md.getBitmap(MediaMetadata.METADATA_KEY_ART)
             ?: md.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
             ?: md.description?.iconBitmap
-        v.setImageViewBitmap(R.id.player_art, artBitmap(ctx, art, accent))
-
-        v.setImageViewBitmap(R.id.player_close, iconBitmap(ctx, "close", 0xFFB5AA9F.toInt(), 16))
-        v.setOnClickPendingIntent(R.id.player_close, broadcast(ctx, ACTION_CLOSE, 205))
-        v.setImageViewBitmap(R.id.player_prev, iconBitmap(ctx, "prev", Graphics.HEAD, 24))
-        v.setImageViewBitmap(R.id.player_next, iconBitmap(ctx, "next", Graphics.HEAD, 24))
-        v.setImageViewBitmap(R.id.player_play, playBitmap(ctx, playing, accent))
-        v.setContentDescription(R.id.player_play, if (playing) "Pausar" else "Reproducir")
-
-        v.setOnClickPendingIntent(R.id.player_play, broadcast(ctx, ACTION_PLAY_PAUSE, 201))
-        v.setOnClickPendingIntent(R.id.player_next, broadcast(ctx, ACTION_NEXT, 202))
-        v.setOnClickPendingIntent(R.id.player_prev, broadcast(ctx, ACTION_PREV, 203))
-
-        // Tocar la carátula o el nombre abre la app que está sonando.
         val open = c.sessionActivity ?: ctx.packageManager.getLaunchIntentForPackage(c.packageName)?.let {
             PendingIntent.getActivity(
                 ctx, 204, it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
         }
-        if (open != null) {
-            v.setOnClickPendingIntent(R.id.player_info, open)
-            v.setOnClickPendingIntent(R.id.player_head, open)
+        val iconCol = if (th.family == "neon") accent else th.head
+
+        if (Prefs.playerLarge(ctx)) {
+            v.setViewVisibility(R.id.player, View.VISIBLE)
+            val src = if (c.packageName == ROCKPLAY) "ROCKPLAY" else try {
+                val pm = ctx.packageManager
+                pm.getApplicationLabel(pm.getApplicationInfo(c.packageName, 0)).toString().uppercase()
+            } catch (e: Exception) { "MÚSICA" }
+            v.setTextViewText(R.id.player_src, src)
+            v.setTextViewText(R.id.player_state, if (playing) " · Sonando" else " · En pausa")
+            v.setViewVisibility(R.id.player_eq, if (playing) View.VISIBLE else View.GONE)
+            v.setImageViewBitmap(R.id.player_eq, eqBitmap(ctx, accent))
+            v.setTextViewText(R.id.player_title, title)
+            v.setTextViewText(R.id.player_artist, artist)
+            v.setViewVisibility(R.id.player_artist, if (artist.isBlank()) View.GONE else View.VISIBLE)
+            v.setImageViewBitmap(R.id.player_art, artBitmap(ctx, art, th, 56, false))
+            v.setImageViewBitmap(R.id.player_close, iconBitmap(ctx, "close", th.dim, 16))
+            v.setOnClickPendingIntent(R.id.player_close, broadcast(ctx, ACTION_CLOSE, 205))
+            v.setImageViewBitmap(R.id.player_prev, iconBitmap(ctx, "prev", iconCol, 24))
+            v.setImageViewBitmap(R.id.player_next, iconBitmap(ctx, "next", iconCol, 24))
+            v.setImageViewBitmap(R.id.player_play, playBitmap(ctx, playing, th, 52))
+            v.setContentDescription(R.id.player_play, if (playing) "Pausar" else "Reproducir")
+            v.setOnClickPendingIntent(R.id.player_play, broadcast(ctx, ACTION_PLAY_PAUSE, 201))
+            v.setOnClickPendingIntent(R.id.player_next, broadcast(ctx, ACTION_NEXT, 202))
+            v.setOnClickPendingIntent(R.id.player_prev, broadcast(ctx, ACTION_PREV, 203))
+            if (open != null) {
+                v.setOnClickPendingIntent(R.id.player_info, open)
+                v.setOnClickPendingIntent(R.id.player_head, open)
+            }
+        } else {
+            v.setViewVisibility(R.id.player_c, View.VISIBLE)
+            v.setTextViewText(R.id.pc_title, title)
+            v.setTextViewText(R.id.pc_artist, artist)
+            v.setViewVisibility(R.id.pc_artist, if (artist.isBlank()) View.GONE else View.VISIBLE)
+            v.setImageViewBitmap(R.id.pc_art, artBitmap(ctx, art, th, 46, playing))
+            v.setImageViewBitmap(R.id.pc_play, playBitmap(ctx, playing, th, 40))
+            v.setContentDescription(R.id.pc_play, if (playing) "Pausar" else "Reproducir")
+            v.setImageViewBitmap(R.id.pc_next, iconBitmap(ctx, "next", iconCol, 22))
+            v.setOnClickPendingIntent(R.id.pc_play, broadcast(ctx, ACTION_PLAY_PAUSE, 211))
+            v.setOnClickPendingIntent(R.id.pc_next, broadcast(ctx, ACTION_NEXT, 212))
+            if (open != null) v.setOnClickPendingIntent(R.id.pc_info, open)
         }
+        return true
     }
 
     // ---------------------------------------------------------------- dibujo
@@ -196,43 +198,73 @@ object Player {
         return b
     }
 
-    private fun artBitmap(ctx: Context, src: Bitmap?, accent: Int): Bitmap {
-        val s = dp(ctx, 56f).toInt()
-        val r = dp(ctx, 9f)
+    private fun artBitmap(ctx: Context, src: Bitmap?, th: Theme, sizeDp: Int, badge: Boolean): Bitmap {
+        val accent = th.accent(ctx)
+        val s = dp(ctx, sizeDp.toFloat()).toInt()
+        val r = dp(ctx, if (th.family == "neon") 4f else sizeDp / 6f)
         val out = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888)
         val c = Canvas(out)
         val rect = RectF(0f, 0f, s.toFloat(), s.toFloat())
         val clip = Path().apply { addRoundRect(rect, r, r, Path.Direction.CW) }
         c.save(); c.clipPath(clip)
         if (src != null) {
-            // Recorte centrado (centerCrop).
             val scale = maxOf(s.toFloat() / src.width, s.toFloat() / src.height)
             val w = src.width * scale; val h = src.height * scale
             c.drawBitmap(src, null, RectF((s - w) / 2, (s - h) / 2, (s + w) / 2, (s + h) / 2),
                 Paint(Paint.FILTER_BITMAP_FLAG))
         } else {
+            val base = if (th.light) 0xFFE9E3DA.toInt() else 0xFF140C0A.toInt()
             val bg = Paint().apply {
                 shader = LinearGradient(0f, 0f, s.toFloat(), s.toFloat(),
-                    ColorUtils.blendARGB(accent, 0xFF000000.toInt(), 0.55f), 0xFF140C0A.toInt(), Shader.TileMode.CLAMP)
+                    ColorUtils.blendARGB(accent, base, 0.55f), base, Shader.TileMode.CLAMP)
             }
             c.drawRect(rect, bg)
-            val note = iconBitmap(ctx, "note", 0xBFEDE6DC.toInt(), 26)
+            val note = iconBitmap(ctx, "note", ColorUtils.setAlphaComponent(th.head, 0xBF), sizeDp / 2)
             c.drawBitmap(note, (s - note.width) / 2f, (s - note.height) / 2f, null)
         }
         c.restore()
         val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE; strokeWidth = dp(ctx, 1f); color = 0x1AFFFFFF
+            style = Paint.Style.STROKE; strokeWidth = dp(ctx, 1f)
+            color = if (th.light) 0x141C1A17 else 0x1AFFFFFF
         }
         c.drawRoundRect(RectF(0.5f, 0.5f, s - 0.5f, s - 0.5f), r, r, stroke)
+        if (badge) {
+            // Pequeña insignia de ecualizador en la esquina: "sonando".
+            val bs = dp(ctx, 16f)
+            val cx = s - bs / 2 - dp(ctx, 1f); val cy = s - bs / 2 - dp(ctx, 1f)
+            c.drawCircle(cx, cy, bs / 2, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = if (th.light) 0xFFFFFFFF.toInt() else 0xFF120F0C.toInt()
+            })
+            val eq = eqBitmap(ctx, accent)
+            val k = 0.62f
+            c.save(); c.translate(cx - eq.width * k / 2, cy - eq.height * k / 2); c.scale(k, k)
+            c.drawBitmap(eq, 0f, 0f, null); c.restore()
+        }
         return out
     }
 
-    private fun playBitmap(ctx: Context, playing: Boolean, accent: Int): Bitmap {
-        val s = dp(ctx, 52f).toInt()
+    private fun playBitmap(ctx: Context, playing: Boolean, th: Theme, sizeDp: Int): Bitmap {
+        val s = dp(ctx, sizeDp.toFloat()).toInt()
         val b = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888)
         val c = Canvas(b)
-        c.drawCircle(s / 2f, s / 2f, s / 2f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = accent })
-        val icon = iconBitmap(ctx, if (playing) "pause" else "play", 0xFFFFFFFF.toInt(), if (playing) 22 else 24)
+        val accent = th.accent(ctx)
+        val half = s / 2f
+        val p = Paint(Paint.ANTI_ALIAS_FLAG)
+        var iconColor = 0xFFFFFFFF.toInt()
+        when (th.family) {
+            "cristal" -> p.shader = LinearGradient(0f, 0f, s.toFloat(), s.toFloat(), accent, th.accent2, Shader.TileMode.CLAMP)
+            "lujo" -> { p.shader = LinearGradient(0f, 0f, 0f, s.toFloat(), 0xFFE3C47E.toInt(), 0xFFA98545.toInt(), Shader.TileMode.CLAMP); iconColor = 0xFF1A160F.toInt() }
+            "neon" -> { p.color = 0x1F3DF2FF; iconColor = accent }
+            "claro" -> p.color = th.head
+            else -> p.color = accent
+        }
+        c.drawCircle(half, half, half - dp(ctx, 1f), p)
+        if (th.family == "neon") {
+            c.drawCircle(half, half, half - dp(ctx, 1.5f), Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE; strokeWidth = dp(ctx, 1.5f); color = accent
+            })
+        }
+        val icon = iconBitmap(ctx, if (playing) "pause" else "play", iconColor, (sizeDp * if (playing) 0.42f else 0.46f).toInt())
         c.drawBitmap(icon, (s - icon.width) / 2f, (s - icon.height) / 2f, null)
         return b
     }

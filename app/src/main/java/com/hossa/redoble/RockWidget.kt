@@ -7,6 +7,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import android.util.TypedValue
 import android.view.View
@@ -61,26 +62,58 @@ class RockWidget : AppWidgetProvider() {
             }
         }
 
+        private fun vis(b: Boolean) = if (b) View.VISIBLE else View.GONE
+
+        /** Tamaño base de la hora por familia de tema (sp). */
+        private fun timeSize(family: String) = when (family) {
+            "claro" -> 76f; "neon" -> 54f; "lujo" -> 80f; else -> 64f
+        }
+
         fun update(ctx: Context, mgr: AppWidgetManager, widgetId: Int) {
-            val v = RemoteViews(ctx.packageName, R.layout.widget_rock)
-            val accent = Prefs.accent(ctx)
+            val th = Themes.current(ctx)
+            val v = RemoteViews(ctx.packageName, th.layout)
+            val accent = th.accent(ctx)
+            val rock = th.family == "rock"
 
+            // Reproductor primero: de él depende cuánto espacio queda.
+            val playing = Player.apply(ctx, v)
+
+            val dia = Prefs.el(ctx, "dia"); val hora = Prefs.el(ctx, "hora")
+            val clima = Prefs.el(ctx, "clima"); val manana = Prefs.el(ctx, "manana")
+            val bateria = Prefs.el(ctx, "bateria")
+
+            // Día
             val day = DAYS[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1]
-            v.setImageViewBitmap(R.id.day_img, Graphics.dayBitmap(ctx, day, accent))
+            if (rock && dia) {
+                val h = if (playing) 150 else 176
+                v.setImageViewBitmap(R.id.day_img, Graphics.dayBitmap(ctx, day, accent, h))
+                if (Build.VERSION.SDK_INT >= 31) v.setViewLayoutHeight(R.id.day_img, h.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
+            }
+            v.setViewVisibility(R.id.day_img, vis(rock && dia))
+            v.setViewVisibility(R.id.day_txt, vis(!rock && dia))
+            if (!rock) v.setTextColor(R.id.day_txt, if (th.family == "claro") th.head else accent)
+            v.setViewVisibility(R.id.date, vis(dia))
 
-            v.setTextColor(R.id.colon, accent)
+            // Hora (más pequeña cuando suena música)
+            v.setViewVisibility(R.id.clock, vis(hora))
+            val ts = timeSize(th.family) * (if (playing) 0.875f else 1f)
+            for (id in intArrayOf(R.id.hh, R.id.colon, R.id.mm)) v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_SP, ts)
+            v.setTextColor(R.id.colon, when (th.family) { "claro" -> th.head; "neon" -> th.accent2; else -> accent })
 
             // Clima
             val now = Prefs.weatherNow(ctx)
             val tomorrow = Prefs.weatherTomorrow(ctx)
             v.setTextViewText(R.id.wx_now, now.ifBlank { if (Prefs.city(ctx).isBlank()) "Elige tu ciudad" else "Cargando clima…" })
             v.setTextViewText(R.id.wx_tomorrow, tomorrow)
-            v.setViewVisibility(R.id.wx_tomorrow, if (tomorrow.isBlank()) View.GONE else View.VISIBLE)
+            v.setViewVisibility(R.id.wx_now, vis(clima))
+            v.setViewVisibility(R.id.wx_tomorrow, vis(manana && tomorrow.isNotBlank()))
+            v.setViewVisibility(R.id.batt_row, vis(bateria))
+            v.setViewVisibility(R.id.status_row, vis(clima || bateria))
+            v.setViewVisibility(R.id.hairline, vis((dia || hora) && (clima || bateria || manana)))
+            v.setViewVisibility(R.id.header, vis(dia || hora || clima || manana || bateria))
+            if (bateria) applyBattery(ctx, v)
 
-            applyBattery(ctx, v)
-            Player.apply(ctx, v)
-
-            // Abrir ajustes desde la cabecera, el día y la lista vacía
+            // Abrir ajustes desde la cabecera y la lista vacía
             val open = PendingIntent.getActivity(
                 ctx, 100, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
@@ -89,11 +122,16 @@ class RockWidget : AppWidgetProvider() {
             v.setOnClickPendingIntent(R.id.day_img, open)
             v.setOnClickPendingIntent(R.id.empty, open)
 
-            // Pads: se llenan en orden con las apps elegidas
+            // Apps: cuántas mostrar según la distribución (con música, solo una fila)
+            val wanted = Prefs.appsCount(ctx)
+            val maxApps = if (playing && wanted > 3) 3 else wanted
             val pm = ctx.packageManager
-            val numColor = ColorUtils.setAlphaComponent(accent, 0xD9)
+            val showNums = th.family == "rock" || th.family == "neon"
+            val numColor = ColorUtils.setAlphaComponent(if (rock) accent else th.accent2, if (rock) 0x99 else 0xCC)
+            val iconColor = when (th.family) { "neon" -> accent; "lujo" -> th.head; else -> th.head }
             val filled = (0 until Prefs.SLOTS)
                 .filter { val a = Prefs.app(ctx, it); a.isNotBlank() && pm.getLaunchIntentForPackage(a) != null }
+                .take(maxApps)
             for (i in 0 until Prefs.SLOTS) {
                 val slot = filled.getOrNull(i)
                 val pkg = slot?.let { Prefs.app(ctx, it) }
@@ -104,11 +142,12 @@ class RockWidget : AppWidgetProvider() {
                 v.setViewVisibility(PADS[i], View.VISIBLE)
                 v.setTextViewText(NUMS[i], String.format("%02d", i + 1))
                 v.setTextColor(NUMS[i], numColor)
+                v.setViewVisibility(NUMS[i], vis(showNums))
                 v.setTextViewText(LABELS[i], Prefs.displayName(ctx, slot))
-                Graphics.appIcon(ctx, pkg)?.let { v.setImageViewBitmap(ICONS[i], it) }
+                Graphics.appIcon(ctx, pkg, mono = iconColor)?.let { v.setImageViewBitmap(ICONS[i], it) }
                 if (Build.VERSION.SDK_INT >= 31) {
-                    // En color, el ícono llena casi toda la placa; en silueta, queda pequeño como antes.
-                    val s = if (Prefs.originalIcons(ctx)) 30f else 18f
+                    val big = th.family == "claro" || th.family == "lujo"
+                    val s = if (Prefs.originalIcons(ctx)) (if (big) 34f else 30f) else (if (big) 22f else 18f)
                     v.setViewLayoutWidth(ICONS[i], s, TypedValue.COMPLEX_UNIT_DIP)
                     v.setViewLayoutHeight(ICONS[i], s, TypedValue.COMPLEX_UNIT_DIP)
                 }
@@ -118,10 +157,13 @@ class RockWidget : AppWidgetProvider() {
                     PendingIntent.getActivity(ctx, i, launch, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                 )
             }
-            v.setViewVisibility(R.id.row2, if (filled.size > 3) View.VISIBLE else View.GONE)
-            v.setViewVisibility(R.id.row1, if (filled.isEmpty()) View.GONE else View.VISIBLE)
-            v.setViewVisibility(R.id.empty, if (filled.isEmpty()) View.VISIBLE else View.GONE)
-            v.setTextViewText(R.id.count, if (filled.size == 1) "1 pista" else "${filled.size} pistas")
+            v.setViewVisibility(R.id.setlist, vis(wanted > 0))
+            v.setViewVisibility(R.id.row2, vis(filled.size > 3))
+            v.setViewVisibility(R.id.row1, vis(filled.isNotEmpty()))
+            v.setViewVisibility(R.id.empty, vis(wanted > 0 && filled.isEmpty()))
+            v.setViewVisibility(R.id.setlist_head, vis(filled.size > 3))
+            val word = if (rock) (if (filled.size == 1) "pista" else "pistas") else (if (filled.size == 1) "app" else "apps")
+            v.setTextViewText(R.id.count, "${filled.size} $word")
 
             // Si hay ciudad pero no hay dato del clima, pedirlo ya
             if (Prefs.city(ctx).isNotBlank() &&
@@ -134,23 +176,20 @@ class RockWidget : AppWidgetProvider() {
 
         /** Medidor LED y texto de batería (también se usa en actualizaciones parciales). */
         fun applyBattery(ctx: Context, v: RemoteViews) {
-            val accent = Prefs.accent(ctx)
+            val th = Themes.current(ctx)
+            val accent = th.accent(ctx)
             val level = BatteryMonitor.level(ctx)
             val charging = BatteryMonitor.isCharging(ctx)
-            v.setImageViewBitmap(R.id.leds_img, Graphics.ledBitmap(ctx, level, accent, charging))
+            val off = if (th.light) Color.parseColor("#1F1C1A17") else Color.parseColor("#2A231E")
+            v.setImageViewBitmap(R.id.leds_img, Graphics.ledBitmap(ctx, level, accent, charging, off))
             if (charging) {
-                v.setViewVisibility(R.id.batt_bolt, android.view.View.VISIBLE)
+                v.setViewVisibility(R.id.batt_bolt, View.VISIBLE)
                 v.setImageViewBitmap(R.id.batt_bolt, Graphics.boltBitmap(ctx, accent))
             } else {
-                v.setViewVisibility(R.id.batt_bolt, android.view.View.GONE)
+                v.setViewVisibility(R.id.batt_bolt, View.GONE)
             }
-            if (!charging && level <= 15) {
-                v.setTextViewText(R.id.batt_txt, "$level %")
-                v.setTextColor(R.id.batt_txt, Graphics.ALERT)
-            } else {
-                v.setTextViewText(R.id.batt_txt, "$level %")
-                v.setTextColor(R.id.batt_txt, Graphics.HEAD)
-            }
+            v.setTextViewText(R.id.batt_txt, "$level %")
+            v.setTextColor(R.id.batt_txt, if (!charging && level <= 15) Graphics.ALERT else th.head)
         }
 
         fun scheduleMidnight(ctx: Context) {

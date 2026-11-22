@@ -59,7 +59,7 @@
         <service
             android:name=".MediaListener"
             android:exported="true"
-            android:label="Redoble · reproductor del widget"
+            android:label="Prisma · reproductor del widget"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />

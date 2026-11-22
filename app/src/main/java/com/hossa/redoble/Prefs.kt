@@ -59,6 +59,36 @@ object Prefs {
     fun onlyRockPlay(ctx: Context) = p(ctx).getBoolean("onlyRockPlay", true)
     fun setOnlyRockPlay(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("onlyRockPlay", v).apply()
 
+    // ---- Tema y distribución ----
+    fun theme(ctx: Context) = p(ctx).getInt("theme", 0)
+    fun setTheme(ctx: Context, v: Int) = p(ctx).edit().putInt("theme", v).apply()
+
+    /** completo | musica | minimal | custom */
+    fun preset(ctx: Context) = p(ctx).getString("preset", "completo") ?: "completo"
+    val ELEMENTS = listOf("dia", "hora", "clima", "manana", "bateria", "player")
+    fun el(ctx: Context, key: String) = p(ctx).getBoolean("el_$key", true)
+    fun setEl(ctx: Context, key: String, v: Boolean) =
+        p(ctx).edit().putBoolean("el_$key", v).putString("preset", "custom").apply()
+    fun appsCount(ctx: Context) = p(ctx).getInt("appsCount", 6)
+    fun setAppsCount(ctx: Context, n: Int) =
+        p(ctx).edit().putInt("appsCount", n).putString("preset", "custom").apply()
+    fun playerLarge(ctx: Context) = p(ctx).getBoolean("playerLarge", false)
+    fun setPlayerLarge(ctx: Context, v: Boolean) =
+        p(ctx).edit().putBoolean("playerLarge", v).putString("preset", "custom").apply()
+
+    fun applyPreset(ctx: Context, name: String) {
+        val off = when (name) {
+            "musica" -> setOf("manana", "bateria")
+            "minimal" -> setOf("manana", "bateria", "player")
+            else -> emptySet()
+        }
+        val e = p(ctx).edit().putString("preset", name)
+        ELEMENTS.forEach { e.putBoolean("el_$it", it !in off) }
+        e.putInt("appsCount", if (name == "completo") 6 else 3)
+        e.putBoolean("playerLarge", name == "musica")
+        e.apply()
+    }
+
     fun playerDismissed(ctx: Context) = p(ctx).getString("playerDismissed", "") ?: ""
     fun setPlayerDismissed(ctx: Context, v: String) = p(ctx).edit().putString("playerDismissed", v).apply()
 

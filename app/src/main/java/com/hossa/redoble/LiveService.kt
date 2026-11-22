@@ -87,7 +87,7 @@ class LiveService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat)
-            .setContentTitle("Redoble")
+            .setContentTitle("Prisma")
             .setContentText("Widget en vivo")
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .setOngoing(true)
