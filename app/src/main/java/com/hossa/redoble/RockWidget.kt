@@ -151,7 +151,11 @@ class RockWidget : AppWidgetProvider() {
          * vivo está activo (es quien la avanza cada minuto). Si no, se usa el reloj
          * del sistema, que avanza solo: así la hora nunca se queda congelada.
          */
-        private fun bitmapClock(ctx: Context) = Prefs.themeFonts(ctx) && LiveService.running
+        private fun bitmapClock(ctx: Context) =
+            Prefs.themeFonts(ctx) && Prefs.themeClock(ctx) && Prefs.liveUpdates(ctx) && LiveService.running
+
+        /** Día y fecha como imagen solo si la hora también va con la letra del tema. */
+        private fun bitmapDate(ctx: Context) = Prefs.themeFonts(ctx) && Prefs.themeClock(ctx) && Prefs.liveUpdates(ctx)
 
         /** Cada minuto (desde el servicio en vivo): solo la hora dibujada. */
         @Synchronized
@@ -274,13 +278,14 @@ class RockWidget : AppWidgetProvider() {
             val dayFmt = when (th.family) {
                 "cristal" -> "EEEE, d 'de' MMMM"; "neon" -> "EEEE '//' dd.MM"; "lujo" -> "EEEE · d 'de' MMMM"; else -> "EEEE"
             }
-            twin(v, R.id.day_txt, R.id.day_txt_bmp, !rock && dia, fonts) {
+            val dateFonts = fonts && bitmapDate(ctx)
+            twin(v, R.id.day_txt, R.id.day_txt_bmp, !rock && dia, dateFonts) {
                 TextArt.render(ctx, java.text.SimpleDateFormat(dayFmt, ES).format(now), S.title, 13f, dayColor,
                     S.tls, caps = true, glow = if (th.family == "neon") th.accent2 else 0, maxWidthPx = colW)
             }
             // Cristal, Neón y Lujo llevan la fecha en la misma línea del día.
             val dateInDay = th.family == "cristal" || th.family == "neon" || th.family == "lujo"
-            twin(v, R.id.date, R.id.date_bmp, dia && !dateInDay, fonts) {
+            twin(v, R.id.date, R.id.date_bmp, dia && !dateInDay, dateFonts) {
                 TextArt.render(ctx, java.text.SimpleDateFormat("d 'de' MMMM", ES).format(now),
                     if (th.family == "lujo") S.med else S.body, S.dsize, if (th.family == "lujo") th.dim else th.head,
                     S.lls, caps = S.caps, shadow = S.shadow, maxWidthPx = colW)

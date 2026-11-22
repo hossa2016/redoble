@@ -149,6 +149,12 @@ object Prefs {
     /** Dibujar los textos con las letras del tema (como imagen). */
     fun themeFonts(ctx: Context) = p(ctx).getBoolean("themeFonts", true)
     fun setThemeFonts(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("themeFonts", on).apply()
+    /**
+     * Hora, día y fecha con la letra del tema. Apagado por defecto: así se usa el
+     * reloj del sistema, que avanza solo aunque HyperOS cierre la app.
+     */
+    fun themeClock(ctx: Context) = p(ctx).getBoolean("themeClock", false)
+    fun setThemeClock(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("themeClock", on).apply()
     fun playerLarge(ctx: Context) = p(ctx).getBoolean("playerLarge", false)
     fun setPlayerLarge(ctx: Context, v: Boolean) =
         p(ctx).edit().putBoolean("playerLarge", v).putString("preset", "custom").apply()

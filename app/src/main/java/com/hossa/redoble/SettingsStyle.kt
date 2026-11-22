@@ -461,10 +461,55 @@ internal fun MainActivity.themePlate(): View {
         RockWidget.updateAll(this)
         build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-    card.addView(ui.note("Hora y batería al instante.",
-        "Batería al instante y hora con la letra del tema. Android exige mostrar una notificación fija " +
-        "mientras está activa; al encenderla te pedirá el permiso de notificaciones."))
+    card.addView(ui.note("Batería al instante.",
+        "Mantiene la batería al día y permite la hora con la letra del tema. Android exige mostrar una " +
+        "notificación fija mientras está activa; al encenderla te pedirá el permiso de notificaciones."))
+    if (Prefs.themeFonts(this) && Prefs.liveUpdates(this)) {
+        card.addView(switchRow("Hora con la letra del tema", Prefs.themeClock(this)) { on ->
+            Prefs.setThemeClock(this, on)
+            RockWidget.updateAll(this)
+            build()
+            if (on) showKeepAliveSteps()
+        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
+        card.addView(ui.note("Si la hora se queda quieta, apágalo.",
+            "Con esto la hora la dibuja Prisma cada minuto. Si HyperOS cierra la app para ahorrar batería, " +
+            "la hora se congela. Apagado, se usa el reloj del sistema, que nunca se atrasa."))
+    }
     return card
+}
+
+/**
+ * HyperOS/MIUI cierra las apps en segundo plano. Para que la hora con la letra
+ * del tema no se congele hay que darle Inicio automático y batería sin restricciones.
+ */
+internal fun MainActivity.showKeepAliveSteps() {
+    val msg = "Para que HyperOS no cierre Prisma y la hora no se congele:\n\n" +
+        "1. Activa Inicio automático.\n" +
+        "2. En Ahorro de batería elige Sin restricciones.\n" +
+        "3. En Recientes, baja la tarjeta de Prisma para bloquearla (candado)."
+    android.app.AlertDialog.Builder(this,
+        if (Ui.light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else android.R.style.Theme_DeviceDefault_Dialog_Alert)
+        .setTitle("Mantener la hora al día")
+        .setMessage(msg)
+        .setPositiveButton("Inicio automático") { _, _ -> openAutostart() }
+        .setNeutralButton("Batería") { _, _ -> openAppInfo() }
+        .setNegativeButton("Luego", null)
+        .show()
+}
+
+private fun MainActivity.openAppInfo() {
+    try {
+        startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            android.net.Uri.fromParts("package", packageName, null)))
+    } catch (e: Exception) { }
+}
+
+/** Pantalla de Inicio automático de Xiaomi; en otros teléfonos, la información de la app. */
+private fun MainActivity.openAutostart() {
+    try {
+        startActivity(Intent().setComponent(android.content.ComponentName(
+            "com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")))
+    } catch (e: Exception) { openAppInfo() }
 }
 
 /** Paleta de colores: oscuros, claros, personalizado y "del tema". */
