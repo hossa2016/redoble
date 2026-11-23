@@ -78,6 +78,9 @@ object Themes {
         return if (Prefs.playerTop(ctx)) t.withLayout(UP[t.layout] ?: t.layout) else t
     }
 
+    /** Variante con el reproductor arriba (la usa el widget Reproductor suelto). */
+    fun up(t: Theme): Theme = t.withLayout(UP[t.layout] ?: t.layout)
+
     private fun textTheme(ctx: Context): Theme {
         val t = current(ctx)
         val bg = when {

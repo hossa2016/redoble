@@ -63,9 +63,9 @@ class RockWidget : AppWidgetProvider() {
         private val LABEL_BMPS = intArrayOf(R.id.label0_bmp, R.id.label1_bmp, R.id.label2_bmp, R.id.label3_bmp, R.id.label4_bmp, R.id.label5_bmp, R.id.label6_bmp, R.id.label7_bmp)
         private val LABELS = intArrayOf(R.id.label0, R.id.label1, R.id.label2, R.id.label3, R.id.label4, R.id.label5, R.id.label6, R.id.label7)
 
+        /** ¿Hay algún widget de Prisma puesto (el Completo o una de las piezas)? */
         fun hasWidgets(ctx: Context): Boolean =
-            AppWidgetManager.getInstance(ctx)
-                .getAppWidgetIds(ComponentName(ctx, RockWidget::class.java)).isNotEmpty()
+            intArrayOf(Widgets.FULL, Widgets.CLOCK, Widgets.APPS, Widgets.PLAYER).any { Widgets.has(ctx, it) }
 
         /** Redibuja todo. Sincronizado: lo llaman el hilo principal y WorkManager. */
         @Synchronized
@@ -74,6 +74,7 @@ class RockWidget : AppWidgetProvider() {
             for (id in mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))) {
                 try { update(ctx, mgr, id) } catch (e: Exception) { }
             }
+            Widgets.updatePieces(ctx)
         }
 
         private val mainH = android.os.Handler(android.os.Looper.getMainLooper())
@@ -163,7 +164,7 @@ class RockWidget : AppWidgetProvider() {
             if (!bitmapClock(ctx)) return
             // La alarma de respaldo se vuelve a armar siempre, aunque la pantalla esté apagada
             armClockCheck(ctx)
-            if (!Prefs.el(ctx, "hora") || !screenOn(ctx)) return
+            if (!(Prefs.el(ctx, "hora") || Widgets.has(ctx, Widgets.CLOCK)) || !screenOn(ctx)) return
             val mgr = AppWidgetManager.getInstance(ctx)
             val th = Themes.widget(ctx)
             val playing = Prefs.lastPlaying(ctx)
@@ -171,6 +172,14 @@ class RockWidget : AppWidgetProvider() {
                 try {
                     val v = RemoteViews(ctx.packageName, th.layout)
                     v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, playing))
+                    mgr.partiallyUpdateAppWidget(id, v)
+                } catch (e: Exception) { }
+            }
+            // Widget Hora y clima: la hora siempre a tamaño completo
+            for (id in Widgets.ids(ctx, Widgets.CLOCK)) {
+                try {
+                    val v = RemoteViews(ctx.packageName, th.layout)
+                    v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, false))
                     mgr.partiallyUpdateAppWidget(id, v)
                 } catch (e: Exception) { }
             }
@@ -210,18 +219,36 @@ class RockWidget : AppWidgetProvider() {
          * ajustes ([preview] = true: sin efectos secundarios como pedir el clima).
          * Está dividido por secciones: cabecera, clima/batería y apps.
          */
-        fun buildViews(ctx: Context, W: Int, preview: Boolean = false): RemoteViews {
-            val th = Themes.widget(ctx)
+        fun buildViews(ctx: Context, W: Int, preview: Boolean = false, kind: Int = Widgets.FULL, hDp: Int = 0): RemoteViews {
+            // El widget Reproductor suelto usa la variante con el reproductor arriba
+            val th = Themes.widget(ctx).let { if (kind == Widgets.PLAYER) Themes.up(it) else it }
             val v = RemoteViews(ctx.packageName, th.layout)
             applyBackground(ctx, v, th)
             val fonts = Prefs.themeFonts(ctx)
 
-            // Reproductor primero: de él depende cuánto espacio queda.
-            val playing = Player.apply(ctx, v, fonts, W, preview)
-            if (!preview) Prefs.setLastPlaying(ctx, playing)
-
-            headerSection(ctx, v, th, W, playing, fonts, preview)
-            appsSection(ctx, v, th, W, playing, fonts)
+            when (kind) {
+                Widgets.CLOCK -> {
+                    // Solo la cabecera (hora, fecha, clima, batería)
+                    Player.apply(ctx, v, fonts, W, preview = true, mode = -1)
+                    v.setViewVisibility(R.id.middle, View.GONE)
+                    v.setViewVisibility(R.id.setlist, View.GONE)
+                    headerSection(ctx, v, th, W, false, fonts, preview, kind, hDp)
+                }
+                Widgets.PLAYER -> {
+                    // Solo el reproductor: grande si el widget es alto, compacto si es bajito
+                    v.setViewVisibility(R.id.top_space, View.GONE)
+                    v.setViewVisibility(R.id.header, View.GONE)
+                    v.setViewVisibility(R.id.setlist, View.GONE)
+                    Player.apply(ctx, v, fonts, W, preview, mode = if (hDp >= 150) 1 else 2)
+                }
+                else -> {
+                    // Reproductor primero: de él depende cuánto espacio queda.
+                    val playing = Player.apply(ctx, v, fonts, W, preview)
+                    if (!preview) Prefs.setLastPlaying(ctx, playing)
+                    headerSection(ctx, v, th, W, playing, fonts, preview)
+                    appsSection(ctx, v, th, W, playing, fonts)
+                }
+            }
 
             // Si hay ciudad pero el clima es viejo o falta el tipo de clima, pedirlo ya
             if (!preview && Prefs.city(ctx).isNotBlank() && (Prefs.weatherCode(ctx) < 0 ||
@@ -238,6 +265,7 @@ class RockWidget : AppWidgetProvider() {
          */
         @Synchronized
         fun updatePlayer(ctx: Context) {
+            Widgets.updateKind(ctx, Widgets.PLAYER)
             val mgr = AppWidgetManager.getInstance(ctx)
             val ids = mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))
             if (ids.isEmpty()) return
@@ -253,16 +281,23 @@ class RockWidget : AppWidgetProvider() {
         }
 
         /** Día, fecha, hora, clima y batería. */
-        private fun headerSection(ctx: Context, v: RemoteViews, th: Theme, W: Int, playing: Boolean, fonts: Boolean, preview: Boolean) {
+        private fun headerSection(ctx: Context, v: RemoteViews, th: Theme, W: Int, playing: Boolean, fonts: Boolean, preview: Boolean,
+                                  kind: Int = Widgets.FULL, hDp: Int = 0) {
             val accent = th.accent(ctx)
             val rock = th.family == "rock"
             val S = TextArt.spec(th.family)
             val dens = ctx.resources.displayMetrics.density
             val colW = W - ((if (rock) 96 else 24) * dens).toInt()
 
-            val dia = Prefs.el(ctx, "dia"); val hora = Prefs.el(ctx, "hora")
-            val clima = Prefs.el(ctx, "clima"); val manana = Prefs.el(ctx, "manana")
-            val bateria = Prefs.el(ctx, "bateria")
+            // En el widget Hora y clima: lo elegido para él, y menos datos si es pequeño
+            val solo = kind == Widgets.CLOCK
+            val roomy = !solo || hDp >= 150
+            val tiny = solo && hDp in 1..109
+            val dia = if (solo) Prefs.cw(ctx, "dia") && !tiny else Prefs.el(ctx, "dia")
+            val hora = if (solo) true else Prefs.el(ctx, "hora")
+            val clima = if (solo) Prefs.cw(ctx, "clima") && (roomy || hDp >= 120) else Prefs.el(ctx, "clima")
+            val manana = if (solo) Prefs.cw(ctx, "manana") && roomy else Prefs.el(ctx, "manana")
+            val bateria = if (solo) Prefs.cw(ctx, "bateria") && roomy else Prefs.el(ctx, "bateria")
 
             // Día
             val day = DAYS[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1]
@@ -419,6 +454,12 @@ class RockWidget : AppWidgetProvider() {
 
         /** Fondo del widget (como está, desvanecido o fijo) y colores de texto acordes. */
         private fun applyBackground(ctx: Context, v: RemoteViews, th: Theme) {
+            rootBackground(ctx, v, th)
+            textColors(ctx, v, th)
+        }
+
+        /** Solo el fondo (lo usan también las piezas sueltas, como el widget de Apps). */
+        internal fun rootBackground(ctx: Context, v: RemoteViews, th: Theme) {
             when (Prefs.widgetStyle(ctx)) {
                 "fade", "solid" -> {
                     val col = Themes.widgetColor(ctx, th)
@@ -430,6 +471,9 @@ class RockWidget : AppWidgetProvider() {
                 }
                 else -> v.setInt(R.id.root, "setBackgroundResource", 0)
             }
+        }
+
+        private fun textColors(ctx: Context, v: RemoteViews, th: Theme) {
             // Si el texto cambió (fondo claro/oscuro), también la letra del sistema
             if (th.head != Themes.current(ctx).head) {
                 for (id in intArrayOf(R.id.hh, R.id.mm, R.id.wx_now, R.id.batt_txt, R.id.pc_title, R.id.player_title,

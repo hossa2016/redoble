@@ -1,5 +1,12 @@
 <resources>
     <string name="app_name">Prisma Widgets</string>
+    <string name="w_full">Prisma · Completo</string>
+    <string name="w_clock">Prisma · Hora y clima</string>
+    <string name="w_apps">Prisma · Apps</string>
+    <string name="w_player">Prisma · Reproductor</string>
+    <string name="w_clock_desc">Día, fecha, hora, clima y batería</string>
+    <string name="w_apps_desc">Tus apps: se acomodan según el tamaño</string>
+    <string name="w_player_desc">La canción que suena, con sus botones</string>
     <string name="widget_desc">Día, hora, clima, música y tus apps en 7 estilos</string>
     <string name="wallpaper_desc">Fondo animado que se mueve al inclinar el teléfono</string>
 </resources>

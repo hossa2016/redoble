@@ -178,7 +178,34 @@ def add_bmps(xml, name):
     xml=xml[:e]+'\n<ImageView android:id="@+id/clock_bmp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:adjustViewBounds="true" android:contentDescription="@null" android:visibility="gone" />'+xml[e:]
     return xml
 
-for n,p in F.items(): build(n,p)
+def build_apps(name,p):
+    """Widget de Apps por separado: hasta 4 filas de 5. El código muestra las filas y
+    columnas que quepan según el tamaño del widget y oculta el resto."""
+    H=p['head']
+    tone='light' if name=='claro' else 'dark'
+    caps='android:textAllCaps="true"' if p['caps'] else ''
+    def apad(i):
+        ms='' if i%5==0 else 'android:layout_marginStart="8dp"'
+        return f'''<FrameLayout android:id="@+id/apad{i}" android:foreground="@drawable/ripple_box_{tone}" android:layout_width="0dp" android:layout_height="{p["padh"]}dp" android:layout_weight="1" {ms} android:background="{p["pad"]}">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="center" android:gravity="center_horizontal" android:orientation="vertical" android:paddingStart="2dp" android:paddingEnd="2dp">
+  <FrameLayout android:id="@+id/aholder{i}" android:layout_width="{p["hs"]}dp" android:layout_height="{p["hs"]}dp" android:background="{p["holder"]}">
+   <ImageView android:id="@+id/aicon{i}" android:layout_width="{p["isz"]}dp" android:layout_height="{p["isz"]}dp" android:layout_gravity="center" android:contentDescription="@null" />
+  </FrameLayout>
+  <TextView android:id="@+id/alabel{i}" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:fontFamily="@font/{p["label"]}" android:textSize="{p["lsize"]}sp" android:textColor="{H}" android:maxLines="1" android:includeFontPadding="false" android:ellipsize="end" android:gravity="center" android:letterSpacing="{p["lls"]}" {caps} {sh(p)} />
+  <ImageView android:id="@+id/alabel{i}_bmp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:adjustViewBounds="true" android:scaleType="fitStart" android:contentDescription="@null" android:visibility="gone" />
+ </LinearLayout>
+</FrameLayout>'''
+    rows=''.join(f'<LinearLayout android:id="@+id/arow{r}" android:layout_width="match_parent" android:layout_height="wrap_content" {"" if r==0 else 'android:layout_marginTop="8dp"'} android:orientation="horizontal">'+''.join(apad(r*5+c) for c in range(5))+'</LinearLayout>\n' for r in range(4))
+    xml=f'''<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="vertical" android:padding="4dp">
+{rows}<LinearLayout android:id="@+id/aempty" android:layout_width="match_parent" android:layout_height="64dp" android:background="{p["card"]}" android:gravity="center" android:visibility="gone">
+ <TextView android:id="@+id/aempty_txt" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/{p["body"]}" android:textSize="15sp" android:textColor="{p["dim"]}" android:text="Toca para elegir tus apps" />
+</LinearLayout>
+</LinearLayout>
+'''
+    open(f'{RES}/layout/widget_{name}_apps.xml','w',encoding='utf-8').write(xml)
+
+for n,p in F.items(): build(n,p); build_apps(n,p)
 
 D={
 'bg_neon_tile':'<layer-list xmlns:android="http://schemas.android.com/apk/res/android"><item><shape android:shape="rectangle"><corners android:radius="6dp"/><solid android:color="#F20B0A16"/><stroke android:width="1dp" android:color="#B33DF2FF"/></shape></item><item android:gravity="bottom|end" android:width="18dp" android:height="2dp" android:right="6dp" android:bottom="1dp"><shape android:shape="rectangle"><solid android:color="#FFFF3DCB"/></shape></item></layer-list>',

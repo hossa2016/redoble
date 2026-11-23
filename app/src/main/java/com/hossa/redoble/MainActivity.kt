@@ -47,6 +47,9 @@ class MainActivity : AppCompatActivity() {
     /** Vista previa fija (no se rehace en cada toque) y la columna de la pantalla. */
     internal var preview: PreviewParts? = null
     internal var mainCol: LinearLayout? = null
+    /** Grupo de apps que se está editando (con widgets de Apps puestos) y si se ven los 20 lugares. */
+    internal var appsGroup = 0
+    internal var moreSlots = false
     internal var lastPreviewBg: Bitmap? = null
 
     internal val suggested = listOf(
@@ -168,9 +171,19 @@ class MainActivity : AppCompatActivity() {
             Prefs.NAMES[Prefs.accentIndex(this).coerceIn(0, Prefs.NAMES.size - 1)]))
 
         col.addView(ui.groupHeader("Contenido"))
-        col.addView(fold(designPlate(), "diseno"))
+        // Diseño es del widget Completo: se muestra si está puesto (o si aún no hay ninguno)
+        if (Widgets.has(this, Widgets.FULL) || !hasWidget) col.addView(fold(designPlate(), "diseno"))
         col.addView(fold(setlistPlate(), "apps"))
         col.addView(fold(weatherPlate(), "clima", Prefs.city(this).substringBefore(",").ifBlank { "Sin ciudad" }))
+
+        // Piezas sueltas: cada sección aparece solo si ese widget está puesto
+        val clockW = Widgets.has(this, Widgets.CLOCK); val appsW = Widgets.has(this, Widgets.APPS)
+        val playerW = Widgets.has(this, Widgets.PLAYER)
+        col.addView(ui.groupHeader("Tus widgets"))
+        if (clockW) col.addView(fold(clockWidgetPlate(), "w_clock"))
+        if (appsW) col.addView(fold(appsWidgetsPlate(), "w_apps", Widgets.ids(this, Widgets.APPS).size.let { if (it == 1) "1 widget" else "$it widgets" }))
+        if (playerW) col.addView(fold(playerWidgetPlate(), "w_player", if (Prefs.pwIdle(this) == "last") "Sin música: última canción" else "Sin música: nada sonando"))
+        col.addView(fold(packPlate(), "w_pack", "${intArrayOf(Widgets.FULL, Widgets.CLOCK, Widgets.APPS, Widgets.PLAYER).count { Widgets.has(this, it) }} de 4 puestos"))
 
         col.addView(ui.groupHeader("Reproductor"))
         col.addView(fold(playerPlate(), "reproductor", if (Player.enabled(this)) "Activo" else "Sin permiso"))

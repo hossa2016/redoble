@@ -54,7 +54,8 @@ object BatteryMonitor {
 
     private fun refreshLocked(ctx: Context) {
         val mgr = AppWidgetManager.getInstance(ctx)
-        val ids = mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))
+        // El Completo y el de Hora y clima usan el mismo diseño: se actualizan igual
+        val ids = mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java)) + Widgets.ids(ctx, Widgets.CLOCK)
         if (ids.isEmpty()) return
         val v = RemoteViews(ctx.packageName, Themes.widget(ctx).layout)
         RockWidget.applyBattery(ctx, v)

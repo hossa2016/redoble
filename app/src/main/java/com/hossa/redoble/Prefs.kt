@@ -195,10 +195,14 @@ object Prefs {
         .putString("wxNow", now).putString("wxTomorrow", tomorrow)
         .putLong("wxAt", System.currentTimeMillis()).apply()
 
-    fun app(ctx: Context, slot: Int): String {
+    /** Clave de una app según el grupo: 0 = «Mis apps» (las de siempre), 1 y 2 = otros grupos. */
+    private fun gk(group: Int, base: String) = if (group == 0) base else "g${group}_$base"
+
+    fun app(ctx: Context, slot: Int, group: Int = 0): String {
         val prefs = p(ctx)
-        val key = "app$slot"
+        val key = gk(group, "app$slot")
         if (prefs.contains(key)) return prefs.getString(key, "") ?: ""
+        if (group != 0) return ""
         val pm = ctx.packageManager
         val found = DEFAULT_APPS.getOrNull(slot)
             ?.firstOrNull { pm.getLaunchIntentForPackage(it) != null } ?: ""
@@ -206,16 +210,54 @@ object Prefs {
         return found
     }
 
-    fun setApp(ctx: Context, slot: Int, pkg: String) =
-        p(ctx).edit().putString("app$slot", pkg).remove("label$slot").apply()
+    fun setApp(ctx: Context, slot: Int, pkg: String, group: Int = 0) =
+        p(ctx).edit().putString(gk(group, "app$slot"), pkg).remove(gk(group, "label$slot")).apply()
 
     /** Nombre corto opcional para el acceso; si no hay, se usa el nombre de la app. */
-    fun label(ctx: Context, slot: Int): String? = p(ctx).getString("label$slot", null)?.takeIf { it.isNotBlank() }
-    fun setLabel(ctx: Context, slot: Int, name: String?) =
-        p(ctx).edit().apply { if (name.isNullOrBlank()) remove("label$slot") else putString("label$slot", name.trim()) }.apply()
+    fun label(ctx: Context, slot: Int, group: Int = 0): String? =
+        p(ctx).getString(gk(group, "label$slot"), null)?.takeIf { it.isNotBlank() }
+    fun setLabel(ctx: Context, slot: Int, name: String?, group: Int = 0) = p(ctx).edit().apply {
+        val k = gk(group, "label$slot")
+        if (name.isNullOrBlank()) remove(k) else putString(k, name.trim())
+    }.apply()
 
-    fun displayName(ctx: Context, slot: Int): String {
-        val pkg = app(ctx, slot)
-        return label(ctx, slot) ?: if (pkg.isBlank()) "" else Apps.label(ctx, pkg)
+    fun displayName(ctx: Context, slot: Int, group: Int = 0): String {
+        val pkg = app(ctx, slot, group)
+        return label(ctx, slot, group) ?: if (pkg.isBlank()) "" else Apps.label(ctx, pkg)
     }
+
+    // ---------------------------------------------------------------- widgets por separado
+
+    /** Lugares de cada grupo de apps (el widget de Apps muestra hasta 4 filas de 5). */
+    const val GROUP_SLOTS = 20
+    val GROUP_NAMES = listOf("Mis apps", "Grupo 2", "Grupo 3")
+
+    /** Widget Hora y clima: qué datos muestra (la hora siempre). */
+    fun cw(ctx: Context, el: String) = p(ctx).getBoolean("cw_$el", true)
+    fun setCw(ctx: Context, el: String, on: Boolean) = p(ctx).edit().putBoolean("cw_$el", on).apply()
+
+    /** Widget Reproductor: sin música, "last" (la última canción) o "none" («Nada sonando»). */
+    fun pwIdle(ctx: Context) = p(ctx).getString("pwIdle", "last") ?: "last"
+    fun setPwIdle(ctx: Context, v: String) = p(ctx).edit().putString("pwIdle", v).apply()
+    fun lastSong(ctx: Context): Triple<String, String, String> = p(ctx).let {
+        Triple(it.getString("lsTitle", "") ?: "", it.getString("lsArtist", "") ?: "", it.getString("lsPkg", "") ?: "")
+    }
+    fun setLastSong(ctx: Context, title: String, artist: String, pkg: String) {
+        val (t, a, k) = lastSong(ctx)
+        if (t != title || a != artist || k != pkg)
+            p(ctx).edit().putString("lsTitle", title).putString("lsArtist", artist).putString("lsPkg", pkg).apply()
+    }
+
+    /** Cada copia del widget de Apps: grupo, nombres y tamaño (automático o a mano). */
+    fun awGroup(ctx: Context, id: Int) = p(ctx).getInt("aw_${id}_group", 0).coerceIn(0, 2)
+    fun awNames(ctx: Context, id: Int) = p(ctx).getString("aw_${id}_names", "auto") ?: "auto"
+    fun awAuto(ctx: Context, id: Int) = p(ctx).getBoolean("aw_${id}_auto", true)
+    fun awCols(ctx: Context, id: Int) = p(ctx).getInt("aw_${id}_cols", 4).coerceIn(1, 5)
+    fun awRows(ctx: Context, id: Int) = p(ctx).getInt("aw_${id}_rows", 2).coerceIn(1, 4)
+    fun setAw(ctx: Context, id: Int, group: Int, names: String, auto: Boolean, cols: Int, rows: Int) =
+        p(ctx).edit().putInt("aw_${id}_group", group).putString("aw_${id}_names", names)
+            .putBoolean("aw_${id}_auto", auto).putInt("aw_${id}_cols", cols).putInt("aw_${id}_rows", rows).apply()
+    fun clearAw(ctx: Context, id: Int) = p(ctx).edit().apply {
+        listOf("group", "names", "auto", "cols", "rows").forEach { remove("aw_${id}_$it") }
+    }.apply()
 }

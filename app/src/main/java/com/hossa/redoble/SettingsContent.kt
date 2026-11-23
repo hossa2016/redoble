@@ -120,9 +120,20 @@ internal fun MainActivity.refreshCityStatus() {
 
 internal fun MainActivity.setlistPlate(): View {
     val card = ui.plateCard()
-    val used = Prefs.usedSlots(this)
-    val filled = (0 until used).count { Prefs.app(this, it).isNotBlank() }
-    card.addView(ui.sectionTitle("Apps", "$filled de $used · ${Prefs.perRow(this)} por fila"))
+    // Con widgets de Apps puestos se editan también los grupos 2 y 3, y hay más lugares
+    val appsWidget = Widgets.has(this, Widgets.APPS)
+    val group = if (appsWidget) appsGroup else 0
+    val used = if (appsWidget) (if (moreSlots) Prefs.GROUP_SLOTS else 8) else Prefs.usedSlots(this)
+    val filled = (0 until used).count { Prefs.app(this, it, group).isNotBlank() }
+    card.addView(ui.sectionTitle("Apps", if (appsWidget) "${Prefs.GROUP_NAMES[group]} · $filled apps"
+        else "$filled de $used · ${Prefs.perRow(this)} por fila"))
+    if (appsWidget) {
+        card.addView(ui.segmented(Prefs.GROUP_NAMES.indices.map { it to Prefs.GROUP_NAMES[it] }, group) { appsGroup = it; build() },
+            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(8) })
+        card.addView(ui.note(if (group == 0) "«Mis apps» también las usa el widget Completo."
+            else "Elige este grupo en un widget de Apps con «Cambiar», en Tus widgets."),
+            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(10) })
+    }
     card.addView(ui.bodyText("Mantén presionada una app para renombrarla.", Ui.MUTED, 13f).apply {
         setPadding(0, 0, 0, ui.dp(8))
     })
@@ -138,17 +149,20 @@ internal fun MainActivity.setlistPlate(): View {
     for (i in 0 until used) {
         if (i > 0) card.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0F)) },
             LinearLayout.LayoutParams(-1, ui.dp(1)))
-        card.addView(slotRow(i), LinearLayout.LayoutParams(-1, ui.dp(56)))
+        card.addView(slotRow(i, group), LinearLayout.LayoutParams(-1, ui.dp(56)))
     }
+    if (appsWidget) card.addView(ui.textButton(if (moreSlots) "Mostrar menos lugares" else "Mostrar ${Prefs.GROUP_SLOTS - 8} lugares más").apply {
+        setOnClickListener { moreSlots = !moreSlots; build() }
+    }, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(6) })
     return card
 }
 
-internal fun MainActivity.renameSlot(slot: Int) {
-    val pkg = Prefs.app(this, slot)
+internal fun MainActivity.renameSlot(slot: Int, group: Int = 0) {
+    val pkg = Prefs.app(this, slot, group)
     val original = Apps.label(this, pkg)
     val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(ui.dp(20), ui.dp(8), ui.dp(20), 0) }
     val field = EditText(this).apply {
-        setText(Prefs.label(this@renameSlot, slot) ?: original)
+        setText(Prefs.label(this@renameSlot, slot, group) ?: original)
         setSelectAllOnFocus(true)
         setSingleLine()
         filters = arrayOf(android.text.InputFilter.LengthFilter(14))
@@ -163,19 +177,19 @@ internal fun MainActivity.renameSlot(slot: Int) {
         .setView(box)
         .setPositiveButton("Guardar") { _, _ ->
             val t = field.text.toString().trim()
-            Prefs.setLabel(this, slot, if (t == original) null else t)
+            Prefs.setLabel(this, slot, if (t == original) null else t, group)
             RockWidget.updateAll(this); build()
         }
         .setNeutralButton("Original") { _, _ ->
-            Prefs.setLabel(this, slot, null); RockWidget.updateAll(this); build()
+            Prefs.setLabel(this, slot, null, group); RockWidget.updateAll(this); build()
         }
         .setNegativeButton("Cancelar", null)
         .show()
     field.requestFocus()
 }
 
-internal fun MainActivity.slotRow(i: Int): View {
-    val pkg = Prefs.app(this, i)
+internal fun MainActivity.slotRow(i: Int, group: Int = 0): View {
+    val pkg = Prefs.app(this, i, group)
     val empty = pkg.isBlank()
     return LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
@@ -186,14 +200,14 @@ internal fun MainActivity.slotRow(i: Int): View {
         addView(ui.appHolder(pkg, 38, 19).apply {
             (layoutParams as LinearLayout.LayoutParams).marginStart = ui.dp(10)
         })
-        addView(ui.ellipsize(ui.text(if (empty) "Espacio libre" else Prefs.displayName(this@slotRow, i), ui.cond, 19f,
+        addView(ui.ellipsize(ui.text(if (empty) "Espacio libre" else Prefs.displayName(this@slotRow, i, group), ui.cond, 19f,
             if (empty) Ui.DIM else Ui.HEAD)),
             LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = ui.dp(14) })
         addView(ui.text(if (empty) "Elegir app" else "Cambiar", ui.cond, 15f, if (empty) ui.accent else Ui.MUTED))
         addView(ui.text("›", ui.condLight, 22f, Ui.DIM).apply { setPadding(ui.dp(8), 0, 0, ui.dp(2)) })
-        if (!empty) setOnLongClickListener { renameSlot(i); true }
+        if (!empty) setOnLongClickListener { renameSlot(i, group); true }
         setOnClickListener {
-            AppPicker(this@slotRow, ui, i) {
+            AppPicker(this@slotRow, ui, i, group) {
                 RockWidget.updateAll(this@slotRow)
                 build()
             }.show()

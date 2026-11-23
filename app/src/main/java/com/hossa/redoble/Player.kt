@@ -165,15 +165,23 @@ object Player {
         )
 
     /** Llena (u oculta) la tarjeta del reproductor. Devuelve si quedó visible. */
-    fun apply(ctx: Context, v: RemoteViews, fonts: Boolean = false, widthPx: Int = 0, preview: Boolean = false): Boolean {
+    /**
+     * [mode]: 0 = dentro del widget Completo (se oculta sin música); 1 y 2 = el widget
+     * Reproductor por separado, grande o compacto (sin música muestra la última canción
+     * o «Nada sonando»).
+     */
+    fun apply(ctx: Context, v: RemoteViews, fonts: Boolean = false, widthPx: Int = 0, preview: Boolean = false, mode: Int = 0): Boolean {
         v.setViewVisibility(R.id.player, View.GONE)
         v.setViewVisibility(R.id.player_c, View.GONE)
-        if (!Prefs.el(ctx, "player")) return false
+        if (mode < 0 || (mode == 0 && !Prefs.el(ctx, "player"))) return false
         val c = try { controller(ctx) } catch (e: Exception) { null }
         val md = c?.metadata
         val title = clean(md?.getString(MediaMetadata.METADATA_KEY_TITLE)
             ?: md?.description?.title?.toString() ?: "")
-        if (c == null || md == null || title.isBlank()) return false
+        if (c == null || md == null || title.isBlank()) {
+            if (mode != 0) idle(ctx, v, fonts, widthPx, mode == 1)
+            return false
+        }
         val artist = clean(md.getString(MediaMetadata.METADATA_KEY_ARTIST)
             ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
             ?: md.description?.subtitle?.toString() ?: "")
@@ -181,7 +189,8 @@ object Player {
         val th = Themes.widget(ctx)
         val accent = th.accent(ctx)
 
-        val dismissed = Prefs.playerDismissed(ctx)
+        if (!preview) Prefs.setLastSong(ctx, title, artist, c.packageName)
+        val dismissed = if (mode == 0) Prefs.playerDismissed(ctx) else ""
         if (dismissed.isNotEmpty()) {
             if (playing) { if (!preview) Prefs.setPlayerDismissed(ctx, "") }
             else if (dismissed == key(c)) return false
@@ -204,8 +213,10 @@ object Player {
                 TextArt.render(ctx, t, font, sp, col, sp2, caps, S.shadow, if (font == S.title) glow else 0, maxW)
             }
 
-        if (Prefs.playerLarge(ctx)) {
+        if (if (mode == 0) Prefs.playerLarge(ctx) else mode == 1) {
             v.setViewVisibility(R.id.player, View.VISIBLE)
+            // En el widget Reproductor no hay X: el widget se quita desde la pantalla de inicio
+            v.setViewVisibility(R.id.player_close, if (mode == 0) View.VISIBLE else View.GONE)
             val src = try {
                 val pm = ctx.packageManager
                 pm.getApplicationLabel(pm.getApplicationInfo(c.packageName, 0)).toString().uppercase()
@@ -253,6 +264,68 @@ object Player {
             if (open != null) v.setOnClickPendingIntent(R.id.pc_info, open)
         }
         return true
+    }
+
+    /** Widget Reproductor sin música: la última canción (para seguir) o «Nada sonando». */
+    private fun idle(ctx: Context, v: RemoteViews, fonts: Boolean, widthPx: Int, large: Boolean) {
+        val th = Themes.widget(ctx)
+        val accent = th.accent(ctx)
+        val S = TextArt.spec(th.family)
+        val d = ctx.resources.displayMetrics.density
+        val W = if (widthPx > 0) widthPx else (360 * d).toInt()
+        val (lt, la, lp) = Prefs.lastSong(ctx)
+        val useLast = Prefs.pwIdle(ctx) == "last" && lt.isNotBlank()
+        val title = if (useLast) lt else "Nada sonando"
+        val artist = if (useLast) la else "Toca ▶ para abrir tu música"
+        val pkg = (if (useLast) lp else "").ifBlank { Prefs.musicApp(ctx) }
+        val launch = ctx.packageManager.getLaunchIntentForPackage(pkg)?.let {
+            PendingIntent.getActivity(ctx, 220, it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        }
+        val iconCol = if (th.family == "neon") accent else th.head
+        fun txt(tv: Int, bmp: Int, t: String, font: Int, sp: Float, col: Int, maxW: Int, caps: Boolean = false, sp2: Float = 0f) =
+            RockWidget.twin(v, tv, bmp, t.isNotBlank(), fonts) {
+                TextArt.render(ctx, t, font, sp, col, sp2, caps, S.shadow, 0, maxW)
+            }
+        if (large) {
+            v.setViewVisibility(R.id.player, View.VISIBLE)
+            v.setViewVisibility(R.id.player_close, View.GONE)
+            v.setViewVisibility(R.id.player_eq, View.GONE)
+            val src = try {
+                val pm = ctx.packageManager
+                pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString().uppercase()
+            } catch (e: Exception) { "MÚSICA" }
+            v.setTextViewText(R.id.player_src, src)
+            v.setTextViewText(R.id.player_state, if (useLast) " · Última canción" else "")
+            v.setTextViewText(R.id.player_title, title)
+            v.setTextViewText(R.id.player_artist, artist)
+            v.setViewVisibility(R.id.player_artist, View.VISIBLE)
+            val tw = W - (230 * d).toInt()
+            txt(R.id.player_src, R.id.player_src_bmp, src, S.title, 10f, accent, W / 2, sp2 = 0.12f)
+            txt(R.id.player_state, R.id.player_state_bmp, if (useLast) " · Última canción" else "", S.body, 10f, th.dim, W / 3)
+            txt(R.id.player_title, R.id.player_title_bmp, title, S.semi, 15f, th.head, tw, caps = th.family == "neon")
+            txt(R.id.player_artist, R.id.player_artist_bmp, artist, S.body, 12f, th.dim, tw)
+            v.setImageViewBitmap(R.id.player_art, artBitmap(ctx, null, th, 56, false))
+            v.setImageViewBitmap(R.id.player_prev, iconBitmap(ctx, "prev", th.dim, 24))
+            v.setImageViewBitmap(R.id.player_next, iconBitmap(ctx, "next", th.dim, 24))
+            v.setImageViewBitmap(R.id.player_play, playBitmap(ctx, false, th, 52))
+            v.setContentDescription(R.id.player_play, "Abrir tu música")
+            if (launch != null) for (id in intArrayOf(R.id.player_play, R.id.player_info, R.id.player_head, R.id.player_next, R.id.player_prev))
+                v.setOnClickPendingIntent(id, launch)
+        } else {
+            v.setViewVisibility(R.id.player_c, View.VISIBLE)
+            v.setTextViewText(R.id.pc_title, title)
+            v.setTextViewText(R.id.pc_artist, artist)
+            v.setViewVisibility(R.id.pc_artist, View.VISIBLE)
+            val tw = W - (180 * d).toInt()
+            txt(R.id.pc_title, R.id.pc_title_bmp, title, S.semi, 14f, th.head, tw, caps = th.family == "neon")
+            txt(R.id.pc_artist, R.id.pc_artist_bmp, artist, S.body, 12f, th.dim, tw)
+            v.setImageViewBitmap(R.id.pc_art, artBitmap(ctx, null, th, 46, false))
+            v.setImageViewBitmap(R.id.pc_play, playBitmap(ctx, false, th, 40))
+            v.setContentDescription(R.id.pc_play, "Abrir tu música")
+            v.setImageViewBitmap(R.id.pc_next, iconBitmap(ctx, "next", iconCol, 22))
+            if (launch != null) for (id in intArrayOf(R.id.pc_play, R.id.pc_next, R.id.pc_info)) v.setOnClickPendingIntent(id, launch)
+        }
     }
 
     // ---------------------------------------------------------------- dibujo

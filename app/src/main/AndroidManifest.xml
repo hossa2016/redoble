@@ -36,7 +36,7 @@
         <receiver
             android:name=".RockWidget"
             android:exported="true"
-            android:label="@string/app_name">
+            android:label="@string/w_full">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.intent.action.TIME_SET" />
@@ -46,6 +46,49 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/rock_widget_info" />
         </receiver>
+        <receiver
+            android:name=".ClockWidget"
+            android:exported="true"
+            android:label="@string/w_clock">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_clock_info" />
+        </receiver>
+        <receiver
+            android:name=".AppsWidget"
+            android:exported="true"
+            android:label="@string/w_apps">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_apps_info" />
+        </receiver>
+        <receiver
+            android:name=".PlayerWidget"
+            android:exported="true"
+            android:label="@string/w_player">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_player_info" />
+        </receiver>
+        <!-- Ventanita al poner un widget de Apps (la abre el sistema) -->
+        <activity
+            android:name=".AppsWidgetConfig"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
         <!-- Botones del reproductor y alarmas propias: privado, otras apps no pueden usarlo -->
         <receiver
             android:name=".ActionReceiver"

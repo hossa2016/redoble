@@ -27,6 +27,7 @@ class AppPicker(
     private val activity: AppCompatActivity,
     private val ui: Ui,
     private val slot: Int,
+    private val group: Int = 0,
     private val onDone: () -> Unit
 ) {
     private sealed class Item {
@@ -35,10 +36,10 @@ class AppPicker(
     }
 
     private val all = Apps.launchable(activity)
-    private val current = Prefs.app(activity, slot)
-    private val usedIn: Map<String, Int> = (0 until Prefs.SLOTS)
+    private val current = Prefs.app(activity, slot, group)
+    private val usedIn: Map<String, Int> = (0 until if (group == 0) Prefs.GROUP_SLOTS else Prefs.GROUP_SLOTS)
         .filter { it != slot }
-        .associateBy { Prefs.app(activity, it) }
+        .associateBy { Prefs.app(activity, it, group) }
         .filterKeys { it.isNotBlank() }
 
     private var items: List<Item> = build("")
@@ -172,8 +173,8 @@ class AppPicker(
     }
 
     private fun choose(pkg: String) {
-        if (pkg.isNotBlank()) usedIn[pkg]?.let { Prefs.setApp(activity, it, "") }
-        Prefs.setApp(activity, slot, pkg)
+        if (pkg.isNotBlank()) usedIn[pkg]?.let { Prefs.setApp(activity, it, "", group) }
+        Prefs.setApp(activity, slot, pkg, group)
         dialog.dismiss()
         onDone()
     }

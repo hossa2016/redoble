@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Vista en la lista de widgets del teléfono -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/bg_player" android:orientation="vertical"
+    android:gravity="center_vertical" android:padding="16dp">
+    <TextClock android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:format12Hour="EEEE" android:format24Hour="EEEE" android:textAllCaps="true"
+        android:fontFamily="@font/anton_regular" android:textSize="13sp" android:letterSpacing="0.06"
+        android:textColor="#FFD2483F" />
+    <TextClock android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:format12Hour="h:mm" android:format24Hour="H:mm" android:includeFontPadding="false"
+        android:fontFamily="@font/barlow_condensed_extralight" android:textSize="58sp" android:textColor="#FFEDE6DC" />
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="☁ 21° · ▮▮▮▮▮▮▮▯ 90 %" android:fontFamily="@font/barlow_condensed_medium"
+        android:textSize="15sp" android:textColor="#FFB5AA9F" />
+</LinearLayout>
