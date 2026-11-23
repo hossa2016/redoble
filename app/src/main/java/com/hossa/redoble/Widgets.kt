@@ -22,6 +22,12 @@ import androidx.appcompat.app.AppCompatActivity
 class ClockWidget : AppWidgetProvider() {
     override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) {
         ids.forEach { Widgets.update(ctx, mgr, it, Widgets.CLOCK) }
+        // Igual que el Completo: cambio de día, clima y batería aunque esté solo
+        try {
+            RockWidget.scheduleMidnight(ctx)
+            WeatherWorker.schedule(ctx)
+            BatteryMonitor.check(ctx)
+        } catch (e: Exception) { }
         LiveService.start(ctx)
     }
     override fun onAppWidgetOptionsChanged(ctx: Context, mgr: AppWidgetManager, id: Int, o: Bundle) =
@@ -35,6 +41,8 @@ class AppsWidget : AppWidgetProvider() {
     override fun onAppWidgetOptionsChanged(ctx: Context, mgr: AppWidgetManager, id: Int, o: Bundle) =
         Widgets.update(ctx, mgr, id, Widgets.APPS)
     override fun onDeleted(ctx: Context, ids: IntArray) = ids.forEach { Prefs.clearAw(ctx, it) }
+    override fun onRestored(ctx: Context, oldIds: IntArray, newIds: IntArray) =
+        oldIds.forEachIndexed { i, old -> newIds.getOrNull(i)?.let { Prefs.moveAw(ctx, old, it) } }
 }
 
 /** Reproductor: grande o compacto según el alto; sin música, la última canción. */
@@ -129,12 +137,14 @@ object Widgets {
             cols = ((wDp - 8) / 76).coerceIn(1, 5)
             rows = ((inner + 8) / (minOf(hs, 48) + 28)).coerceIn(1, 4)
         } else {
-            cols = Prefs.awCols(ctx, id); rows = Prefs.awRows(ctx, id)
+            // A mano, pero sin pasarse de lo que cabe en el widget
+            cols = minOf(Prefs.awCols(ctx, id), ((wDp - 8 + 8) / 48).coerceAtLeast(1))
+            rows = minOf(Prefs.awRows(ctx, id), ((inner + 8) / 44).coerceAtLeast(1))
         }
         val rowH = ((inner - 8 * (rows - 1)) / rows).coerceAtLeast(36)
         val colW = (wDp - 8 - 8 * (cols - 1)) / cols
         val fits = rowH >= minOf(hs, 48) + 26 && colW >= 58
-        val names = when (Prefs.awNames(ctx, id)) { "on" -> true; "off" -> false; else -> fits }
+        val names = colW >= 40 && when (Prefs.awNames(ctx, id)) { "on" -> true; "off" -> false; else -> fits }
         return Grid(cols, rows, names, rowH)
     }
 
@@ -158,7 +168,7 @@ object Widgets {
         val usedRows = if (apps.isEmpty()) 0 else (apps.size + g.cols - 1) / g.cols
 
         // Nombres del mismo tamaño en toda la cuadrícula
-        val labelMax = ((wDp - 8 - 8 * (g.cols - 1)) / g.cols * dens).toInt() - (6 * dens).toInt()
+        val labelMax = (((wDp - 8 - 8 * (g.cols - 1)) / g.cols * dens).toInt() - (6 * dens).toInt()).coerceAtLeast(1)
         val labelSp = TextArt.commonSize(ctx, apps.map { Prefs.displayName(ctx, it.first, group) }, S.label,
             if (g.cols >= 4) S.lsize * 0.86f else S.lsize, S.lls, th.family == "neon" || th.family == "lujo", S.shadow, maxWidthPx = labelMax)
         // Caja del ícono: más pequeña si la fila es bajita
@@ -231,9 +241,13 @@ class AppsWidgetConfig : AppCompatActivity() {
 
     private var group = 0; private var names = "auto"; private var auto = true; private var cols = 4; private var rows = 2
     private var loaded = false
+    private var scroll: ScrollView? = null
+    private var isNew = true
 
     private fun show() {
+        val keepY = scroll?.scrollY ?: 0
         if (!loaded) {
+            isNew = !Prefs.awExists(this, widgetId)
             group = Prefs.awGroup(this, widgetId); names = Prefs.awNames(this, widgetId)
             auto = Prefs.awAuto(this, widgetId); cols = Prefs.awCols(this, widgetId); rows = Prefs.awRows(this, widgetId)
             loaded = true
@@ -247,7 +261,7 @@ class AppsWidgetConfig : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             setPadding(ui.dp(20), ui.dp(28), ui.dp(20), ui.dp(28))
         }
-        col.addView(ui.text("NUEVO WIDGET DE APPS", ui.anton, 26f, Ui.HEAD, 0.02f))
+        col.addView(ui.text(if (isNew) "NUEVO WIDGET DE APPS" else "WIDGET DE APPS", ui.anton, 26f, Ui.HEAD, 0.02f))
         col.addView(ui.note("Elige qué muestra esta copia."), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(4) })
 
         fun label(t: String) = col.addView(ui.text(t, ui.cond, 16f, Ui.HEAD),
@@ -280,7 +294,9 @@ class AppsWidgetConfig : AppCompatActivity() {
         }, LinearLayout.LayoutParams(-1, ui.dp(52)).apply { topMargin = ui.dp(28) })
 
         val sv = ScrollView(this).apply { setBackgroundColor(Ui.INK); addView(col) }
+        scroll = sv
         setContentView(sv)
+        sv.post { sv.scrollTo(0, keepY) }
         window.decorView.setBackgroundColor(Ui.INK)
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(sv) { view, ins ->
             val b = ins.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())

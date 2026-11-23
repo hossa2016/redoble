@@ -123,7 +123,9 @@ internal fun MainActivity.setlistPlate(): View {
     // Con widgets de Apps puestos se editan también los grupos 2 y 3, y hay más lugares
     val appsWidget = Widgets.has(this, Widgets.APPS)
     val group = if (appsWidget) appsGroup else 0
-    val used = if (appsWidget) (if (moreSlots) Prefs.GROUP_SLOTS else 8) else Prefs.usedSlots(this)
+    val extraFilled = appsWidget && (8 until Prefs.GROUP_SLOTS).any { Prefs.app(this, it, group).isNotBlank() }
+    val showAll = moreSlots || extraFilled
+    val used = if (appsWidget) (if (showAll) Prefs.GROUP_SLOTS else 8) else Prefs.usedSlots(this)
     val filled = (0 until used).count { Prefs.app(this, it, group).isNotBlank() }
     card.addView(ui.sectionTitle("Apps", if (appsWidget) "${Prefs.GROUP_NAMES[group]} · $filled apps"
         else "$filled de $used · ${Prefs.perRow(this)} por fila"))
@@ -151,7 +153,7 @@ internal fun MainActivity.setlistPlate(): View {
             LinearLayout.LayoutParams(-1, ui.dp(1)))
         card.addView(slotRow(i, group), LinearLayout.LayoutParams(-1, ui.dp(56)))
     }
-    if (appsWidget) card.addView(ui.textButton(if (moreSlots) "Mostrar menos lugares" else "Mostrar ${Prefs.GROUP_SLOTS - 8} lugares más").apply {
+    if (appsWidget && !extraFilled) card.addView(ui.textButton(if (moreSlots) "Mostrar menos lugares" else "Mostrar ${Prefs.GROUP_SLOTS - 8} lugares más").apply {
         setOnClickListener { moreSlots = !moreSlots; build() }
     }, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(6) })
     return card

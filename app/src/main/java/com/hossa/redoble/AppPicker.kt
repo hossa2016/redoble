@@ -37,7 +37,7 @@ class AppPicker(
 
     private val all = Apps.launchable(activity)
     private val current = Prefs.app(activity, slot, group)
-    private val usedIn: Map<String, Int> = (0 until if (group == 0) Prefs.GROUP_SLOTS else Prefs.GROUP_SLOTS)
+    private val usedIn: Map<String, Int> = (0 until Prefs.GROUP_SLOTS)
         .filter { it != slot }
         .associateBy { Prefs.app(activity, it, group) }
         .filterKeys { it.isNotBlank() }

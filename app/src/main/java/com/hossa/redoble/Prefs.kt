@@ -257,6 +257,13 @@ object Prefs {
     fun setAw(ctx: Context, id: Int, group: Int, names: String, auto: Boolean, cols: Int, rows: Int) =
         p(ctx).edit().putInt("aw_${id}_group", group).putString("aw_${id}_names", names)
             .putBoolean("aw_${id}_auto", auto).putInt("aw_${id}_cols", cols).putInt("aw_${id}_rows", rows).apply()
+    fun awExists(ctx: Context, id: Int) = p(ctx).contains("aw_${id}_group")
+    /** Copia de seguridad restaurada: los ajustes pasan del número viejo del widget al nuevo. */
+    fun moveAw(ctx: Context, from: Int, to: Int) {
+        if (!awExists(ctx, from)) return
+        setAw(ctx, to, awGroup(ctx, from), awNames(ctx, from), awAuto(ctx, from), awCols(ctx, from), awRows(ctx, from))
+        clearAw(ctx, from)
+    }
     fun clearAw(ctx: Context, id: Int) = p(ctx).edit().apply {
         listOf("group", "names", "auto", "cols", "rows").forEach { remove("aw_${id}_$it") }
     }.apply()

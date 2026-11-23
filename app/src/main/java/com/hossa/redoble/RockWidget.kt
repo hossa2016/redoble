@@ -239,7 +239,10 @@ class RockWidget : AppWidgetProvider() {
                     v.setViewVisibility(R.id.top_space, View.GONE)
                     v.setViewVisibility(R.id.header, View.GONE)
                     v.setViewVisibility(R.id.setlist, View.GONE)
-                    Player.apply(ctx, v, fonts, W, preview, mode = if (hDp >= 150) 1 else 2)
+                    // El grande mide unos 185 dp: solo si cabe entero; si no, el compacto
+                    Player.apply(ctx, v, fonts, W, preview, mode = if (hDp >= 190) 1 else 2)
+                    if (Build.VERSION.SDK_INT >= 31) for (pid in intArrayOf(R.id.player, R.id.player_c))
+                        v.setViewLayoutMargin(pid, RemoteViews.MARGIN_TOP, 0f, TypedValue.COMPLEX_UNIT_DIP)
                 }
                 else -> {
                     // Reproductor primero: de él depende cuánto espacio queda.
@@ -302,7 +305,8 @@ class RockWidget : AppWidgetProvider() {
             // Día
             val day = DAYS[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1]
             if (rock && dia) {
-                val h = if (playing) 150 else 176
+                // En el widget Hora y clima, el día de Rock no pasa del alto del widget
+                val h = if (solo) (hDp - 28).coerceIn(80, 176) else if (playing) 150 else 176
                 v.setImageViewBitmap(R.id.day_img, Graphics.dayBitmap(ctx, day, accent, h))
                 if (Build.VERSION.SDK_INT >= 31) v.setViewLayoutHeight(R.id.day_img, h.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
             }
