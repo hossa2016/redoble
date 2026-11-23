@@ -155,7 +155,7 @@ class RockWidget : AppWidgetProvider() {
         internal fun soloTimeSize(ctx: Context, family: String, wDp: Int, hDp: Int): Float {
             val fs = ctx.resources.configuration.fontScale.coerceIn(0.8f, 1.6f)
             val base = timeSize(family)
-            val colW = wDp - (if (family == "rock") 96 else 24)
+            val colW = wDp - (if (family == "rock" && wDp >= 230) 96 else 24)
             val byW = colW / (2.4f * fs)
             val byH = if (hDp in 1..109) (hDp - 16) / (1.05f * fs) else base
             return minOf(base, byW, byH).coerceAtLeast(24f)
@@ -305,10 +305,12 @@ class RockWidget : AppWidgetProvider() {
             val rock = th.family == "rock"
             val S = TextArt.spec(th.family)
             val dens = ctx.resources.displayMetrics.density
-            val colW = W - ((if (rock) 96 else 24) * dens).toInt()
-
             // En el widget Hora y clima: lo elegido para él, y menos datos si es pequeño
             val solo = kind == Widgets.CLOCK
+            // Rock angosto: sin el día vertical (ocupaba media pantalla); el día va en texto
+            val bigDay = rock && !(solo && W / dens < 230)
+            val colW = W - ((if (bigDay) 96 else 24) * dens).toInt()
+
             val roomy = !solo || hDp >= 150
             val tiny = solo && hDp in 1..109
             val dia = if (solo) Prefs.cw(ctx, "dia") && !tiny else Prefs.el(ctx, "dia")
@@ -321,21 +323,21 @@ class RockWidget : AppWidgetProvider() {
 
             // Día
             val day = DAYS[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1]
-            if (rock && dia) {
+            if (bigDay && dia) {
                 // En el widget Hora y clima, el día de Rock no pasa del alto del widget
                 val h = if (solo) (hDp - 28).coerceIn(80, 176) else if (playing) 150 else 176
                 v.setImageViewBitmap(R.id.day_img, Graphics.dayBitmap(ctx, day, accent, h))
                 if (Build.VERSION.SDK_INT >= 31) v.setViewLayoutHeight(R.id.day_img, h.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
             }
-            v.setViewVisibility(R.id.day_img, vis(rock && dia))
+            v.setViewVisibility(R.id.day_img, vis(bigDay && dia))
             val dayColor = when (th.family) { "claro", "cristal" -> th.head; "neon" -> th.accent2; else -> accent }
-            if (!rock) v.setTextColor(R.id.day_txt, dayColor)
+            if (!bigDay) v.setTextColor(R.id.day_txt, dayColor)
             val now = java.util.Date()
             val dayFmt = when (th.family) {
                 "cristal" -> "EEEE, d 'de' MMMM"; "neon" -> "EEEE '//' dd.MM"; "lujo" -> "EEEE · d 'de' MMMM"; else -> "EEEE"
             }
             val dateFonts = fonts && bitmapDate(ctx)
-            twin(v, R.id.day_txt, R.id.day_txt_bmp, !rock && dia, dateFonts) {
+            twin(v, R.id.day_txt, R.id.day_txt_bmp, !bigDay && dia, dateFonts) {
                 TextArt.render(ctx, java.text.SimpleDateFormat(dayFmt, ES).format(now), S.title, 13f, dayColor,
                     S.tls, caps = true, glow = if (th.family == "neon") th.accent2 else 0, maxWidthPx = colW)
             }
