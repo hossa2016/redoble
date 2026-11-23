@@ -314,7 +314,9 @@ class RockWidget : AppWidgetProvider() {
             val dia = if (solo) Prefs.cw(ctx, "dia") && !tiny else Prefs.el(ctx, "dia")
             val hora = if (solo) true else Prefs.el(ctx, "hora")
             val clima = if (solo) Prefs.cw(ctx, "clima") && (roomy || hDp >= 120) else Prefs.el(ctx, "clima")
-            val manana = if (solo) Prefs.cw(ctx, "manana") && roomy else Prefs.el(ctx, "manana")
+            // Muy angosto (menos de ~3 celdas): solo día, hora, fecha y clima; sin mañana
+            val narrow = solo && W / dens < 230
+            val manana = if (solo) Prefs.cw(ctx, "manana") && roomy && !narrow else Prefs.el(ctx, "manana")
             val bateria = if (solo) Prefs.cw(ctx, "bateria") && roomy else Prefs.el(ctx, "bateria")
 
             // Día

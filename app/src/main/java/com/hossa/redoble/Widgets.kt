@@ -133,7 +133,8 @@ object Widgets {
             hDp < 120 -> Player.applyStandalone(ctx, v, 0, wPx, 44, fonts, showText = wDp >= 200)
             hDp < 260 || wDp < 200 -> Player.applyStandalone(ctx, v, 1, wPx,
                 minOf(hDp - 24, (wDp * (if (wDp < 300) 0.34f else 0.42f)).toInt()).coerceIn(56, 140), fonts)
-            else -> Player.applyStandalone(ctx, v, 2, wPx, minOf(wDp - 40, hDp - 160).coerceIn(80, 220), fonts)
+            // Grande: la carátula deja sitio a título, artista y botones (unos 200 dp)
+            else -> Player.applyStandalone(ctx, v, 2, wPx, minOf(wDp - 40, hDp - 210).coerceIn(80, 220), fonts)
         }
         return v
     }
