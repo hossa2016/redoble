@@ -336,6 +336,8 @@ object Player {
             0 -> {
                 val tw = wPx - (128 * d).toInt()
                 v.setViewVisibility(R.id.ws_texts, if (showText) View.VISIBLE else View.GONE)
+                // Muy angosto (2 celdas): carátula y ⏯; ⏭ solo si cabe
+                v.setViewVisibility(R.id.ws_next, if (wPx / d >= 150) View.VISIBLE else View.GONE)
                 txt(R.id.ws_title, R.id.ws_title_bmp, title, S.semi, 14f, th.head, tw, neonCaps)
                 txt(R.id.ws_artist, R.id.ws_artist_bmp, artist, S.body, 11f, th.dim, tw)
                 v.setImageViewBitmap(R.id.ws_art, artBitmap(ctx, art, th, 44, playing))
@@ -349,6 +351,8 @@ object Player {
             1 -> {
                 val tw = wPx - ((artDp + 14 + 28) * d).toInt()
                 sizeArt(R.id.wm_art)
+                // Si la columna es angosta no caben los tres botones: se quita ⏮
+                v.setViewVisibility(R.id.wm_prev, if (tw / d >= 140) View.VISIBLE else View.GONE)
                 txt(R.id.wm_src, R.id.wm_src_bmp, src + if (live) (if (playing) " · SONANDO" else " · EN PAUSA") else "",
                     S.title, 10f, accent, tw, sp2 = 0.12f)
                 txt(R.id.wm_title, R.id.wm_title_bmp, title, S.semi, 17f, th.head, tw, neonCaps)

@@ -136,7 +136,7 @@ class RockWidget : AppWidgetProvider() {
             return maxOf((dp * dm.density).toInt(), screen)
         }
 
-        private fun clockBitmap(ctx: Context, th: Theme, playing: Boolean): android.graphics.Bitmap {
+        private fun clockBitmap(ctx: Context, th: Theme, playing: Boolean, size: Float = 0f): android.graphics.Bitmap {
             val s = TextArt.spec(th.family)
             val is24 = android.text.format.DateFormat.is24HourFormat(ctx)
             val hp = if (th.family == "neon") (if (is24) "HH" else "hh") else (if (is24) "H" else "h")
@@ -144,7 +144,21 @@ class RockWidget : AppWidgetProvider() {
             val hh = java.text.SimpleDateFormat(hp, ES).format(now)
             val mm = java.text.SimpleDateFormat("mm", ES).format(now)
             val colon = when (th.family) { "claro" -> th.head; "neon" -> th.accent2; else -> th.accent(ctx) }
-            return TextArt.clock(ctx, hh, mm, s, timeSize(th.family) * (if (playing) 0.875f else 1f), th.head, colon)
+            val sz = if (size > 0f) size else timeSize(th.family) * (if (playing) 0.875f else 1f)
+            return TextArt.clock(ctx, hh, mm, s, sz, th.head, colon)
+        }
+
+        /**
+         * Hora del widget Hora y clima: a su tamaño normal, pero más pequeña si el widget
+         * es angosto o muy bajito, para que nunca se corte.
+         */
+        internal fun soloTimeSize(ctx: Context, family: String, wDp: Int, hDp: Int): Float {
+            val fs = ctx.resources.configuration.fontScale.coerceIn(0.8f, 1.6f)
+            val base = timeSize(family)
+            val colW = wDp - (if (family == "rock") 96 else 24)
+            val byW = colW / (2.4f * fs)
+            val byH = if (hDp in 1..109) (hDp - 16) / (1.05f * fs) else base
+            return minOf(base, byW, byH).coerceAtLeast(24f)
         }
 
         /**
@@ -175,11 +189,12 @@ class RockWidget : AppWidgetProvider() {
                     mgr.partiallyUpdateAppWidget(id, v)
                 } catch (e: Exception) { }
             }
-            // Widget Hora y clima: la hora siempre a tamaño completo
+            // Widget Hora y clima: la hora al tamaño que cabe en cada copia
             for (id in Widgets.ids(ctx, Widgets.CLOCK)) {
                 try {
                     val v = RemoteViews(ctx.packageName, th.layout)
-                    v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, false))
+                    val (w, h) = Widgets.sizeDp(ctx, mgr, id)
+                    v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, false, soloTimeSize(ctx, th.family, w, h)))
                     mgr.partiallyUpdateAppWidget(id, v)
                 } catch (e: Exception) { }
             }
@@ -330,15 +345,18 @@ class RockWidget : AppWidgetProvider() {
                     S.lls, caps = S.caps, shadow = S.shadow, maxWidthPx = colW)
             }
 
-            // Hora (más pequeña cuando suena música)
+            // Hora (más pequeña cuando suena música; en el widget suelto, a lo que quepa)
+            val soloTs = if (solo) soloTimeSize(ctx, th.family, (W / dens).toInt(), hDp) else 0f
             val bmpClock = bitmapClock(ctx)
             v.setViewVisibility(R.id.clock, vis(hora && !bmpClock))
             v.setViewVisibility(R.id.clock_bmp, vis(hora && bmpClock))
             if (hora && bmpClock) {
-                v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, playing))
+                v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, playing, soloTs))
                 if (!preview) armClockCheck(ctx)
             }
-            val ts = timeSize(th.family) * (if (playing) 0.875f else 1f)
+            val ts = if (solo) soloTs else timeSize(th.family) * (if (playing) 0.875f else 1f)
+            // Fecha más pequeña si el widget suelto es angosto
+            if (solo && W / dens < 320) v.setTextViewTextSize(R.id.date, TypedValue.COMPLEX_UNIT_SP, S.dsize * 0.8f)
             for (id in intArrayOf(R.id.hh, R.id.colon, R.id.mm)) v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_SP, ts)
             v.setTextColor(R.id.colon, when (th.family) { "claro" -> th.head; "neon" -> th.accent2; else -> accent })
 

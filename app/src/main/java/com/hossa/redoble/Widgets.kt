@@ -132,7 +132,7 @@ object Widgets {
         when {
             hDp < 120 -> Player.applyStandalone(ctx, v, 0, wPx, 44, fonts, showText = wDp >= 200)
             hDp < 260 || wDp < 200 -> Player.applyStandalone(ctx, v, 1, wPx,
-                minOf(hDp - 24, (wDp * 0.42f).toInt()).coerceIn(56, 140), fonts)
+                minOf(hDp - 24, (wDp * (if (wDp < 300) 0.34f else 0.42f)).toInt()).coerceIn(56, 140), fonts)
             else -> Player.applyStandalone(ctx, v, 2, wPx, minOf(wDp - 40, hDp - 160).coerceIn(80, 220), fonts)
         }
         return v
@@ -181,12 +181,13 @@ object Widgets {
             cols = minOf(Prefs.awCols(ctx, id), ((wDp - 8 + 8) / 48).coerceAtLeast(1))
             rows = minOf(Prefs.awRows(ctx, id), ((inner + 8) / 44).coerceAtLeast(1))
         }
-        // Cada casilla con su alto normal (no se estira de más): el resto queda centrado
-        val cap = minOf(hs, 48) + 56
-        val rowH = ((inner - 8 * (rows - 1)) / rows).coerceIn(36, cap)
+        val avail = (inner - 8 * (rows - 1)) / rows
         val colW = (wDp - 8 - 8 * (cols - 1)) / cols
-        val fits = rowH >= minOf(hs, 48) + 26 && colW >= 58
+        val fits = avail >= minOf(hs, 48) + 26 && colW >= 58
         val names = colW >= 40 && when (Prefs.awNames(ctx, id)) { "on" -> true; "off" -> false; else -> fits }
+        // Cada casilla con su alto normal (no se estira de más): el resto queda centrado
+        val cap = minOf(hs, 48) + (if (names) 44 else 18)
+        val rowH = avail.coerceIn(36, maxOf(36, cap))
         return Grid(cols, rows, names, rowH)
     }
 
