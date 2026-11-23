@@ -110,3 +110,34 @@ internal fun MainActivity.packPlate(): View {
     }, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(10) })
     return card
 }
+
+/**
+ * Protector de pantalla mientras carga: lo más cercano a la pantalla siempre activa
+ * (HyperOS no deja que otras apps pongan cosas en la suya).
+ */
+internal fun MainActivity.dreamPlate(): View {
+    val card = ui.plateCard()
+    card.addView(ui.sectionTitle("Pantalla al cargar"))
+    card.addView(ui.note("Hora, clima y música mientras el teléfono carga.",
+        "Es un protector de pantalla: aparece cuando el teléfono está cargando y se apaga la pantalla (o al ponerlo en su base). " +
+        "Muestra tu widget Hora y clima y, si suena música, el reproductor con sus botones. Usa poco brillo y se mueve un poco " +
+        "cada minuto para no marcar la pantalla. La pantalla siempre activa de HyperOS no permite widgets de otras apps; esto es lo más parecido."))
+    card.addView(ui.text("Fondo", ui.cond, 16f, Ui.HEAD),
+        LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(12); bottomMargin = ui.dp(6) })
+    card.addView(ui.segmented(listOf("wall" to "Tu fondo, oscurecido", "black" to "Negro"), Prefs.dreamBg(this)) {
+        Prefs.setDreamBg(this, it); build()
+    })
+    val open = ui.primary("Activarlo en el teléfono")
+    open.setOnClickListener {
+        val ok = try { startActivity(Intent(android.provider.Settings.ACTION_DREAM_SETTINGS)); true } catch (e: Exception) { false }
+        if (!ok) ui.sheet("Activar el protector de pantalla",
+            "Tu teléfono no abrió el ajuste directamente. Búscalo así:\n\n" +
+            "1. Abre Ajustes y busca «Protector de pantalla» (o «Salvapantallas»).\n" +
+            "2. Elige Prisma Widgets.\n" +
+            "3. En «Cuándo empezar», elige «Mientras se carga».\n\n" +
+            "Si tu versión de HyperOS no tiene esa opción, el teléfono no admite protectores de pantalla.",
+            dismissLabel = "Entendido")
+    }
+    card.addView(open, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(14) })
+    return card
+}

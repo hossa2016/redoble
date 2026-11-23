@@ -156,6 +156,10 @@ object Prefs {
      */
     fun themeClock(ctx: Context) = p(ctx).getBoolean("themeClock", false)
     fun setThemeClock(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("themeClock", on).apply()
+    /** Fondo del protector de pantalla: "wall" (el elegido, oscurecido) o "black". */
+    fun dreamBg(ctx: Context) = p(ctx).getString("dreamBg", "wall") ?: "wall"
+    fun setDreamBg(ctx: Context, v: String) = p(ctx).edit().putString("dreamBg", v).apply()
+
     /** El reproductor toma el color de la carátula de cada canción. */
     fun coverColor(ctx: Context) = p(ctx).getBoolean("coverColor", true)
     fun setCoverColor(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("coverColor", on).apply()

@@ -196,6 +196,7 @@ class MainActivity : AppCompatActivity() {
         // Piezas sueltas: cada sección aparece solo si ese widget está puesto
         if (clockW) col.addView(fold(clockWidgetPlate(), "w_clock"))
         if (appsW) col.addView(fold(appsWidgetsPlate(), "w_apps", Widgets.ids(this, Widgets.APPS).size.let { if (it == 1) "1 widget" else "$it widgets" }))
+        col.addView(fold(dreamPlate(), "dream", if (Prefs.dreamBg(this) == "black") "Fondo negro" else "Con tu fondo"))
         if (playerW) col.addView(fold(playerWidgetPlate(), "w_player", if (Prefs.pwIdle(this) == "last") "Sin música: última canción" else "Sin música: nada sonando"))
 
         col.addView(ui.groupHeader("App"))
