@@ -84,6 +84,9 @@ internal fun MainActivity.onboardingView(): View {
                 "Clima" to "Escribe tu ciudad y toca Guardar.",
                 "Reproductor" to "Elige tu app de música, si va abajo o debajo del clima, y si muestra solo tu app o cualquiera. " +
                     "Con el reproductor grande sonando, queda una fila de apps para que quepan los botones.",
+                "Paquete de widgets" to "Además del Completo hay tres sueltos: Hora y clima, Apps y Reproductor. " +
+                    "Agrégalos desde la lista de widgets del teléfono y estíralos a tu gusto: se acomodan al tamaño. " +
+                    "Sus ajustes aparecen en «Tus widgets» cuando los pones.",
                 "Apariencia" to "Modo claro u oscuro de esta pantalla, en App → Apariencia y ayuda."
             )
             tips.forEach { (t, d) ->
