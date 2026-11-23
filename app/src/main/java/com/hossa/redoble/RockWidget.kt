@@ -117,12 +117,15 @@ class RockWidget : AppWidgetProvider() {
          * Muestra un texto como TextView (letra del sistema) o como imagen con la
          * letra del tema, según el ajuste "Letras del tema".
          */
-        internal fun twin(v: RemoteViews, tv: Int, bmp: Int, visible: Boolean, fonts: Boolean, draw: () -> android.graphics.Bitmap) {
+        internal fun twin(v: RemoteViews, tv: Int, bmp: Int, visible: Boolean, fonts: Boolean, desc: String? = null,
+                          draw: () -> android.graphics.Bitmap) {
             if (!visible) { v.setViewVisibility(tv, View.GONE); v.setViewVisibility(bmp, View.GONE); return }
             if (fonts) {
                 v.setViewVisibility(tv, View.GONE)
                 v.setViewVisibility(bmp, View.VISIBLE)
                 v.setImageViewBitmap(bmp, draw())
+                // TalkBack lee el texto aunque esté dibujado como imagen
+                if (desc != null) v.setContentDescription(bmp, desc)
             } else {
                 v.setViewVisibility(tv, View.VISIBLE)
                 v.setViewVisibility(bmp, View.GONE)
@@ -130,10 +133,11 @@ class RockWidget : AppWidgetProvider() {
         }
 
         internal fun widthPx(ctx: Context, mgr: AppWidgetManager, id: Int): Int {
-            val dp = try { mgr.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) } catch (e: Exception) { 0 }
+            // El ancho real del widget (antes se medía siempre como si ocupara toda la pantalla)
+            val dp = Widgets.sizeDp(ctx, mgr, id).first
             val dm = ctx.resources.displayMetrics
             val screen = minOf(dm.widthPixels, dm.heightPixels) - (16 * dm.density).toInt()
-            return maxOf((dp * dm.density).toInt(), screen)
+            return if (dp > 0) minOf((dp * dm.density).toInt(), screen) else screen
         }
 
         private fun clockBitmap(ctx: Context, th: Theme, playing: Boolean, size: Float = 0f): android.graphics.Bitmap {
@@ -316,7 +320,10 @@ class RockWidget : AppWidgetProvider() {
             val dateInDay0 = th.family == "cristal" || th.family == "neon" || th.family == "lujo"
             var dia = if (solo) Prefs.cw(ctx, "dia") else Prefs.el(ctx, "dia")
             val hora = if (solo) true else Prefs.el(ctx, "hora")
-            var clima = if (solo) Prefs.cw(ctx, "clima") else Prefs.el(ctx, "clima")
+            // Clima viejo (más de 6 horas sin actualizar): mejor no mostrarlo que mostrar algo falso
+            val wxAt = Prefs.weatherAt(ctx)
+            val stale = wxAt > 0 && System.currentTimeMillis() - wxAt > 6 * 3_600_000L
+            var clima = (if (solo) Prefs.cw(ctx, "clima") else Prefs.el(ctx, "clima")) && !stale
             var manana = if (solo) Prefs.cw(ctx, "manana") && wDp >= 230 else Prefs.el(ctx, "manana")
             var bateria = if (solo) Prefs.cw(ctx, "bateria") else Prefs.el(ctx, "bateria")
             // Widget Hora y clima: según el alto se quitan líneas enteras (nunca se cortan).
@@ -487,7 +494,7 @@ class RockWidget : AppWidgetProvider() {
                 v.setViewVisibility(NUMS[i], vis(showNums))
                 val name = Prefs.displayName(ctx, slot)
                 v.setTextViewText(LABELS[i], name)
-                twin(v, LABELS[i], LABEL_BMPS[i], true, fonts) {
+                twin(v, LABELS[i], LABEL_BMPS[i], true, fonts, name) {
                     // Con 4 por fila, letra un poco menor para todas (así se ven parejas)
                     TextArt.render(ctx, name, S.label, labelSp, th.head, S.lls,
                         caps = labelCaps, shadow = S.shadow, maxWidthPx = labelMax)
@@ -536,7 +543,7 @@ class RockWidget : AppWidgetProvider() {
                         v.setColorStateList(R.id.root, "setBackgroundTintList", android.content.res.ColorStateList.valueOf(col))
                     } else v.setInt(R.id.root, "setBackgroundColor", col)
                     // Margen interior: el contenido no queda pegado al borde del fondo
-                    val pad = (12 * ctx.resources.displayMetrics.density).toInt()
+                    val pad = (16 * ctx.resources.displayMetrics.density).toInt()
                     v.setViewPadding(R.id.root, pad, pad, pad, pad)
                 }
                 else -> v.setInt(R.id.root, "setBackgroundResource", 0)
@@ -590,7 +597,7 @@ class RockWidget : AppWidgetProvider() {
                 v.setViewVisibility(R.id.batt_bolt, View.GONE)
             }
             val bt = if (th.family == "lujo") "BATERÍA $level %" else "$level %"
-            val bc = if (!charging && level <= 15) Graphics.ALERT else th.head
+            val bc = if (!charging && level <= 15) Graphics.alert(ctx) else th.head
             v.setTextViewText(R.id.batt_txt, bt)
             v.setTextColor(R.id.batt_txt, bc)
             val S = TextArt.spec(th.family)

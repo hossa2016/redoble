@@ -307,5 +307,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    internal fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+    /** Aviso propio (píldora abajo que se desvanece), con el estilo de la app. */
+    internal fun toast(msg: String) {
+        val host = findViewById<android.view.ViewGroup>(android.R.id.content)
+        if (host == null || fullPreviewOpen) { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show(); return }
+        host.findViewWithTag<View>("pill")?.let { host.removeView(it) }
+        val pill = ui.text(msg, ui.condMedium, 16f, Ui.HEAD).apply {
+            tag = "pill"
+            gravity = Gravity.CENTER
+            background = ui.rect(Ui.PLATE_TOP, 24f, Ui.veil(0x24), 1f)
+            setPadding(ui.dp(20), ui.dp(12), ui.dp(20), ui.dp(12))
+            elevation = ui.dp(8).toFloat()
+            alpha = 0f; translationY = ui.dp(16).toFloat()
+        }
+        val bottom = ViewCompat.getRootWindowInsets(host)?.getInsets(WindowInsetsCompat.Type.systemBars())?.bottom ?: 0
+        host.addView(pill, android.widget.FrameLayout.LayoutParams(-2, -2,
+            Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply { bottomMargin = bottom + ui.dp(24); marginStart = ui.dp(24); marginEnd = ui.dp(24) })
+        pill.animate().alpha(1f).translationY(0f).setDuration(180).start()
+        pill.postDelayed({
+            pill.animate().alpha(0f).setDuration(250).withEndAction { host.removeView(pill) }.start()
+        }, 2500)
+    }
+    internal var fullPreviewOpen = false
+    internal var permCelebrated = false
 }

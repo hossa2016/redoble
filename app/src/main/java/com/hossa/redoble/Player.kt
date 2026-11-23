@@ -212,7 +212,7 @@ object Player {
         val W = if (widthPx > 0) widthPx else (360 * d).toInt()
         val glow = if (th.family == "neon") accent else 0
         fun txt(tv: Int, bmp: Int, t: String, font: Int, sp: Float, col: Int, maxW: Int, caps: Boolean = false, sp2: Float = 0f) =
-            RockWidget.twin(v, tv, bmp, t.isNotBlank(), fonts) {
+            RockWidget.twin(v, tv, bmp, t.isNotBlank(), fonts, t) {
                 TextArt.render(ctx, t, font, sp, col, sp2, caps, S.shadow, if (font == S.title) glow else 0, maxW)
             }
 
@@ -232,8 +232,8 @@ object Player {
             v.setTextViewText(R.id.player_artist, artist)
             v.setViewVisibility(R.id.player_artist, if (artist.isBlank()) View.GONE else View.VISIBLE)
             val tw = (W - (230 * d).toInt()).coerceAtLeast((60 * d).toInt())
-            txt(R.id.player_src, R.id.player_src_bmp, src, S.title, 10f, accent, W / 2, sp2 = 0.12f)
-            txt(R.id.player_state, R.id.player_state_bmp, if (playing) " · Sonando" else " · En pausa", S.body, 10f, th.dim, W / 3)
+            txt(R.id.player_src, R.id.player_src_bmp, src, S.title, 11f, accent, W / 2, sp2 = 0.12f)
+            txt(R.id.player_state, R.id.player_state_bmp, if (playing) " · Sonando" else " · En pausa", S.body, 11f, th.dim, W / 3)
             txt(R.id.player_title, R.id.player_title_bmp, title, S.semi, 15f, th.head, tw, caps = th.family == "neon")
             txt(R.id.player_artist, R.id.player_artist_bmp, artist, S.body, 12f, th.dim, tw)
             v.setImageViewBitmap(R.id.player_art, artBitmap(ctx, art, th, 56, false))
@@ -322,7 +322,7 @@ object Player {
         } catch (e: Exception) { "MÚSICA" }
         fun txt(tv: Int, bmp: Int, t: String, font: Int, sp: Float, col: Int, maxW: Int, caps: Boolean = false, sp2: Float = 0f) {
             v.setTextViewText(tv, t); v.setTextColor(tv, col)
-            RockWidget.twin(v, tv, bmp, t.isNotBlank(), fonts) {
+            RockWidget.twin(v, tv, bmp, t.isNotBlank(), fonts, t) {
                 TextArt.render(ctx, t, font, sp, col, sp2, caps, S.shadow, 0, maxW.coerceAtLeast((40 * d).toInt()))
             }
         }
@@ -358,7 +358,7 @@ object Player {
                 v.setViewVisibility(R.id.wm_next, if (tw / d >= 100) View.VISIBLE else View.GONE)
                 val roomyM = tw / d >= 170
                 txt(R.id.wm_src, R.id.wm_src_bmp, src + if (live && roomyM) (if (playing) " · SONANDO" else " · EN PAUSA") else "",
-                    S.title, 10f, accent, tw, sp2 = 0.12f)
+                    S.title, 11f, accent, tw, sp2 = 0.12f)
                 txt(R.id.wm_title, R.id.wm_title_bmp, title, S.semi, 17f, th.head, tw, neonCaps)
                 txt(R.id.wm_artist, R.id.wm_artist_bmp, artist, S.body, 13f, th.dim, tw)
                 v.setImageViewBitmap(R.id.wm_art, artBitmap(ctx, art, th, artDp, false))
@@ -448,7 +448,7 @@ object Player {
         }
         val iconCol = if (th.family == "neon") accent else th.head
         fun txt(tv: Int, bmp: Int, t: String, font: Int, sp: Float, col: Int, maxW: Int, caps: Boolean = false, sp2: Float = 0f) =
-            RockWidget.twin(v, tv, bmp, t.isNotBlank(), fonts) {
+            RockWidget.twin(v, tv, bmp, t.isNotBlank(), fonts, t) {
                 TextArt.render(ctx, t, font, sp, col, sp2, caps, S.shadow, 0, maxW)
             }
         if (large) {
@@ -465,8 +465,8 @@ object Player {
             v.setTextViewText(R.id.player_artist, artist)
             v.setViewVisibility(R.id.player_artist, View.VISIBLE)
             val tw = (W - (230 * d).toInt()).coerceAtLeast((60 * d).toInt())
-            txt(R.id.player_src, R.id.player_src_bmp, src, S.title, 10f, accent, W / 2, sp2 = 0.12f)
-            txt(R.id.player_state, R.id.player_state_bmp, if (useLast) " · Última canción" else "", S.body, 10f, th.dim, W / 3)
+            txt(R.id.player_src, R.id.player_src_bmp, src, S.title, 11f, accent, W / 2, sp2 = 0.12f)
+            txt(R.id.player_state, R.id.player_state_bmp, if (useLast) " · Última canción" else "", S.body, 11f, th.dim, W / 3)
             txt(R.id.player_title, R.id.player_title_bmp, title, S.semi, 15f, th.head, tw, caps = th.family == "neon")
             txt(R.id.player_artist, R.id.player_artist_bmp, artist, S.body, 12f, th.dim, tw)
             v.setImageViewBitmap(R.id.player_art, artBitmap(ctx, null, th, 56, false))

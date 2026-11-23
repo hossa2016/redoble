@@ -30,6 +30,10 @@ object Graphics {
     val DIM = Color.parseColor("#645A52")
     val INK = Color.parseColor("#0E0B09")
     val ALERT = Color.parseColor("#E24B4A")
+    /** Color de batería baja según el tema (ámbar en Lujo, magenta en Neón). */
+    fun alert(ctx: Context): Int = when (Themes.current(ctx).family) {
+        "lujo" -> Color.parseColor("#E0A040"); "neon" -> Color.parseColor("#FF3DA5"); else -> ALERT
+    }
 
     /** Gradiente de metal pulido (con reflejo de madera). */
     val METAL_COLORS = intArrayOf(
@@ -167,7 +171,7 @@ object Graphics {
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
         val on = Math.round(level.coerceIn(0, 100) / 100f * 12)
-        val color = if (level <= 15 && !charging) ALERT else accent
+        val color = if (level <= 15 && !charging) alert(ctx) else accent
         val segW = dp(ctx, 6f)
         val segH = dp(ctx, 11f)
         val gap = dp(ctx, 3f)
@@ -206,7 +210,7 @@ object Graphics {
         c.drawRoundRect(RectF(0f, y, w.toFloat(), y + th), r, r, Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = track })
         val fw = w * level.coerceIn(0, 100) / 100f
         c.drawRoundRect(RectF(0f, y, fw, y + th), r, r, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            this.color = if (level <= 15) ALERT else color
+            this.color = if (level <= 15) alert(ctx) else color
         })
         return bmp
     }

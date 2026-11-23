@@ -43,7 +43,7 @@ internal fun MainActivity.playerPlate(): View {
         try {
             startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
         } catch (e: Exception) {
-            Toast.makeText(this, "Busca «Acceso a notificaciones» en Ajustes y activa Prisma Widgets.", Toast.LENGTH_LONG).show()
+            toast("Busca «Acceso a notificaciones» en Ajustes y activa Prisma Widgets.")
         }
     }
     card.addView(btn, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(12) })

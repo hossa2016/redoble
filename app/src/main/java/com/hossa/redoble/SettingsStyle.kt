@@ -192,12 +192,8 @@ internal fun MainActivity.sceneTile(s: VideoScenes.Info, on: Boolean, w: Int, h:
         isClickable = true
         foreground = ui.rowBg()
         contentDescription = "${s.name}: ${s.desc}" + if (on) ", elegido" else ""
-        // Tocar: verla a pantalla completa (ahí se aplica). Mantener presionado: elegirla directo.
+        // Tocar: verla a pantalla completa (ahí se aplica)
         setOnClickListener { openFullPreview(VideoScenes.ALL.indexOf(s)) }
-        setOnLongClickListener {
-            if (!on) { Prefs.setLiveScene(this@sceneTile, s.id); RockWidget.updateAll(this@sceneTile); build() }
-            true
-        }
     }
 }
 

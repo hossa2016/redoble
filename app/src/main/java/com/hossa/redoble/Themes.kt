@@ -1,5 +1,7 @@
 package com.hossa.redoble
 
+import android.os.Build
+
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -91,7 +93,17 @@ object Themes {
         val bg = when {
             Prefs.widgetStyle(ctx) != "orig" -> widgetColor(ctx, t)
             Prefs.wallStyle(ctx) == "fade" || Prefs.wallStyle(ctx) == "solid" -> wallColor(ctx, t)
-            else -> return t
+            else -> {
+                // Sin capa detrás: se mira el fondo de pantalla real. Si es claro, letras oscuras.
+                if (Build.VERSION.SDK_INT < 27) return t
+                val wc = try {
+                    android.app.WallpaperManager.getInstance(ctx).getWallpaperColors(android.app.WallpaperManager.FLAG_SYSTEM)
+                } catch (e: Exception) { null } ?: return t
+                val dark = (wc.colorHints and android.app.WallpaperColors.HINT_SUPPORTS_DARK_TEXT) != 0
+                if (dark == t.light) return t
+                return if (dark) t.withText(c("#1C1A17"), c("#5E584F"), true)
+                else t.withText(c("#F5F2EC"), c("#B9B2A7"), false)
+            }
         }
         val light = isLight(bg)
         if (light == t.light) return t

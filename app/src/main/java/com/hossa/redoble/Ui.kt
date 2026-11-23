@@ -239,8 +239,8 @@ class Ui(val ctx: Context, val accent: Int) {
         pressDown(this)
     }
 
-    /** El texto se achica (hasta 11 sp) solo si no cabe; si cabe, queda a su tamaño. */
-    fun fitText(tv: TextView, maxSp: Int, minSp: Int = 11) {
+    /** El texto se achica (hasta 12 sp) solo si no cabe; si cabe, queda a su tamaño. */
+    fun fitText(tv: TextView, maxSp: Int, minSp: Int = 12) {
         tv.maxLines = 1
         androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
             tv, minSp, maxSp, 1, TypedValue.COMPLEX_UNIT_SP)
@@ -256,8 +256,10 @@ class Ui(val ctx: Context, val accent: Int) {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             addView(t, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(text("ⓘ", body, 20f, MUTED).apply {
-                gravity = Gravity.CENTER
+            addView(ImageView(ctx).apply {
+                setImageResource(R.drawable.ic_info)
+                imageTintList = ColorStateList.valueOf(MUTED)
+                scaleType = ImageView.ScaleType.CENTER
                 background = rowBg()
                 contentDescription = "Más información"
                 setOnClickListener {
@@ -335,7 +337,7 @@ class Ui(val ctx: Context, val accent: Int) {
     fun groupHeader(title: String): View = LinearLayout(ctx).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(20), dp(16), dp(20), dp(10))
-        addView(text(title.uppercase(), condSemi, 13f, accent, 0.16f))
+        addView(text(title, condSemi, 15f, accent, 0.04f))
         isFocusable = false
         accessibilityHeading()
     }

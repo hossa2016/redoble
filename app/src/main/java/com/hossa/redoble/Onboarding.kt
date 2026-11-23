@@ -92,10 +92,18 @@ internal fun MainActivity.onboardingView(): View {
             give.setOnClickListener {
                 try { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
                 catch (e: Exception) {
-                    Toast.makeText(this, "Busca «Acceso a notificaciones» en Ajustes y activa Prisma Widgets.", Toast.LENGTH_LONG).show()
+                    toast("Busca «Acceso a notificaciones» en Ajustes y activa Prisma Widgets.")
                 }
             }
             content.addView(give, LinearLayout.LayoutParams(-1, ui.dp(52)))
+            // Permiso recién dado: el botón «late» una vez, con vibración
+            if (on && !permCelebrated) {
+                permCelebrated = true
+                give.scaleX = 0.92f; give.scaleY = 0.92f
+                give.animate().scaleX(1f).scaleY(1f).setDuration(320)
+                    .setInterpolator(android.view.animation.OvershootInterpolator(3f)).start()
+                give.tick()
+            }
             content.addView(ui.bodyText("Puedes hacerlo después en la sección Reproductor.", Ui.DIM, 14f).apply {
                 setPadding(0, ui.dp(12), 0, 0)
             })

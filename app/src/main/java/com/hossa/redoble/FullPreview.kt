@@ -41,6 +41,7 @@ internal fun MainActivity.openFullPreview(animIndex: Int? = null) {
     val (sw, sh) = screenSize()
 
     val d = Dialog(this, android.R.style.Theme_DeviceDefault_NoActionBar)
+    fullPreviewOpen = true
     val root = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
 
     // ---- Fondo ----
@@ -292,7 +293,7 @@ internal fun MainActivity.openFullPreview(animIndex: Int? = null) {
         }
         WindowInsetsControllerCompat(w, w.decorView).isAppearanceLightStatusBars = false
     }
-    d.setOnDismissListener { build() }
+    d.setOnDismissListener { fullPreviewOpen = false; build() }
     // Entrada: crece desde un poco más pequeño, como si se abriera la miniatura
     root.alpha = 0f; root.scaleX = 0.92f; root.scaleY = 0.92f
     d.show()

@@ -211,7 +211,6 @@ internal fun MainActivity.slotRow(i: Int, group: Int = 0): View {
         }, LinearLayout.LayoutParams(ui.dp(44), ui.dp(44)).apply { marginEnd = ui.dp(4) })
         addView(ui.text(if (empty) "Elegir app" else "Cambiar", ui.cond, 15f, if (empty) ui.accent else Ui.MUTED))
         addView(ui.text("›", ui.condLight, 22f, Ui.DIM).apply { setPadding(ui.dp(8), 0, 0, ui.dp(2)) })
-        if (!empty) setOnLongClickListener { renameSlot(i, group); true }
         setOnClickListener {
             AppPicker(this@slotRow, ui, i, group) {
                 RockWidget.updateAll(this@slotRow)

@@ -140,9 +140,14 @@ internal fun MainActivity.showPreviewError(p: PreviewParts, msg: String?) {
     // Frase amable para todos; el detalle técnico solo en las versiones de prueba
     val text = "La vista previa no se pudo mostrar. Tu widget en la pantalla de inicio no se ve afectado." +
         (if (BuildConfig.DEBUG) "\n$msg" else "")
-    if (old != null) { (old as android.widget.TextView).text = text; return }
-    p.frame.addView(ui.text(text, ui.body, 13f, Color.WHITE).apply {
-        tag = "pvErr"; translationZ = 4f; gravity = Gravity.CENTER
-        setBackgroundColor(Color.argb(0xCC, 0, 0, 0)); setPadding(ui.dp(12), ui.dp(10), ui.dp(12), ui.dp(10))
+    if (old != null) return
+    p.frame.addView(android.widget.LinearLayout(this).apply {
+        tag = "pvErr"; translationZ = 4f; orientation = android.widget.LinearLayout.VERTICAL
+        gravity = Gravity.CENTER_HORIZONTAL
+        setBackgroundColor(Color.argb(0xCC, 0, 0, 0)); setPadding(ui.dp(12), ui.dp(10), ui.dp(12), ui.dp(6))
+        addView(ui.text(text, ui.body, 13f, Color.WHITE).apply { gravity = Gravity.CENTER })
+        addView(ui.textButton("Reintentar").apply {
+            setOnClickListener { showPreviewError(p, null); updatePreview() }
+        }, android.widget.LinearLayout.LayoutParams(-2, ui.dp(44)))
     }, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
 }

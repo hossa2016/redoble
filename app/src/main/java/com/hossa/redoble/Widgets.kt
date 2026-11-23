@@ -255,7 +255,7 @@ object Widgets {
             v.setTextViewText(LABELS[i], name)
             v.setTextColor(LABELS[i], th.head)
             v.setContentDescription(PADS[i], name)
-            RockWidget.twin(v, LABELS[i], LABEL_BMPS[i], g.names, fonts) {
+            RockWidget.twin(v, LABELS[i], LABEL_BMPS[i], g.names, fonts, name) {
                 TextArt.render(ctx, name, S.label, labelSp, th.head, S.lls,
                     caps = th.family == "neon" || th.family == "lujo", shadow = S.shadow, maxWidthPx = labelMax)
             }
@@ -276,7 +276,9 @@ object Widgets {
         val mgr = AppWidgetManager.getInstance(ctx)
         val (w, h) = sizeDp(ctx, mgr, id)
         val g = grid(ctx, id, w, h, Themes.widget(ctx).family)
-        val size = if (Prefs.awAuto(ctx, id)) "automático (${g.cols} × ${g.rows})" else "${g.cols} × ${g.rows}"
+        fun n(k: Int, one: String, many: String) = "$k " + if (k == 1) one else many
+        val shape = n(g.cols, "columna", "columnas") + ", " + n(g.rows, "fila", "filas")
+        val size = if (Prefs.awAuto(ctx, id)) "Automático: $shape" else shape
         return "${Prefs.GROUP_NAMES[Prefs.awGroup(ctx, id)]} · $size"
     }
 }
