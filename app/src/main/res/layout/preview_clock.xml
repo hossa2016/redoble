@@ -11,7 +11,14 @@
     <TextClock android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:format12Hour="h:mm" android:format24Hour="H:mm" android:includeFontPadding="false"
         android:fontFamily="@font/barlow_condensed_extralight" android:textSize="58sp" android:textColor="#FFEDE6DC" />
-    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:text="☁ 21° · ▮▮▮▮▮▮▮▯ 90 %" android:fontFamily="@font/barlow_condensed_medium"
-        android:textSize="15sp" android:textColor="#FFB5AA9F" />
+    <TextClock android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:format12Hour="d MMM" android:format24Hour="d MMM" android:singleLine="true"
+        android:fontFamily="@font/barlow_condensed_regular" android:textSize="16sp" android:textColor="#FFEDE6DC" />
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"
+        android:gravity="center_vertical" android:orientation="horizontal">
+        <ImageView android:layout_width="18dp" android:layout_height="18dp" android:src="@drawable/pv_cloud" android:tint="#FFB5AA9F" android:scaleType="fitCenter" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp"
+            android:text="Nublado, 21°" android:fontFamily="@font/barlow_condensed_medium"
+            android:textSize="15sp" android:textColor="#FFB5AA9F" />
+    </LinearLayout>
 </LinearLayout>

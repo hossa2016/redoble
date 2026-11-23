@@ -97,7 +97,8 @@ class Tilt(ctx: Context) : SensorEventListener {
     private var rawX = 0f; private var rawY = .65f
     var gx = 0f; var gy = .65f; var tx = 0f; var ty = 0f
 
-    fun start() { sensor?.let { sm.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) } }
+    // Ritmo de interfaz (no de juego): suficiente para el movimiento suave y gasta menos
+    fun start() { sensor?.let { sm.registerListener(this, it, SensorManager.SENSOR_DELAY_UI) } }
     fun stop() { sm.unregisterListener(this) }
     override fun onSensorChanged(e: SensorEvent) {
         rawX = (-e.values[0] / 9.81f).coerceIn(-1f, 1f); rawY = (e.values[1] / 9.81f).coerceIn(-1f, 1f)
@@ -156,17 +157,26 @@ private class VideoRenderer(private val ctx: Context, private val scene: VideoSc
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
         val st = SurfaceTexture(t[0]); val surf = Surface(st)
+        st.setOnFrameAvailableListener { fresh = true }
         val mp = MediaPlayer.create(ctx, res) ?: return
         mp.setSurface(surf); mp.isLooping = true; mp.setVolume(0f, 0f)
         layers.add(Layer(t[0], st, mp, surf))
     }
 
-    fun size(width: Int, height: Int) { w = width; h = height }
+    fun size(width: Int, height: Int) { w = width; h = height; fresh = true }
+
+    /** Hay un cuadro nuevo del video (si no, y el teléfono no se movió, no se redibuja). */
+    @Volatile var fresh = true
+    private var lastTx = 9f; private var lastTy = 9f
     fun play() { layers.forEach { try { it.player.start() } catch (e: Exception) { } } }
     fun pause() { layers.forEach { try { if (it.player.isPlaying) it.player.pause() } catch (e: Exception) { } } }
 
-    fun draw(tx: Float, ty: Float, t: Float) {
+    fun draw(tx: Float, ty: Float, t: Float, force: Boolean = false) {
         if (prog == 0) return
+        // Sin cuadro nuevo ni movimiento (y sin fuego que parpadee): no se gasta GPU
+        val moved = kotlin.math.abs(tx - lastTx) > 0.002f || kotlin.math.abs(ty - lastTy) > 0.002f
+        if (!force && !fresh && !moved && !scene.fire) return
+        fresh = false; lastTx = tx; lastTy = ty
         GLES20.glViewport(0, 0, w, h); GLES20.glClearColor(0f, 0f, 0f, 1f); GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         GLES20.glUseProgram(prog)
         val a = GLES20.glGetAttribLocation(prog, "a"); GLES20.glEnableVertexAttribArray(a)
@@ -242,16 +252,41 @@ class PrismaWallpaper : WallpaperService() {
         override fun onSurfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
             super.onSurfaceChanged(holder, format, width, height); w = width; h = height; gl.post { renderer?.size(width, height) }
         }
+        /** Ahorro de batería o batería baja: el fondo se queda quieto (un cuadro fijo). */
+        private fun saving(): Boolean {
+            val pm = getSystemService(android.os.PowerManager::class.java)
+            return (pm?.isPowerSaveMode == true) || BatteryMonitor.level(this@PrismaWallpaper) in 0..14
+        }
+
+        @androidx.annotation.RequiresApi(27)
+        override fun onComputeColors(): android.app.WallpaperColors? {
+            // Colores de la escena para que HyperOS adapte íconos y barra de estado
+            val res = VideoScenes.thumb(Prefs.liveScene(this@PrismaWallpaper)) ?: return null
+            return try {
+                val bmp = android.graphics.BitmapFactory.decodeResource(resources, res) ?: return null
+                android.app.WallpaperColors.fromBitmap(bmp)
+            } catch (e: Exception) { null }
+        }
+
         override fun onVisibilityChanged(v: Boolean) {
             visible = v
             if (v) {
-                tilt.start()
+                val still = saving()
+                if (!still) tilt.start()
                 gl.post {
                     // Si se eligió otra escena en los ajustes, cambiarla al volver
-                    if (Prefs.liveScene(this@PrismaWallpaper) != sceneId && surfaceHolder.surface.isValid) build(surfaceHolder)
-                    renderer?.play()
+                    if (Prefs.liveScene(this@PrismaWallpaper) != sceneId && surfaceHolder.surface.isValid) {
+                        build(surfaceHolder)
+                        if (android.os.Build.VERSION.SDK_INT >= 27) notifyColorsChanged()
+                    }
+                    if (still) {
+                        // Un instante de video para tener un cuadro, y se congela
+                        renderer?.play()
+                        gl.postDelayed({ try { renderer?.draw(0f, 0f, 0f, force = true) } catch (e: Exception) { }; renderer?.pause() }, 400)
+                    } else renderer?.play()
                 }
-                gl.removeCallbacks(tick); gl.post(tick)
+                gl.removeCallbacks(tick)
+                if (!still) gl.post(tick)
             } else {
                 tilt.stop(); gl.removeCallbacks(tick); gl.post { renderer?.pause() }   // sin pantalla visible no gasta nada
             }
