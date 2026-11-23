@@ -211,8 +211,15 @@ object Widgets {
         }.take(g.cols * g.rows)
         val usedRows = if (apps.isEmpty()) 0 else (apps.size + g.cols - 1) / g.cols
 
+        // Casillas de ancho normal: si hay pocas columnas no se estiran, quedan centradas
+        val freeW = wDp - 8
+        val cellMax = if (g.names) 100 else maxOf(g.rowH + 12, 64)
+        val cellW = minOf((freeW - 8 * (g.cols - 1)) / g.cols, cellMax)
+        val side = ((freeW - cellW * g.cols - 8 * (g.cols - 1)) / 2).coerceAtLeast(0)
+        val sidePx = (side * dens).toInt()
+        for (r in 0 until 4) v.setViewPadding(ROWS[r], sidePx, 0, sidePx, 0)
         // Nombres del mismo tamaño en toda la cuadrícula
-        val labelMax = (((wDp - 8 - 8 * (g.cols - 1)) / g.cols * dens).toInt() - (6 * dens).toInt()).coerceAtLeast(1)
+        val labelMax = ((cellW * dens).toInt() - (6 * dens).toInt()).coerceAtLeast(1)
         val labelSp = TextArt.commonSize(ctx, apps.map { Prefs.displayName(ctx, it.first, group) }, S.label,
             if (g.cols >= 4) S.lsize * 0.86f else S.lsize, S.lls, th.family == "neon" || th.family == "lujo", S.shadow, maxWidthPx = labelMax)
         // Caja del ícono: más pequeña si la fila es bajita
