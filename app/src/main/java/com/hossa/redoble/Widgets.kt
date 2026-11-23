@@ -171,35 +171,40 @@ object Widgets {
     /** Columnas, filas y si se ven los nombres, según el tamaño (o lo elegido a mano). */
     data class Grid(val cols: Int, val rows: Int, val names: Boolean, val rowH: Int)
 
-    fun grid(ctx: Context, id: Int, wDp: Int, hDp: Int, family: String): Grid {
+    /** Lo elegido para una copia del widget de Apps (o lo que se está probando en su ventana). */
+    class AwCfg(val group: Int, val names: String, val auto: Boolean, val cols: Int, val rows: Int)
+    fun awCfg(ctx: Context, id: Int) =
+        AwCfg(Prefs.awGroup(ctx, id), Prefs.awNames(ctx, id), Prefs.awAuto(ctx, id), Prefs.awCols(ctx, id), Prefs.awRows(ctx, id))
+
+    fun grid(ctx: Context, id: Int, wDp: Int, hDp: Int, family: String, cfg: AwCfg = awCfg(ctx, id)): Grid {
         val hs = holderDp(family)
         val inner = (hDp - 8).coerceAtLeast(40)
         val cols: Int; val rows: Int
-        if (Prefs.awAuto(ctx, id)) {
+        if (cfg.auto) {
             cols = (wDp / 70).coerceIn(1, 5)  // 2 celdas de ancho ya son 2 columnas
             rows = ((inner + 8) / (minOf(hs, 48) + 28)).coerceIn(1, 4)
         } else {
             // A mano, pero sin pasarse de lo que cabe en el widget
-            cols = minOf(Prefs.awCols(ctx, id), ((wDp - 8 + 8) / 48).coerceAtLeast(1))
-            rows = minOf(Prefs.awRows(ctx, id), ((inner + 8) / 44).coerceAtLeast(1))
+            cols = minOf(cfg.cols, ((wDp - 8 + 8) / 48).coerceAtLeast(1))
+            rows = minOf(cfg.rows, ((inner + 8) / 44).coerceAtLeast(1))
         }
         val avail = (inner - 8 * (rows - 1)) / rows
         val colW = (wDp - 8 - 8 * (cols - 1)) / cols
         val fits = avail >= minOf(hs, 48) + 26 && colW >= 58
-        val names = colW >= 40 && when (Prefs.awNames(ctx, id)) { "on" -> true; "off" -> false; else -> fits }
+        val names = colW >= 40 && when (cfg.names) { "on" -> true; "off" -> false; else -> fits }
         // Cada casilla con su alto normal (no se estira de más): el resto queda centrado
         val cap = minOf(hs, 48) + (if (names) 44 else 18)
         val rowH = avail.coerceIn(36, maxOf(36, cap))
         return Grid(cols, rows, names, rowH)
     }
 
-    fun appsViews(ctx: Context, id: Int, wDp: Int, hDp: Int): RemoteViews {
+    fun appsViews(ctx: Context, id: Int, wDp: Int, hDp: Int, cfg: AwCfg = awCfg(ctx, id)): RemoteViews {
         val th = Themes.widget(ctx)
         val v = RemoteViews(ctx.packageName, appsLayout(th.family))
         RockWidget.rootBackground(ctx, v, th)
         val fonts = Prefs.themeFonts(ctx)
-        val g = grid(ctx, id, wDp, hDp, th.family)
-        val group = Prefs.awGroup(ctx, id)
+        val g = grid(ctx, id, wDp, hDp, th.family, cfg)
+        val group = cfg.group
         val pm = ctx.packageManager
         val dens = ctx.resources.displayMetrics.density
         val S = TextArt.spec(th.family)
@@ -298,6 +303,12 @@ class AppsWidgetConfig : AppCompatActivity() {
     private var scroll: ScrollView? = null
     private var isNew = true
 
+    override fun onResume() {
+        super.onResume()
+        // Al volver de elegir las apps, la vista previa muestra las nuevas
+        if (loaded) show()
+    }
+
     private fun show() {
         val keepY = scroll?.scrollY ?: 0
         if (!loaded) {
@@ -310,20 +321,43 @@ class AppsWidgetConfig : AppCompatActivity() {
             android.content.res.Configuration.UI_MODE_NIGHT_YES
         Ui.setLight(when (Prefs.uiMode(this)) { "light" -> true; "system" -> !night; else -> false })
         val th = Themes.current(this)
-        val ui = Ui(this, if (th.light) android.graphics.Color.parseColor(if (Ui.light) "#4A423B" else "#D8CFC2") else th.accent(this))
+        val ui = Ui(this, if (th.light) android.graphics.Color.parseColor(if (Ui.light) "#A8443A" else "#E58272") else th.accent(this))
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(ui.dp(20), ui.dp(28), ui.dp(20), ui.dp(28))
         }
-        col.addView(ui.text(if (isNew) "NUEVO WIDGET DE APPS" else "WIDGET DE APPS", ui.anton, 26f, Ui.HEAD, 0.02f))
+        col.addView(ui.text(if (isNew) "Nuevo widget de apps" else "Widget de apps", ui.condSemi, 26f, Ui.HEAD, 0.01f))
         col.addView(ui.note("Elige qué muestra esta copia."), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(4) })
+
+        // Vista previa en vivo con lo que se va eligiendo
+        val mgr0 = AppWidgetManager.getInstance(this)
+        val (w0, h0) = Widgets.sizeDp(this, mgr0, widgetId)
+        val pw = if (w0 > 0) w0 else 320; val ph = if (h0 > 0) h0 else 150
+        val maxW = (resources.displayMetrics.widthPixels / resources.displayMetrics.density).toInt() - 40
+        val shown = minOf(pw, maxW)
+        val frame = android.widget.FrameLayout(this).apply {
+            background = ui.rect(android.graphics.Color.parseColor("#141110"), 18f, Ui.veil(0x14), 1f)
+            setPadding(ui.dp(6), ui.dp(6), ui.dp(6), ui.dp(6))
+        }
+        try {
+            val rv = Widgets.appsViews(applicationContext, widgetId, shown, ph, Widgets.AwCfg(group, names, auto, cols, rows))
+            frame.addView(rv.apply(applicationContext, frame))
+        } catch (e: Exception) { }
+        col.addView(frame, LinearLayout.LayoutParams(ui.dp(shown + 12), ui.dp(ph + 12)).apply {
+            topMargin = ui.dp(16); gravity = android.view.Gravity.CENTER_HORIZONTAL })
 
         fun label(t: String) = col.addView(ui.text(t, ui.cond, 16f, Ui.HEAD),
             LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(18); bottomMargin = ui.dp(6) })
         label("Apps")
         col.addView(ui.segmented(Prefs.GROUP_NAMES.indices.map { it to Prefs.GROUP_NAMES[it] }, group) { group = it; show() })
-        col.addView(ui.note("Las apps de cada grupo se eligen en Prisma Widgets → Apps."),
-            LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
+        col.addView(ui.secondary("Elegir las apps de ${Prefs.GROUP_NAMES[group]}").apply {
+            setOnClickListener {
+                // Se guarda lo elegido y se abre la sección Apps con este grupo
+                Prefs.setAw(this@AppsWidgetConfig, widgetId, group, names, auto, cols, rows)
+                startActivity(Intent(this@AppsWidgetConfig, MainActivity::class.java)
+                    .putExtra("appsGroup", group).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+        }, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(10) })
         label("Nombres")
         col.addView(ui.segmented(listOf("auto" to "Automático", "on" to "Con nombres", "off" to "Sin nombres"), names) { names = it; show() })
         label("Tamaño")

@@ -1,5 +1,6 @@
 package com.hossa.redoble
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -122,8 +123,19 @@ class MainActivity : AppCompatActivity() {
         super.onStop()
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
+
     override fun onResume() {
         super.onResume()
+        // Desde la ventana del widget de Apps: abrir Apps con ese grupo
+        intent?.getIntExtra("appsGroup", -1)?.takeIf { it >= 0 }?.let { g ->
+            appsGroup = g
+            openSections.clear(); openSections.add("apps"); Prefs.setOpenSections(this, openSections)
+            intent.removeExtra("appsGroup")
+        }
         // El widget se redibuja fuera del hilo principal para que la app abra fluida
         val app = applicationContext
         io.execute { try { RockWidget.updateAll(app) } catch (e: Exception) { } }
@@ -138,7 +150,8 @@ class MainActivity : AppCompatActivity() {
     internal fun build() {
         val th = Themes.current(this)
         applyUiMode()
-        val base = if (th.light) Color.parseColor(if (Ui.light) "#4A423B" else "#D8CFC2") else th.accent(this)
+        // Temas sin color propio (Claro): el acento de la marca, para que la app no quede apagada
+        val base = if (th.light) Color.parseColor(if (Ui.light) "#A8443A" else "#E58272") else th.accent(this)
         // En modo claro los acentos muy claros (plata, ámbar, cian) se oscurecen para que se lean
         val accent = if (Ui.light && androidx.core.graphics.ColorUtils.calculateLuminance(base) > 0.4)
             androidx.core.graphics.ColorUtils.blendARGB(base, Color.BLACK, 0.35f) else base
@@ -163,30 +176,27 @@ class MainActivity : AppCompatActivity() {
             "fade" -> "Desvanecido"; "solid" -> "Fijo"; "photo" -> "Foto"
             "anim" -> VideoScenes.find(Prefs.liveScene(this)).name; else -> "Del tema"
         }
-        val widgetBgName = when (Prefs.widgetStyle(this)) { "fade" -> "Desvanecido"; "solid" -> "Fijo"; else -> "Normal" }
+        val widgetBgName = when (Prefs.widgetStyle(this)) { "fade" -> "Desvanecido"; "solid" -> "Fijo"; else -> "Sin fondo" }
         col.addView(fold(themePlate(), "tema"))
         col.addView(fold(wallpaperPlate(), "fondo", wallName))
         col.addView(fold(widgetBgPlate(), "fondoWidget", widgetBgName))
         if (th.usesUserAccent) col.addView(fold(accentPlate(), "acento",
             Prefs.NAMES[Prefs.accentIndex(this).coerceIn(0, Prefs.NAMES.size - 1)]))
 
-        col.addView(ui.groupHeader("Contenido"))
+        // Widgets: primero cuáles tienes, luego lo que muestran
+        val clockW = Widgets.has(this, Widgets.CLOCK); val appsW = Widgets.has(this, Widgets.APPS)
+        val playerW = Widgets.has(this, Widgets.PLAYER)
+        col.addView(ui.groupHeader("Widgets"))
+        col.addView(fold(packPlate(), "w_pack", "${intArrayOf(Widgets.FULL, Widgets.CLOCK, Widgets.APPS, Widgets.PLAYER).count { Widgets.has(this, it) }} de 4 en pantalla"))
         // Diseño es del widget Completo: se muestra si está puesto (o si aún no hay ninguno)
         if (Widgets.has(this, Widgets.FULL) || !hasWidget) col.addView(fold(designPlate(), "diseno"))
         col.addView(fold(setlistPlate(), "apps"))
-        col.addView(fold(weatherPlate(), "clima", Prefs.city(this).substringBefore(",").ifBlank { "Sin ciudad" }))
-
+        col.addView(fold(weatherPlate(), "clima", Prefs.city(this).substringBefore(",").ifBlank { "Agregar ciudad ›" }))
+        col.addView(fold(playerPlate(), "reproductor", if (Player.enabled(this)) "Activo" else "Falta dar permiso ›"))
         // Piezas sueltas: cada sección aparece solo si ese widget está puesto
-        val clockW = Widgets.has(this, Widgets.CLOCK); val appsW = Widgets.has(this, Widgets.APPS)
-        val playerW = Widgets.has(this, Widgets.PLAYER)
-        col.addView(ui.groupHeader("Tus widgets"))
         if (clockW) col.addView(fold(clockWidgetPlate(), "w_clock"))
         if (appsW) col.addView(fold(appsWidgetsPlate(), "w_apps", Widgets.ids(this, Widgets.APPS).size.let { if (it == 1) "1 widget" else "$it widgets" }))
         if (playerW) col.addView(fold(playerWidgetPlate(), "w_player", if (Prefs.pwIdle(this) == "last") "Sin música: última canción" else "Sin música: nada sonando"))
-        col.addView(fold(packPlate(), "w_pack", "${intArrayOf(Widgets.FULL, Widgets.CLOCK, Widgets.APPS, Widgets.PLAYER).count { Widgets.has(this, it) }} de 4 puestos"))
-
-        col.addView(ui.groupHeader("Reproductor"))
-        col.addView(fold(playerPlate(), "reproductor", if (Player.enabled(this)) "Activo" else "Sin permiso"))
 
         col.addView(ui.groupHeader("App"))
         col.addView(fold(appearancePlate(hasWidget), "apariencia",

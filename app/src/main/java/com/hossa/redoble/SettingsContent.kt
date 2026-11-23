@@ -162,7 +162,7 @@ internal fun MainActivity.setlistPlate(): View {
 internal fun MainActivity.renameSlot(slot: Int, group: Int = 0) {
     val pkg = Prefs.app(this, slot, group)
     val original = Apps.label(this, pkg)
-    val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(ui.dp(20), ui.dp(8), ui.dp(20), 0) }
+    val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
     val field = EditText(this).apply {
         setText(Prefs.label(this@renameSlot, slot, group) ?: original)
         setSelectAllOnFocus(true)
@@ -173,20 +173,15 @@ internal fun MainActivity.renameSlot(slot: Int, group: Int = 0) {
     }
     box.addView(ui.bodyText("Nombre original: $original", Ui.MUTED, 13f))
     box.addView(field)
-    android.app.AlertDialog.Builder(this,
-        if (Ui.light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else android.R.style.Theme_DeviceDefault_Dialog_Alert)
-        .setTitle("Nombre del acceso %d".format(slot + 1))
-        .setView(box)
-        .setPositiveButton("Guardar") { _, _ ->
+    ui.sheet("Nombre en el widget", content = box, actions = listOf(
+        "Guardar" to {
             val t = field.text.toString().trim()
             Prefs.setLabel(this, slot, if (t == original) null else t, group)
-            RockWidget.updateAll(this); build()
-        }
-        .setNeutralButton("Original") { _, _ ->
-            Prefs.setLabel(this, slot, null, group); RockWidget.updateAll(this); build()
-        }
-        .setNegativeButton("Cancelar", null)
-        .show()
+            RockWidget.updateAll(this); Widgets.updateKind(this, Widgets.APPS); build()
+        },
+        "Usar el original" to {
+            Prefs.setLabel(this, slot, null, group); RockWidget.updateAll(this); Widgets.updateKind(this, Widgets.APPS); build()
+        }))
     field.requestFocus()
 }
 
@@ -205,6 +200,15 @@ internal fun MainActivity.slotRow(i: Int, group: Int = 0): View {
         addView(ui.ellipsize(ui.text(if (empty) "Espacio libre" else Prefs.displayName(this@slotRow, i, group), ui.cond, 19f,
             if (empty) Ui.DIM else Ui.HEAD)),
             LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = ui.dp(14) })
+        // Lápiz visible para cambiar el nombre (antes era presión larga, difícil de descubrir)
+        if (!empty) addView(android.widget.ImageView(this@slotRow).apply {
+            setImageResource(R.drawable.ic_edit)
+            imageTintList = android.content.res.ColorStateList.valueOf(Ui.MUTED)
+            scaleType = android.widget.ImageView.ScaleType.CENTER
+            background = ui.rowBg()
+            contentDescription = "Cambiar el nombre"
+            setOnClickListener { renameSlot(i, group) }
+        }, LinearLayout.LayoutParams(ui.dp(44), ui.dp(44)).apply { marginEnd = ui.dp(4) })
         addView(ui.text(if (empty) "Elegir app" else "Cambiar", ui.cond, 15f, if (empty) ui.accent else Ui.MUTED))
         addView(ui.text("›", ui.condLight, 22f, Ui.DIM).apply { setPadding(ui.dp(8), 0, 0, ui.dp(2)) })
         if (!empty) setOnLongClickListener { renameSlot(i, group); true }
@@ -275,7 +279,7 @@ internal fun MainActivity.switchRow(label: String, on: Boolean, onChange: (Boole
         val states = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
         thumbTintList = android.content.res.ColorStateList(states, intArrayOf(Color.WHITE, if (Ui.light) Color.WHITE else Ui.MUTED))
         trackTintList = android.content.res.ColorStateList(states, intArrayOf(ui.accent, if (Ui.light) Color.parseColor("#B9AFA3") else Color.parseColor("#3A322B")))
-        setOnCheckedChangeListener { _, v -> onChange(v) }
+        setOnCheckedChangeListener { b, v -> b.tick(); onChange(v) }
     }
     row.addView(sw)
     row.setOnClickListener { sw.toggle() }

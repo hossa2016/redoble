@@ -94,16 +94,11 @@ internal fun MainActivity.pickMusicApp() {
     io.execute {
         val apps = Apps.launchable(this)
         onUi {
-            android.app.AlertDialog.Builder(this,
-                if (Ui.light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle("Tu app de música")
-                .setItems(apps.map { it.label }.toTypedArray()) { _, i ->
-                    Prefs.setMusicApp(this, apps[i].pkg)
-                    Player.updateAll(this)
-                    build()
-                }
-                .setNegativeButton("Cancelar", null)
-                .show()
+            ui.sheet("Tu app de música", items = apps.map { it.label }, onItem = { i ->
+                Prefs.setMusicApp(this, apps[i].pkg)
+                Player.updateAll(this)
+                build()
+            })
         }
     }
 }
@@ -167,17 +162,11 @@ internal fun MainActivity.showAddWidgetSteps(offerPin: Boolean = false) {
         "2. Toca Widgets.\n" +
         "3. Busca Prisma Widgets.\n" +
         "4. Arrástralo a la pantalla y estíralo a lo ancho."
-    val b = android.app.AlertDialog.Builder(this,
-        if (Ui.light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else android.R.style.Theme_DeviceDefault_Dialog_Alert)
-        .setTitle("Agregar el widget")
-        .setMessage(msg)
-        .setNegativeButton("Entendido", null)
-    if (offerPin && AppWidgetManager.getInstance(this).isRequestPinAppWidgetSupported)
-        b.setPositiveButton("Probar agregarlo") { _, _ ->
-            if (!tryPin()) toast("Tu teléfono no lo permite desde aquí; usa los pasos.")
-            else toast("Si no aparece una ventana para confirmar, usa los pasos.")
-        }
-    b.show()
+    val pin = offerPin && AppWidgetManager.getInstance(this).isRequestPinAppWidgetSupported
+    ui.sheet("Agregar el widget", msg, actions = if (pin) listOf("Probar agregarlo" to {
+        if (!tryPin()) toast("Tu teléfono no lo permite desde aquí; usa los pasos.")
+        else toast("Si no aparece una ventana para confirmar, usa los pasos.")
+    }) else emptyList(), dismissLabel = "Entendido")
 }
 
 internal fun MainActivity.tryPin(): Boolean {

@@ -12,7 +12,10 @@ internal fun MainActivity.fold(card: View, key: String, summary: String? = null)
     val c = card as? LinearLayout ?: return card
     val title = c.getChildAt(0) as? LinearLayout ?: return card
     if (summary != null && title.findViewWithTag<View>("hint") == null) {
-        title.findViewWithTag<LinearLayout>("titleCol")?.addView(ui.hintText(summary))
+        title.findViewWithTag<LinearLayout>("titleCol")?.addView(ui.hintText(summary).apply {
+            // Algo pendiente (sin ciudad, sin permiso): en color de acento, como invitación
+            if (summary.endsWith("›")) setTextColor(ui.accent)
+        })
     }
     // Flecha dibujada en dp (no en letra): no se corta con letra grande del sistema
     val chev = android.widget.ImageView(this).apply {
@@ -43,6 +46,8 @@ internal fun MainActivity.fold(card: View, key: String, summary: String? = null)
             it.bottomMargin = if (open) ui.dp(14) else 0
             title.layoutParams = it
         }
+        // La rayita de acento solo marca la sección abierta
+        title.getChildAt(0)?.animate()?.alpha(if (open) 1f else 0f)?.setDuration(if (animate) 180 else 0)?.start()
         val angle = if (open) -90f else 90f
         if (animate) chev.animate().rotation(angle).setDuration(180).start() else chev.rotation = angle
         val name = title.findViewWithTag<android.widget.TextView>("titleText")?.text ?: ""
@@ -54,6 +59,7 @@ internal fun MainActivity.fold(card: View, key: String, summary: String? = null)
     c.layoutTransition = LayoutTransition().apply { setDuration(180) }
     folds[key] = { o -> if (o != open) { open = o; show(o, true) } }
     title.setOnClickListener {
+        title.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
         open = !open
         if (open) {
             // Solo una abierta a la vez: se cierra la que estaba abierta

@@ -39,6 +39,17 @@ internal fun MainActivity.appsWidgetsPlate(): View {
                 orientation = LinearLayout.VERTICAL
                 addView(ui.text(if (ids.size == 1) "Tu widget de Apps" else "Widget ${n + 1}", ui.cond, 18f, Ui.HEAD))
                 addView(ui.ellipsize(ui.text(Widgets.appsSummary(this@appsWidgetsPlate, id), ui.cond, 14f, Ui.DIM)))
+                // Sus primeras apps, para distinguir una copia de otra
+                val g = Prefs.awGroup(this@appsWidgetsPlate, id)
+                val pkgs = (0 until Prefs.GROUP_SLOTS).map { Prefs.app(this@appsWidgetsPlate, it, g) }.filter { it.isNotBlank() }.take(5)
+                if (pkgs.isNotEmpty()) addView(LinearLayout(this@appsWidgetsPlate).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    pkgs.forEachIndexed { k, p ->
+                        addView(ui.appHolder(p, 26, 14).apply {
+                            (layoutParams as LinearLayout.LayoutParams).apply { if (k > 0) marginStart = ui.dp(4) }
+                        })
+                    }
+                }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(6) })
             }, LinearLayout.LayoutParams(0, -2, 1f))
             addView(ui.text("Cambiar", ui.cond, 15f, ui.accent))
             addView(ui.text("›", ui.condLight, 22f, Ui.DIM).apply { setPadding(ui.dp(8), 0, 0, ui.dp(2)) })
@@ -47,7 +58,7 @@ internal fun MainActivity.appsWidgetsPlate(): View {
                 startActivity(Intent(this@appsWidgetsPlate, AppsWidgetConfig::class.java)
                     .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
             }
-        }, LinearLayout.LayoutParams(-1, ui.dp(64)))
+        }.apply { minimumHeight = ui.dp(64); setPadding(ui.dp(6), ui.dp(10), ui.dp(6), ui.dp(10)) }, LinearLayout.LayoutParams(-1, -2))
     }
     return card
 }
@@ -76,7 +87,7 @@ internal fun MainActivity.packPlate(): View {
         Widgets.APPS to ("Apps" to "Tus apps, se acomodan al tamaño"),
         Widgets.PLAYER to ("Reproductor" to "La canción con sus botones"))
     val placed = list.count { Widgets.has(this, it.first) }
-    card.addView(ui.sectionTitle("Paquete de widgets"))
+    card.addView(ui.sectionTitle("Tus widgets"))
     card.addView(ui.note("Ponlos juntos o por separado; todos usan tu tema."))
     list.forEach { (kind, nd) ->
         val on = Widgets.has(this, kind)
@@ -91,7 +102,7 @@ internal fun MainActivity.packPlate(): View {
                 addView(ui.text(nd.first, ui.condSemi, 17f, Ui.HEAD))
                 addView(ui.text(nd.second, ui.cond, 14f, Ui.DIM))
             }, LinearLayout.LayoutParams(0, -2, 1f))
-            addView(ui.text(if (on) "Puesto" else "", ui.cond, 14f, Ui.OK))
+            addView(ui.text(if (on) "En pantalla" else "", ui.cond, 14f, Ui.OK))
         }, LinearLayout.LayoutParams(-1, -2))
     }
     if (placed < list.size) card.addView(ui.secondary("Cómo agregar un widget").apply {

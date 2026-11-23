@@ -157,7 +157,7 @@ internal fun MainActivity.animSection(card: LinearLayout) {
     val apply = ui.primary("Ver y aplicar")
     apply.setOnClickListener { openFullPreview() }
     card.addView(apply, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(14) })
-    card.addView(ui.note("Toca uno para verlo; mantenlo presionado para elegirlo.",
+    card.addView(ui.note("Toca uno para verlo en grande y aplicarlo.",
         "Al tocar uno lo ves a pantalla completa, donde puedes deslizar para ver los demás y aplicarlo. " +
         "Se mueve solo con la pantalla encendida y en el inicio; al abrir una app o bloquear el teléfono se pausa para no gastar batería."),
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
@@ -497,14 +497,9 @@ internal fun MainActivity.showKeepAliveSteps() {
         "2. En Batería (Ahorro de batería) elige Sin restricciones.\n" +
         "3. En Recientes, baja la tarjeta de Prisma Widgets para bloquearla (candado).\n\n" +
         "Si aun así se queda quieta, apaga «Hora con la letra del tema»."
-    android.app.AlertDialog.Builder(this,
-        if (Ui.light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else android.R.style.Theme_DeviceDefault_Dialog_Alert)
-        .setTitle("Mantener la hora al día")
-        .setMessage(msg)
-        .setPositiveButton("Inicio automático") { _, _ -> openAutostart() }
-        .setNeutralButton("Batería") { _, _ -> openAppInfo() }
-        .setNegativeButton("Luego", null)
-        .show()
+    ui.sheet("Mantener la hora al día", msg, actions = listOf(
+        "Inicio automático" to { openAutostart() },
+        "Batería" to { openAppInfo() }), dismissLabel = "Luego")
 }
 
 private fun MainActivity.openAppInfo() {
@@ -564,7 +559,7 @@ internal fun MainActivity.widgetBgPlate(): View {
     val card = ui.plateCard()
     card.addView(ui.sectionTitle("Fondo del widget"))
     val gs = Prefs.widgetStyle(this)
-    card.addView(ui.segmented(listOf("orig" to "Normal", "fade" to "Desvanecido", "solid" to "Fijo"), gs) {
+    card.addView(ui.segmented(listOf("orig" to "Sin fondo", "fade" to "Desvanecido", "solid" to "Fijo"), gs) {
         Prefs.setWidgetStyle(this, it); RockWidget.updateAll(this); build()
     })
     if (gs != "orig") card.addView(colorSwatches(Prefs.widgetColor(this)) {
@@ -578,7 +573,7 @@ internal fun MainActivity.widgetBgPlate(): View {
 /** Selector de color libre: tono y brillo, con muestra. */
 internal fun MainActivity.customColor(start: Int, onPick: (Int) -> Unit) {
     val hsv = FloatArray(3); Color.colorToHSV(start, hsv)
-    val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(ui.dp(24), ui.dp(16), ui.dp(24), 0) }
+    val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
     val preview = View(this)
     fun col() = Color.HSVToColor(hsv)
     fun refresh() { preview.background = ui.rect(col(), 14f) }
@@ -605,13 +600,7 @@ internal fun MainActivity.customColor(start: Int, onPick: (Int) -> Unit) {
     bar("Brillo", 100, light0) { setLight(it) }
     refresh()
     // Mismo estilo de ventana que las demás: clara u oscura según la pantalla de ajustes
-    android.app.AlertDialog.Builder(this,
-        if (Ui.light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else android.R.style.Theme_DeviceDefault_Dialog_Alert)
-        .setTitle("Color personalizado")
-        .setView(box)
-        .setPositiveButton("Usar") { _, _ -> onPick(col() or 0xFF000000.toInt()) }
-        .setNegativeButton("Cancelar", null)
-        .show()
+    ui.sheet("Color personalizado", content = box, actions = listOf("Usar este color" to { onPick(col() or 0xFF000000.toInt()) }))
 }
 
 internal fun MainActivity.screenSize(): Pair<Int, Int> {

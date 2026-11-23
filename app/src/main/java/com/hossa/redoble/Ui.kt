@@ -44,15 +44,15 @@ class Ui(val ctx: Context, val accent: Int) {
         fun setLight(on: Boolean) {
             light = on
             fun c(dark: String, clear: String) = Color.parseColor(if (on) clear else dark)
-            INK = c("#0E0B09", "#F3EFE9")
+            INK = c("#0E0B09", "#ECE6DE")
             PLATE_TOP = c("#1C1713", "#FFFFFF")
             PLATE_BOTTOM = c("#141110", "#FBF8F4")
-            PLATE_PRESSED = c("#1F1915", "#ECE6DE")
+            PLATE_PRESSED = c("#1F1915", "#E4DDD3")
             WELL = c("#0A0807", "#EEE9E2")
             GROOVE = c("#2A231E", "#D9D1C6")
             HEAD = c("#EDE6DC", "#1C1713")
             MUTED = c("#9C9187", "#5B524A")
-            DIM = c("#8A7F75", "#6B6158")
+            DIM = c("#958A80", "#655B52")
             OK = c("#7FB38A", "#2F7A45")
             ALERT = c("#E24B4A", "#C42F2D")
         }
@@ -261,12 +261,7 @@ class Ui(val ctx: Context, val accent: Int) {
                 background = rowBg()
                 contentDescription = "Más información"
                 setOnClickListener {
-                    android.app.AlertDialog.Builder(ctx,
-                        if (light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert
-                        else android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                        .setMessage(more)
-                        .setPositiveButton("Entendido", null)
-                        .show()
+                    sheet(null, more, dismissLabel = "Entendido")
                 }
             }, LinearLayout.LayoutParams(dp(48), dp(48)))
         }
@@ -303,7 +298,7 @@ class Ui(val ctx: Context, val accent: Int) {
                 setPadding(dp(2), 0, dp(2), 0)
                 minHeight = dp(48); minimumHeight = dp(48)
                 contentDescription = if (on) "$label, seleccionado" else label
-                setOnClickListener { if (!on) onPick(value) }
+                setOnClickListener { if (!on) { tick(); onPick(value) } }
             }
             val weight = label.length + 3f
             row.addView(b, LinearLayout.LayoutParams(0, dp(48), weight).apply { if (i > 0) marginStart = dp(3) })
@@ -367,11 +362,11 @@ class Ui(val ctx: Context, val accent: Int) {
         // Título a todo el ancho y el resumen (lo elegido) debajo, en pequeño:
         // así el título nunca se corta, aunque la letra del teléfono sea grande
         val col = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; tag = "titleCol" }
-        col.addView(text(title.uppercase(), anton, 21f, HEAD, 0.03f).apply {
+        col.addView(text(title, condSemi, 21f, HEAD, 0.01f).apply {
             tag = "titleText"
             isSingleLine = true
-            fitText(this, 21, 14)
-        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36)))
+            fitText(this, 21, 15)
+        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(34)))
         if (hint != null) col.addView(hintText(hint))
         addView(col, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(10) })
         layoutParams = LinearLayout.LayoutParams(

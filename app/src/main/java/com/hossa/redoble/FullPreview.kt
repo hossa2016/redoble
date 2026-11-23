@@ -147,10 +147,7 @@ internal fun MainActivity.openFullPreview(animIndex: Int? = null) {
         val names = arrayOf("Pantalla de inicio", "Pantalla de bloqueo", "Ambas")
         val flags = intArrayOf(WallpaperManager.FLAG_SYSTEM, WallpaperManager.FLAG_LOCK,
             WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK)
-        android.app.AlertDialog.Builder(this,
-            if (Ui.light) android.R.style.Theme_DeviceDefault_Light_Dialog_Alert else android.R.style.Theme_DeviceDefault_Dialog_Alert)
-            .setTitle("Aplicar en")
-            .setItems(names) { _, i ->
+        ui.sheet("Aplicar en", items = names.toList(), onItem = { i ->
                 toast("Aplicando…")
                 io.execute {
                     val ok = try {
@@ -159,9 +156,7 @@ internal fun MainActivity.openFullPreview(animIndex: Int? = null) {
                     } catch (e: Throwable) { false }
                     onUi { toast(if (ok) "Fondo aplicado" else "No se pudo aplicar"); if (ok) close() }
                 }
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
+            })
     }
 
     // Contenido del panel: datos del fondo, o los ajustes del fondo del widget
@@ -172,7 +167,7 @@ internal fun MainActivity.openFullPreview(animIndex: Int? = null) {
         if (styleOpen) {
             panel.addView(ui.text("FONDO DEL WIDGET", ui.anton, 19f, Ui.HEAD, 0.03f))
             val gs = Prefs.widgetStyle(this)
-            panel.addView(ui.segmented(listOf("orig" to "Normal", "fade" to "Desvanecido", "solid" to "Fijo"), gs) {
+            panel.addView(ui.segmented(listOf("orig" to "Sin fondo", "fade" to "Desvanecido", "solid" to "Fijo"), gs) {
                 Prefs.setWidgetStyle(this, it); RockWidget.updateAll(this); refreshWidget(); fill()
             }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
             if (gs != "orig") panel.addView(colorSwatches(Prefs.widgetColor(this)) {

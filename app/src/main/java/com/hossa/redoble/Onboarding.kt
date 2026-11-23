@@ -31,7 +31,7 @@ internal fun MainActivity.onboardingView(): View {
 
     col.addView(ui.text("Paso ${step + 1} de ${LAST + 1}", ui.cond, 15f, Ui.MUTED))
     val (title, body) = when (step) {
-        0 -> "Elige tu estilo" to "Siete temas, cada uno con sus propias letras. Puedes cambiarlo cuando quieras."
+        0 -> "Elige tu estilo" to "Siete estilos, cada uno con sus propias letras. Puedes cambiarlo cuando quieras."
         1 -> "Agrega el widget" to "Ponlo en tu pantalla de inicio y estíralo para que ocupe el ancho y casi todo el alto."
         3 -> "Así lo configuras" to "Todo se cambia desde esta app y el widget se actualiza al instante."
         else -> "Muestra tu música" to "Para ver la canción y los botones ⏮ ⏯ ⏭ en el widget, Android pide el acceso a notificaciones. " +
@@ -66,28 +66,12 @@ internal fun MainActivity.onboardingView(): View {
             )), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
         }
         3 -> {
+            // Solo lo esencial; cada sección tiene su propia explicación (ⓘ) en la app
             val tips = listOf(
-                "Vista previa" to "Arriba ves cómo queda tu widget. Tócala para verla a pantalla completa.",
-                "Secciones" to "Toca el título de una sección para abrirla o cerrarla. Debajo del título ves lo que tienes elegido.",
-                "Tema" to "Elige uno de los 7 estilos. «Letras del tema» pone la letra propia de cada uno en clima, batería, " +
-                    "música y apps. La hora usa el reloj del sistema para que nunca se atrase.",
-                "Hora con la letra del tema" to "Opcional: la hora, el día y la fecha con la letra del tema. " +
-                    "Enciende la actualización en vivo y, en HyperOS, pide Inicio automático y batería sin restricciones. " +
-                    "Si la hora se queda quieta, apágalo.",
-                "Actualización en vivo" to "Batería al instante (usa una notificación fija).",
-                "Fondo de pantalla" to "Del tema, desvanecido, fijo, una foto o animado. Toca Ver y aplicar (o un fondo animado) para verlo en grande: " +
-                    "desliza a los lados para ver los demás y toca Aplicar. Para salir sin cambiar nada, desliza hacia abajo.",
-                "Fondo del widget" to "Una capa detrás de la hora. Con colores claros, las letras pasan a oscuras solas. " +
-                    "También lo cambias en la pantalla completa, con el botón «Fondo del widget».",
-                "Diseño" to "Completo, Música o Minimal. En «Personalizar elementos» prendes o apagas día, hora, clima, batería y más.",
-                "Apps" to "3 o 4 por fila. Toca un espacio para elegir la app y mantenlo presionado para ponerle un nombre corto.",
-                "Clima" to "Escribe tu ciudad y toca Guardar.",
-                "Reproductor" to "Elige tu app de música, si va abajo o debajo del clima, y si muestra solo tu app o cualquiera. " +
-                    "Con el reproductor grande sonando, queda una fila de apps para que quepan los botones.",
-                "Paquete de widgets" to "Además del Completo hay tres sueltos: Hora y clima, Apps y Reproductor. " +
-                    "Agrégalos desde la lista de widgets del teléfono y estíralos a tu gusto: se acomodan al tamaño. " +
-                    "Sus ajustes aparecen en «Tus widgets» cuando los pones.",
-                "Apariencia" to "Modo claro u oscuro de esta pantalla, en App → Apariencia y ayuda."
+                "Vista previa" to "Arriba ves tu widget. Tócala para verla a pantalla completa con el fondo.",
+                "Secciones" to "Toca un título para abrirlo. Debajo ves lo que tienes elegido; ⓘ explica cada opción.",
+                "Fondos" to "Toca un fondo para verlo en grande, desliza para ver los demás y toca Aplicar.",
+                "Más widgets" to "Además del Completo hay Hora y clima, Apps y Reproductor. Agrégalos desde la lista de widgets del teléfono."
             )
             tips.forEach { (t, d) ->
                 content.addView(LinearLayout(this).apply {
