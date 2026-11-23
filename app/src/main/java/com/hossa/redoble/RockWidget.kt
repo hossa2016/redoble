@@ -311,15 +311,40 @@ class RockWidget : AppWidgetProvider() {
             val bigDay = rock && !(solo && W / dens < 230)
             val colW = W - ((if (bigDay) 96 else 24) * dens).toInt()
 
-            val roomy = !solo || hDp >= 150
-            val tiny = solo && hDp in 1..109
-            val dia = if (solo) Prefs.cw(ctx, "dia") && !tiny else Prefs.el(ctx, "dia")
+            val wDp = (W / dens).toInt()
+            val fs = ctx.resources.configuration.fontScale.coerceIn(0.8f, 1.6f)
+            val dateInDay0 = th.family == "cristal" || th.family == "neon" || th.family == "lujo"
+            var dia = if (solo) Prefs.cw(ctx, "dia") else Prefs.el(ctx, "dia")
             val hora = if (solo) true else Prefs.el(ctx, "hora")
-            val clima = if (solo) Prefs.cw(ctx, "clima") && (roomy || hDp >= 120) else Prefs.el(ctx, "clima")
-            // Muy angosto (menos de ~3 celdas): solo día, hora, fecha y clima; sin mañana
-            val narrow = solo && W / dens < 230
-            val manana = if (solo) Prefs.cw(ctx, "manana") && roomy && !narrow else Prefs.el(ctx, "manana")
-            val bateria = if (solo) Prefs.cw(ctx, "bateria") && roomy else Prefs.el(ctx, "bateria")
+            var clima = if (solo) Prefs.cw(ctx, "clima") else Prefs.el(ctx, "clima")
+            var manana = if (solo) Prefs.cw(ctx, "manana") && wDp >= 230 else Prefs.el(ctx, "manana")
+            var bateria = if (solo) Prefs.cw(ctx, "bateria") else Prefs.el(ctx, "bateria")
+            // Widget Hora y clima: según el alto se quitan líneas enteras (nunca se cortan).
+            // Orden en que se quitan: batería, mañana, clima, día y fecha.
+            var timeRoom = 0
+            if (solo && hDp > 0) {
+                fun need(): Int {
+                    var n = 0
+                    if (dia) n += if (bigDay) 0 else if (dateInDay0) 22 else 44
+                    if (clima) n += 36
+                    if (manana) n += 20
+                    if (bateria) n += 24
+                    return (n * fs).toInt()
+                }
+                val avail = hDp - 20
+                val minTime = (40 * fs).toInt()
+                while (avail - need() < minTime) {
+                    when {
+                        bateria -> bateria = false
+                        manana -> manana = false
+                        clima -> clima = false
+                        dia -> dia = false
+                        else -> break
+                    }
+                }
+                timeRoom = avail - need()
+            }
+            val narrow = solo && wDp < 260
 
             // Día
             val day = DAYS[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1]
@@ -333,24 +358,34 @@ class RockWidget : AppWidgetProvider() {
             val dayColor = when (th.family) { "claro", "cristal" -> th.head; "neon" -> th.accent2; else -> accent }
             if (!bigDay) v.setTextColor(R.id.day_txt, dayColor)
             val now = java.util.Date()
-            val dayFmt = when (th.family) {
+            val dayFmt = if (narrow) when (th.family) {
+                "cristal" -> "EEE d MMM"; "neon" -> "EEE '//' dd.MM"; "lujo" -> "EEE · d MMM"; else -> "EEEE"
+            } else when (th.family) {
                 "cristal" -> "EEEE, d 'de' MMMM"; "neon" -> "EEEE '//' dd.MM"; "lujo" -> "EEEE · d 'de' MMMM"; else -> "EEEE"
             }
+            // Fecha corta ("22 nov") cuando el widget es angosto: nunca "22 de novie…"
+            val dateFmt = if (narrow) "d MMM" else "d 'de' MMMM"
+            fun fmt(f: String) = java.text.SimpleDateFormat(f, ES).format(now).replace(".", "")
+            v.setCharSequence(R.id.date, "setFormat12Hour", dateFmt)
+            v.setCharSequence(R.id.date, "setFormat24Hour", dateFmt)
             val dateFonts = fonts && bitmapDate(ctx)
             twin(v, R.id.day_txt, R.id.day_txt_bmp, !bigDay && dia, dateFonts) {
-                TextArt.render(ctx, java.text.SimpleDateFormat(dayFmt, ES).format(now), S.title, 13f, dayColor,
+                TextArt.render(ctx, fmt(dayFmt), S.title, 13f, dayColor,
                     S.tls, caps = true, glow = if (th.family == "neon") th.accent2 else 0, maxWidthPx = colW)
             }
+            v.setContentDescription(R.id.day_txt_bmp, fmt(dayFmt))
+            v.setContentDescription(R.id.date_bmp, fmt(dateFmt))
             // Cristal, Neón y Lujo llevan la fecha en la misma línea del día.
-            val dateInDay = th.family == "cristal" || th.family == "neon" || th.family == "lujo"
+            val dateInDay = dateInDay0
             twin(v, R.id.date, R.id.date_bmp, dia && !dateInDay, dateFonts) {
-                TextArt.render(ctx, java.text.SimpleDateFormat("d 'de' MMMM", ES).format(now),
+                TextArt.render(ctx, fmt(dateFmt),
                     if (th.family == "lujo") S.med else S.body, S.dsize, if (th.family == "lujo") th.dim else th.head,
                     S.lls, caps = S.caps, shadow = S.shadow, maxWidthPx = colW)
             }
 
             // Hora (más pequeña cuando suena música; en el widget suelto, a lo que quepa)
-            val soloTs = if (solo) soloTimeSize(ctx, th.family, (W / dens).toInt(), hDp) else 0f
+            val soloTs = if (solo) minOf(soloTimeSize(ctx, th.family, wDp, 0),
+                if (timeRoom > 0) timeRoom / (1.1f * fs) else 999f).coerceAtLeast(24f) else 0f
             val bmpClock = bitmapClock(ctx)
             v.setViewVisibility(R.id.clock, vis(hora && !bmpClock))
             v.setViewVisibility(R.id.clock_bmp, vis(hora && bmpClock))
@@ -360,15 +395,20 @@ class RockWidget : AppWidgetProvider() {
             }
             val ts = if (solo) soloTs else timeSize(th.family) * (if (playing) 0.875f else 1f)
             // Fecha más pequeña si el widget suelto es angosto
-            if (solo && W / dens < 320) v.setTextViewTextSize(R.id.date, TypedValue.COMPLEX_UNIT_SP, S.dsize * 0.8f)
+            if (solo && wDp < 200) v.setTextViewTextSize(R.id.date, TypedValue.COMPLEX_UNIT_SP, S.dsize * 0.9f)
             for (id in intArrayOf(R.id.hh, R.id.colon, R.id.mm)) v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_SP, ts)
             v.setTextColor(R.id.colon, when (th.family) { "claro" -> th.head; "neon" -> th.accent2; else -> accent })
 
             // Clima
             val tomorrow = Prefs.weatherTomorrow(ctx)
-            v.setTextViewText(R.id.wx_now, now0(ctx))
             v.setTextViewText(R.id.wx_tomorrow, tomorrow)
-            val nowTxt = now0(ctx)
+            val nowFull = now0(ctx)
+            val fitsFull = TextArt.commonSize(ctx, listOf(nowFull), if (th.family == "lujo") S.body else S.med, S.wsize,
+                caps = th.family == "neon", shadow = S.shadow, maxWidthPx = colW) >= S.wsize * 0.85f
+            // Si no cabe completo: solo la temperatura (nunca "Nie…")
+            val nowTxt = if (fitsFull || Prefs.weatherNow(ctx).isBlank()) nowFull else "${Prefs.weatherTemp(ctx)}°"
+            v.setTextViewText(R.id.wx_now, nowTxt)
+            v.setContentDescription(R.id.wx_now_bmp, nowFull)
             val wxIcon = fonts && clima && Prefs.weatherCode(ctx) >= 0 && (th.family == "cristal" || th.family == "claro")
             val tomInline = wxIcon && manana && tomorrow.isNotBlank()
             twin(v, R.id.wx_now, R.id.wx_now_bmp, clima, fonts) {
@@ -482,6 +522,7 @@ class RockWidget : AppWidgetProvider() {
         private fun applyBackground(ctx: Context, v: RemoteViews, th: Theme) {
             rootBackground(ctx, v, th)
             textColors(ctx, v, th)
+            tintCards(ctx, v, th, PADS + intArrayOf(R.id.player, R.id.player_c, R.id.empty))
         }
 
         /** Solo el fondo (lo usan también las piezas sueltas, como el widget de Apps). */
@@ -494,9 +535,27 @@ class RockWidget : AppWidgetProvider() {
                             if (Prefs.widgetStyle(ctx) == "fade") R.drawable.wbg_fade else R.drawable.wbg_solid)
                         v.setColorStateList(R.id.root, "setBackgroundTintList", android.content.res.ColorStateList.valueOf(col))
                     } else v.setInt(R.id.root, "setBackgroundColor", col)
+                    // Margen interior: el contenido no queda pegado al borde del fondo
+                    val pad = (12 * ctx.resources.displayMetrics.density).toInt()
+                    v.setViewPadding(R.id.root, pad, pad, pad, pad)
                 }
                 else -> v.setInt(R.id.root, "setBackgroundResource", 0)
             }
+        }
+
+        /**
+         * Si el texto cambió a oscuro (fondo claro) o a claro (fondo oscuro), las tarjetas
+         * también: así nunca queda texto oscuro sobre una tarjeta casi negra, ni al revés.
+         */
+        internal fun tintCards(ctx: Context, v: RemoteViews, th: Theme, cards: IntArray, holders: IntArray = IntArray(0)) {
+            if (Build.VERSION.SDK_INT < 31) return
+            if (th.light == Themes.current(ctx).light) return
+            val card = android.content.res.ColorStateList.valueOf(
+                Color.parseColor(if (th.light) "#CCFFFFFF" else "#B8141110"))
+            val hold = android.content.res.ColorStateList.valueOf(
+                Color.parseColor(if (th.light) "#1A000000" else "#2EFFFFFF"))
+            for (id in cards) v.setColorStateList(id, "setBackgroundTintList", card)
+            for (id in holders) v.setColorStateList(id, "setBackgroundTintList", hold)
         }
 
         private fun textColors(ctx: Context, v: RemoteViews, th: Theme) {

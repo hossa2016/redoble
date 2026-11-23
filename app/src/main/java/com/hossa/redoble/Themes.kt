@@ -34,6 +34,11 @@ class Theme(
 
     /** Mismo tema con otro diseño (por ejemplo, el reproductor debajo del clima). */
     fun withLayout(l: Int) = Theme(id, name, family, l, head, dim, fixedAccent, accent2, bg, orbs, light)
+
+    /** Mismo tema con otro color de acento (el de la carátula, por ejemplo). */
+    fun withAccent(c: Int) = Theme(id, name, family, layout, head, dim, c,
+        if (family == "neon" || family == "cristal") androidx.core.graphics.ColorUtils.blendARGB(c, android.graphics.Color.WHITE, 0.35f) else accent2,
+        bg, orbs, light)
 }
 
 object Themes {

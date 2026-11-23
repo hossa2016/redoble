@@ -32,7 +32,7 @@ object TextArt {
             64f, 17f, 16f, 14f, 13f, 0.06f, 0f, 0f, caps = false, shadow = true),
         "cristal" to Spec(R.font.jakarta_light, R.font.jakarta_light, R.font.jakarta_regular, R.font.jakarta_semibold,
             R.font.jakarta_bold, R.font.jakarta_bold, R.font.jakarta_semibold,
-            76f, 15f, 15f, 13f, 12f, 0.04f, 0f, -0.03f, caps = false, shadow = false),
+            76f, 15f, 15f, 13f, 12f, 0.04f, 0f, -0.03f, caps = false, shadow = true),
         "claro" to Spec(R.font.intertight_extralight, R.font.intertight_extralight, R.font.inter_regular, R.font.inter_medium,
             R.font.inter_semibold, R.font.inter_semibold, R.font.inter_medium,
             76f, 14f, 15f, 13f, 12f, 0.2f, 0f, -0.04f, caps = false, shadow = false),
@@ -41,7 +41,7 @@ object TextArt {
             54f, 15f, 16f, 14f, 12f, 0.25f, 0.1f, 0f, caps = true, shadow = false, glow = Color.parseColor("#3DF2FF")),
         "lujo" to Spec(R.font.cormorant_light, R.font.cormorant_light, R.font.cormorant_italic, R.font.montserrat_medium,
             R.font.cormorant_medium, R.font.montserrat_medium, R.font.montserrat_medium,
-            80f, 12f, 18f, 12f, 12f, 0.22f, 0.12f, 0f, caps = true, shadow = false),
+            80f, 12f, 18f, 12f, 12f, 0.22f, 0.12f, 0f, caps = true, shadow = true),
     )
 
     fun spec(family: String): Spec = SPECS[family] ?: SPECS.getValue("rock")
@@ -234,7 +234,9 @@ object TextArt {
             val d = ctx.resources.displayMetrics.density
             when {
                 glow != 0 -> setShadowLayer(14f * d, 0f, 0f, glow)
-                shadow -> setShadowLayer(6f * d, 0f, 2f * d, Color.parseColor("#CC000000"))
+                // Sombra solo bajo letras claras (bajo letras oscuras ensuciaba)
+                shadow && androidx.core.graphics.ColorUtils.calculateLuminance(color) > 0.4 ->
+                    setShadowLayer(6f * d, 0f, 2f * d, Color.parseColor("#B3000000"))
             }
         }
 

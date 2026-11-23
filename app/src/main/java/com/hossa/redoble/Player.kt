@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
@@ -188,7 +189,8 @@ object Player {
             ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
             ?: md.description?.subtitle?.toString() ?: "")
         val playing = isPlaying(c)
-        val th = Themes.widget(ctx)
+        val art = artFor(ctx, md, download = !preview)  // la vista previa no descarga nada
+        val th = coverTheme(ctx, Themes.widget(ctx), art)
         val accent = th.accent(ctx)
 
         if (!preview) Prefs.setLastSong(ctx, title, artist, c.packageName)
@@ -198,7 +200,6 @@ object Player {
             else if (dismissed == key(c)) return false
         }
 
-        val art = artFor(ctx, md, download = !preview)  // la vista previa no descarga nada
         val open = c.sessionActivity ?: ctx.packageManager.getLaunchIntentForPackage(c.packageName)?.let {
             PendingIntent.getActivity(
                 ctx, 204, it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
@@ -274,11 +275,8 @@ object Player {
      * última canción o «Nada sonando», y tocarlo abre tu app de música.
      */
     fun applyStandalone(ctx: Context, v: RemoteViews, variant: Int, wPx: Int, artDp: Int, fonts: Boolean, showText: Boolean = true) {
-        val th = Themes.widget(ctx)
-        val accent = th.accent(ctx)
-        val S = TextArt.spec(th.family)
+        val S = TextArt.spec(Themes.widget(ctx).family)
         val d = ctx.resources.displayMetrics.density
-        val iconCol = if (th.family == "neon") accent else th.head
         v.setViewVisibility(R.id.ws, if (variant == 0) View.VISIBLE else View.GONE)
         v.setViewVisibility(R.id.wm, if (variant == 1) View.VISIBLE else View.GONE)
         v.setViewVisibility(R.id.wl, if (variant == 2) View.VISIBLE else View.GONE)
@@ -315,6 +313,9 @@ object Player {
             val l = launch(pkg)
             play = l; next = l; prev = l; open = l
         }
+        val th = coverTheme(ctx, Themes.widget(ctx), art)
+        val accent = th.accent(ctx)
+        val iconCol = if (th.family == "neon") accent else th.head
         val src = try {
             val pm = ctx.packageManager
             pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString().uppercase()
@@ -352,8 +353,11 @@ object Player {
                 val tw = wPx - ((artDp + 14 + 28) * d).toInt()
                 sizeArt(R.id.wm_art)
                 // Si la columna es angosta no caben los tres botones: se quita ⏮
-                v.setViewVisibility(R.id.wm_prev, if (tw / d >= 140) View.VISIBLE else View.GONE)
-                txt(R.id.wm_src, R.id.wm_src_bmp, src + if (live) (if (playing) " · SONANDO" else " · EN PAUSA") else "",
+                // ⏮ es el primero en irse; ⏭ se queda mientras quepa junto a ⏯
+                v.setViewVisibility(R.id.wm_prev, if (tw / d >= 160) View.VISIBLE else View.GONE)
+                v.setViewVisibility(R.id.wm_next, if (tw / d >= 100) View.VISIBLE else View.GONE)
+                val roomyM = tw / d >= 170
+                txt(R.id.wm_src, R.id.wm_src_bmp, src + if (live && roomyM) (if (playing) " · SONANDO" else " · EN PAUSA") else "",
                     S.title, 10f, accent, tw, sp2 = 0.12f)
                 txt(R.id.wm_title, R.id.wm_title_bmp, title, S.semi, 17f, th.head, tw, neonCaps)
                 txt(R.id.wm_artist, R.id.wm_artist_bmp, artist, S.body, 13f, th.dim, tw)
@@ -383,6 +387,47 @@ object Player {
                 open?.let { v.setOnClickPendingIntent(R.id.wl_art, it); v.setOnClickPendingIntent(R.id.wl_info, it) }
             }
         }
+    }
+
+    /** El tema con el color de la carátula (si la opción está activa y la carátula tiene color). */
+    private fun coverTheme(ctx: Context, th: Theme, art: Bitmap?): Theme {
+        if (art == null || !Prefs.coverColor(ctx)) return th
+        val c = coverAccent(art, th.light) ?: return th
+        return th.withAccent(c)
+    }
+
+    /**
+     * Color principal de una carátula: el tono con más color (no el gris ni el negro),
+     * ajustado para que se lea bien sobre el widget claro u oscuro.
+     */
+    private val accentCache = android.util.LruCache<Int, Int>(16)
+    fun coverAccent(art: Bitmap, lightBg: Boolean): Int? {
+        val key = art.hashCode() * 31 + (if (lightBg) 1 else 0)
+        accentCache.get(key)?.let { return if (it == 0) null else it }
+        val small = try { Bitmap.createScaledBitmap(art, 24, 24, true) } catch (e: Exception) { return null }
+        val bins = FloatArray(24); val rs = FloatArray(24); val gs = FloatArray(24); val bs = FloatArray(24)
+        val hsl = FloatArray(3); var total = 0f
+        for (y in 0 until small.height) for (x in 0 until small.width) {
+            val px = small.getPixel(x, y)
+            ColorUtils.colorToHSL(px, hsl)
+            val l = hsl[2]; val sat = hsl[1]
+            total += 1f
+            if (l < 0.1f || l > 0.93f || sat < 0.2f) continue
+            val w = sat * (1f - kotlin.math.abs(l - 0.5f))
+            val b = ((hsl[0] / 15f).toInt()).coerceIn(0, 23)
+            bins[b] += w; rs[b] += Color.red(px) * w; gs[b] += Color.green(px) * w; bs[b] += Color.blue(px) * w
+        }
+        val best = bins.indices.maxByOrNull { bins[it] } ?: return null
+        // Carátula casi sin color (blanco y negro): se queda el color del tema
+        if (bins[best] < total * 0.04f) { accentCache.put(key, 0); return null }
+        val w = bins[best]
+        val avg = Color.rgb((rs[best] / w).toInt(), (gs[best] / w).toInt(), (bs[best] / w).toInt())
+        ColorUtils.colorToHSL(avg, hsl)
+        hsl[1] = hsl[1].coerceIn(0.45f, 0.85f)
+        hsl[2] = if (lightBg) 0.40f else 0.62f
+        val out = ColorUtils.HSLToColor(hsl)
+        accentCache.put(key, out)
+        return out
     }
 
     /** Widget Reproductor sin música: la última canción (para seguir) o «Nada sonando». */

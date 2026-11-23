@@ -128,6 +128,7 @@ object Widgets {
         val v = RemoteViews(ctx.packageName, playerLayout(th.family))
         RockWidget.rootBackground(ctx, v, th)
         val wPx = (wDp * ctx.resources.displayMetrics.density).toInt()
+        RockWidget.tintCards(ctx, v, th, intArrayOf(R.id.ws, R.id.wm, R.id.wl))
         val fonts = Prefs.themeFonts(ctx)
         when {
             hDp < 120 -> Player.applyStandalone(ctx, v, 0, wPx, 44, fonts, showText = wDp >= 200)
@@ -239,7 +240,8 @@ object Widgets {
                 v.setViewLayoutHeight(HOLDERS[i], hs.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
                 val big = th.family == "claro" || th.family == "lujo" || th.family == "cristal"
                 val s0 = if (Prefs.originalIcons(ctx)) (if (big) 34f else 30f) else (if (big) 22f else 18f)
-                val isz = minOf(s0, hs * 0.75f)
+                // El ícono ocupa una buena parte del círculo (antes se veía perdido)
+                val isz = if (Prefs.originalIcons(ctx)) hs * 0.78f else maxOf(minOf(s0, hs * 0.75f), hs * 0.56f)
                 v.setViewLayoutWidth(ICONS[i], isz, TypedValue.COMPLEX_UNIT_DIP)
                 v.setViewLayoutHeight(ICONS[i], isz, TypedValue.COMPLEX_UNIT_DIP)
             }
@@ -255,6 +257,7 @@ object Widgets {
             v.setOnClickPendingIntent(PADS[i], PendingIntent.getActivity(ctx, id * 32 + i,
                 launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
         }
+        RockWidget.tintCards(ctx, v, th, PADS + intArrayOf(R.id.aempty), HOLDERS)
         // Sin apps en el grupo: invitación a elegirlas
         v.setViewVisibility(R.id.aempty, if (apps.isEmpty()) View.VISIBLE else View.GONE)
         v.setOnClickPendingIntent(R.id.aempty, PendingIntent.getActivity(ctx, 150,

@@ -80,6 +80,12 @@ internal fun MainActivity.playerPlate(): View {
         Prefs.setOnlyMusicApp(this, m); Player.updateAll(this); build()
     }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(4) })
 
+    // Color: el del tema o el de la carátula de cada canción
+    card.addView(ui.text("Color del reproductor", ui.cond, 15f, Ui.MUTED), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
+    card.addView(ui.segmented(listOf(true to "Según la carátula", false to "El del tema"), Prefs.coverColor(this)) { on ->
+        Prefs.setCoverColor(this, on); Player.updateAll(this); Widgets.updateKind(this, Widgets.PLAYER); build()
+    }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(4) })
+
     return card
 }
 

@@ -71,7 +71,7 @@ def build(name,p):
     large=f'''<LinearLayout android:id="@+id/player" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom" android:layout_marginStart="2dp" android:layout_marginEnd="2dp" android:layout_marginBottom="12dp" android:background="{p["card"]}" android:orientation="vertical" android:paddingStart="14dp" android:paddingTop="12dp" android:paddingEnd="14dp" android:paddingBottom="8dp" android:visibility="gone">
  <LinearLayout android:id="@+id/player_head" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
   <ImageView android:id="@+id/player_eq" android:layout_width="16dp" android:layout_height="14dp" android:layout_marginEnd="8dp" android:scaleType="fitCenter" android:contentDescription="@null" />
-  {tv("player_src",p["title"],12 if name!="lujo" else 10,H,'android:letterSpacing="'+p["tls"]+'"',text="ROCKPLAY")}
+  {tv("player_src",p["title"],12 if name!="lujo" else 10,H,'android:letterSpacing="'+p["tls"]+'"',text="MÚSICA")}
   {tv("player_state",p["body"] if name!="lujo" else p["med"],13 if name!="lujo" else 10,D,'android:layout_weight="1" '+(caps if name in ("neon","lujo") else ''),w="0dp")}
   <ImageView android:id="@+id/player_close" android:layout_width="36dp" android:layout_height="28dp" android:layout_marginEnd="-8dp" android:contentDescription="Cerrar reproductor" android:paddingStart="10dp" android:paddingTop="6dp" android:paddingEnd="10dp" android:paddingBottom="6dp" android:scaleType="fitCenter" />
  </LinearLayout>
@@ -102,7 +102,7 @@ def build(name,p):
     def pad(i):
         ms='' if i in (0,3) else 'android:layout_marginStart="8dp"'
         return f'''<FrameLayout android:id="@+id/pad{i}" android:layout_width="0dp" android:layout_height="{p["padh"]}dp" android:layout_weight="1" {ms} android:background="{p["pad"]}">
- {tv(f"num{i}",p["med"],10 if name=="lujo" else 11,H,'android:layout_gravity="top|start" android:layout_marginStart="8dp" android:layout_marginTop="4dp"',text=f"0{i+1}")}
+ {tv(f"num{i}",p["med"],10 if name=="lujo" else 11,H,'android:layout_gravity="top|start" android:layout_marginStart="8dp" android:layout_marginTop="4dp" android:visibility="gone"',text=f"0{i+1}")}
  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="center" android:gravity="center_horizontal" android:orientation="vertical" android:paddingStart="4dp" android:paddingEnd="4dp" android:paddingTop="{4 if p["pad"].startswith("@drawable") else 0}dp">
   <FrameLayout android:layout_width="{p["hs"]}dp" android:layout_height="{p["hs"]}dp" android:background="{p["holder"]}">
    <ImageView android:id="@+id/icon{i}" android:layout_width="{p["isz"]}dp" android:layout_height="{p["isz"]}dp" android:layout_gravity="center" android:contentDescription="@null" />
