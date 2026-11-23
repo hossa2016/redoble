@@ -56,7 +56,9 @@ internal fun MainActivity.appsWidgetsPlate(): View {
 internal fun MainActivity.playerWidgetPlate(): View {
     val card = ui.plateCard()
     card.addView(ui.sectionTitle("Widget reproductor"))
-    card.addView(ui.note("Grande si lo estiras a lo alto; compacto si es bajito."))
+    card.addView(ui.note("Tres tamaños: estíralo y cambia solo.",
+        "Bajito: carátula y botones, como una píldora. Mediano: carátula a la izquierda con título y botones. " +
+        "Grande (casi cuadrado): carátula arriba, título y botones abajo."))
     card.addView(ui.text("Sin música, mostrar", ui.cond, 16f, Ui.HEAD),
         LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(12); bottomMargin = ui.dp(6) })
     card.addView(ui.segmented(listOf("last" to "Última canción", "none" to "Nada sonando"), Prefs.pwIdle(this)) {

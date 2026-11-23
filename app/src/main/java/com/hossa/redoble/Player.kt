@@ -19,6 +19,8 @@ import android.media.session.PlaybackState
 import android.os.Handler
 import android.os.Looper
 import android.service.notification.NotificationListenerService
+import android.os.Build
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.app.NotificationManagerCompat
@@ -264,6 +266,119 @@ object Player {
             if (open != null) v.setOnClickPendingIntent(R.id.pc_info, open)
         }
         return true
+    }
+
+    /**
+     * Widget Reproductor suelto en tres tamaños: 0 = pequeño (píldora), 1 = mediano
+     * (carátula a la izquierda), 2 = grande (carátula arriba). Sin música muestra la
+     * última canción o «Nada sonando», y tocarlo abre tu app de música.
+     */
+    fun applyStandalone(ctx: Context, v: RemoteViews, variant: Int, wPx: Int, artDp: Int, fonts: Boolean, showText: Boolean = true) {
+        val th = Themes.widget(ctx)
+        val accent = th.accent(ctx)
+        val S = TextArt.spec(th.family)
+        val d = ctx.resources.displayMetrics.density
+        val iconCol = if (th.family == "neon") accent else th.head
+        v.setViewVisibility(R.id.ws, if (variant == 0) View.VISIBLE else View.GONE)
+        v.setViewVisibility(R.id.wm, if (variant == 1) View.VISIBLE else View.GONE)
+        v.setViewVisibility(R.id.wl, if (variant == 2) View.VISIBLE else View.GONE)
+
+        val c = try { controller(ctx) } catch (e: Exception) { null }
+        val md = c?.metadata
+        var title = clean(md?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: md?.description?.title?.toString() ?: "")
+        val live = c != null && md != null && title.isNotBlank()
+        var artist: String
+        val playing: Boolean
+        var art: Bitmap? = null
+        val pkg: String
+        val play: PendingIntent?; val next: PendingIntent?; val prev: PendingIntent?; val open: PendingIntent?
+        fun launch(p: String) = ctx.packageManager.getLaunchIntentForPackage(p)?.let {
+            PendingIntent.getActivity(ctx, 310, it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        }
+        if (live) {
+            artist = clean(md!!.getString(MediaMetadata.METADATA_KEY_ARTIST)
+                ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST) ?: md.description?.subtitle?.toString() ?: "")
+            playing = isPlaying(c!!)
+            art = artFor(ctx, md, download = true)
+            pkg = c.packageName
+            Prefs.setLastSong(ctx, title, artist, pkg)
+            play = broadcast(ctx, ACTION_PLAY_PAUSE, 301); next = broadcast(ctx, ACTION_NEXT, 302)
+            prev = broadcast(ctx, ACTION_PREV, 303); open = c.sessionActivity ?: launch(pkg)
+        } else {
+            val (lt, la, lp) = Prefs.lastSong(ctx)
+            val useLast = Prefs.pwIdle(ctx) == "last" && lt.isNotBlank()
+            title = if (useLast) lt else "Nada sonando"
+            artist = if (useLast) la else "Toca ▶ para abrir tu música"
+            playing = false
+            pkg = (if (useLast) lp else "").ifBlank { Prefs.musicApp(ctx) }
+            val l = launch(pkg)
+            play = l; next = l; prev = l; open = l
+        }
+        val src = try {
+            val pm = ctx.packageManager
+            pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString().uppercase()
+        } catch (e: Exception) { "MÚSICA" }
+        fun txt(tv: Int, bmp: Int, t: String, font: Int, sp: Float, col: Int, maxW: Int, caps: Boolean = false, sp2: Float = 0f) {
+            v.setTextViewText(tv, t); v.setTextColor(tv, col)
+            RockWidget.twin(v, tv, bmp, t.isNotBlank(), fonts) {
+                TextArt.render(ctx, t, font, sp, col, sp2, caps, S.shadow, 0, maxW.coerceAtLeast((40 * d).toInt()))
+            }
+        }
+        val neonCaps = th.family == "neon"
+        fun sizeArt(id: Int) {
+            if (Build.VERSION.SDK_INT >= 31) {
+                v.setViewLayoutWidth(id, artDp.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
+                v.setViewLayoutHeight(id, artDp.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
+            }
+        }
+        when (variant) {
+            0 -> {
+                val tw = wPx - (128 * d).toInt()
+                v.setViewVisibility(R.id.ws_texts, if (showText) View.VISIBLE else View.GONE)
+                txt(R.id.ws_title, R.id.ws_title_bmp, title, S.semi, 14f, th.head, tw, neonCaps)
+                txt(R.id.ws_artist, R.id.ws_artist_bmp, artist, S.body, 11f, th.dim, tw)
+                v.setImageViewBitmap(R.id.ws_art, artBitmap(ctx, art, th, 44, playing))
+                v.setImageViewBitmap(R.id.ws_play, playBitmap(ctx, playing, th, 40))
+                v.setImageViewBitmap(R.id.ws_next, iconBitmap(ctx, "next", iconCol, 20))
+                v.setContentDescription(R.id.ws_play, if (playing) "Pausar" else "Reproducir")
+                play?.let { v.setOnClickPendingIntent(R.id.ws_play, it) }
+                next?.let { v.setOnClickPendingIntent(R.id.ws_next, it) }
+                open?.let { v.setOnClickPendingIntent(R.id.ws_info, it) }
+            }
+            1 -> {
+                val tw = wPx - ((artDp + 14 + 28) * d).toInt()
+                sizeArt(R.id.wm_art)
+                txt(R.id.wm_src, R.id.wm_src_bmp, src + if (live) (if (playing) " · SONANDO" else " · EN PAUSA") else "",
+                    S.title, 10f, accent, tw, sp2 = 0.12f)
+                txt(R.id.wm_title, R.id.wm_title_bmp, title, S.semi, 17f, th.head, tw, neonCaps)
+                txt(R.id.wm_artist, R.id.wm_artist_bmp, artist, S.body, 13f, th.dim, tw)
+                v.setImageViewBitmap(R.id.wm_art, artBitmap(ctx, art, th, artDp, false))
+                v.setImageViewBitmap(R.id.wm_prev, iconBitmap(ctx, "prev", iconCol, 22))
+                v.setImageViewBitmap(R.id.wm_play, playBitmap(ctx, playing, th, 46))
+                v.setImageViewBitmap(R.id.wm_next, iconBitmap(ctx, "next", iconCol, 22))
+                v.setContentDescription(R.id.wm_play, if (playing) "Pausar" else "Reproducir")
+                play?.let { v.setOnClickPendingIntent(R.id.wm_play, it) }
+                next?.let { v.setOnClickPendingIntent(R.id.wm_next, it) }
+                prev?.let { v.setOnClickPendingIntent(R.id.wm_prev, it) }
+                open?.let { v.setOnClickPendingIntent(R.id.wm_art, it); v.setOnClickPendingIntent(R.id.wm_info, it) }
+            }
+            else -> {
+                val tw = wPx - (40 * d).toInt()
+                sizeArt(R.id.wl_art)
+                txt(R.id.wl_title, R.id.wl_title_bmp, title, S.semi, 19f, th.head, tw, neonCaps)
+                txt(R.id.wl_artist, R.id.wl_artist_bmp, artist, S.body, 14f, th.dim, tw)
+                v.setImageViewBitmap(R.id.wl_art, artBitmap(ctx, art, th, artDp, false))
+                v.setImageViewBitmap(R.id.wl_prev, iconBitmap(ctx, "prev", iconCol, 24))
+                v.setImageViewBitmap(R.id.wl_play, playBitmap(ctx, playing, th, 56))
+                v.setImageViewBitmap(R.id.wl_next, iconBitmap(ctx, "next", iconCol, 24))
+                v.setContentDescription(R.id.wl_play, if (playing) "Pausar" else "Reproducir")
+                play?.let { v.setOnClickPendingIntent(R.id.wl_play, it) }
+                next?.let { v.setOnClickPendingIntent(R.id.wl_next, it) }
+                prev?.let { v.setOnClickPendingIntent(R.id.wl_prev, it) }
+                open?.let { v.setOnClickPendingIntent(R.id.wl_art, it); v.setOnClickPendingIntent(R.id.wl_info, it) }
+            }
+        }
     }
 
     /** Widget Reproductor sin música: la última canción (para seguir) o «Nada sonando». */

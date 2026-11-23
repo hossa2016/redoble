@@ -205,7 +205,65 @@ def build_apps(name,p):
 '''
     open(f'{RES}/layout/widget_{name}_apps.xml','w',encoding='utf-8').write(xml)
 
-for n,p in F.items(): build(n,p); build_apps(n,p)
+def build_player(name,p):
+    """Widget Reproductor suelto en tres tamaños (como los de la app Música):
+    pequeño (píldora), mediano (carátula a la izquierda) y grande (carátula arriba).
+    El código muestra uno según el tamaño del widget."""
+    H,D=p['head'],p['dim']
+    tone='light' if name=='claro' else 'dark'
+    caps='android:textAllCaps="true"' if p['caps'] else ''
+    def txt(i,font,size,color,extra='',w='wrap_content'):
+        return tv(i,font,size,color,'android:ellipsize="end" '+extra,w=w)+f'<ImageView android:id="@+id/{i}_bmp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:adjustViewBounds="true" android:scaleType="fitStart" android:contentDescription="@null" android:visibility="gone" />'
+    def btn(i,size,pad,desc):
+        return f'<ImageView android:id="@+id/{i}" android:foreground="@drawable/ripple_round_{tone}" android:layout_width="{size}dp" android:layout_height="{size}dp" android:padding="{pad}dp" android:scaleType="fitCenter" android:contentDescription="{desc}" />'
+    small=f'''<LinearLayout android:id="@+id/ws" android:layout_width="match_parent" android:layout_height="match_parent" android:background="{p["card"]}" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="8dp" android:paddingEnd="6dp" android:visibility="gone">
+ <LinearLayout android:id="@+id/ws_info" android:foreground="@drawable/ripple_box_{tone}" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+  <ImageView android:id="@+id/ws_art" android:layout_width="44dp" android:layout_height="44dp" android:scaleType="fitCenter" android:contentDescription="Carátula" />
+  <LinearLayout android:id="@+id/ws_texts" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:layout_weight="1" android:orientation="vertical">
+   {txt("ws_title",p["semi"],15,H,caps if name=="neon" else "",w="match_parent")}
+   {txt("ws_artist",p["body"],12,D,'android:layout_marginTop="2dp"',w="match_parent")}
+  </LinearLayout>
+ </LinearLayout>
+ {btn("ws_play",44,2,"Reproducir")}
+ {btn("ws_next",40,10,"Siguiente")}
+</LinearLayout>'''
+    med=f'''<LinearLayout android:id="@+id/wm" android:layout_width="match_parent" android:layout_height="match_parent" android:background="{p["card"]}" android:gravity="center_vertical" android:orientation="horizontal" android:padding="12dp" android:visibility="gone">
+ <ImageView android:id="@+id/wm_art" android:foreground="@drawable/ripple_box_{tone}" android:layout_width="104dp" android:layout_height="104dp" android:scaleType="fitCenter" android:contentDescription="Carátula" />
+ <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="14dp" android:layout_weight="1" android:orientation="vertical">
+  <LinearLayout android:id="@+id/wm_info" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+   {txt("wm_src",p["title"],11 if name!="lujo" else 10,p["head"],'android:letterSpacing="'+p["tls"]+'"',w="match_parent")}
+   {txt("wm_title",p["semi"],18,H,'android:layout_marginTop="6dp" '+(caps if name=="neon" else ""),w="match_parent")}
+   {txt("wm_artist",p["body"],14,D,'android:layout_marginTop="2dp"',w="match_parent")}
+  </LinearLayout>
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center_vertical" android:orientation="horizontal">
+   {btn("wm_prev",44,12,"Anterior")}
+   {btn("wm_play",50,2,"Reproducir")}
+   {btn("wm_next",44,12,"Siguiente")}
+  </LinearLayout>
+ </LinearLayout>
+</LinearLayout>'''
+    large=f'''<LinearLayout android:id="@+id/wl" android:layout_width="match_parent" android:layout_height="match_parent" android:background="{p["card"]}" android:gravity="center" android:orientation="vertical" android:padding="16dp" android:visibility="gone">
+ <ImageView android:id="@+id/wl_art" android:foreground="@drawable/ripple_box_{tone}" android:layout_width="170dp" android:layout_height="170dp" android:scaleType="fitCenter" android:contentDescription="Carátula" />
+ <LinearLayout android:id="@+id/wl_info" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:gravity="center_horizontal" android:orientation="vertical">
+  {txt("wl_title",p["semi"],20,H,'android:gravity="center" '+(caps if name=="neon" else ""))}
+  {txt("wl_artist",p["body"],15,D,'android:layout_marginTop="3dp" android:gravity="center"')}
+ </LinearLayout>
+ <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:gravity="center_vertical" android:orientation="horizontal">
+  {btn("wl_prev",48,13,"Anterior")}
+  {btn("wl_play",60,2,"Reproducir")}
+  {btn("wl_next",48,13,"Siguiente")}
+ </LinearLayout>
+</LinearLayout>'''
+    xml=f'''<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent">
+{small}
+{med}
+{large}
+</FrameLayout>
+'''
+    open(f'{RES}/layout/widget_{name}_player.xml','w',encoding='utf-8').write(xml)
+
+for n,p in F.items(): build(n,p); build_apps(n,p); build_player(n,p)
 
 D={
 'bg_neon_tile':'<layer-list xmlns:android="http://schemas.android.com/apk/res/android"><item><shape android:shape="rectangle"><corners android:radius="6dp"/><solid android:color="#F20B0A16"/><stroke android:width="1dp" android:color="#B33DF2FF"/></shape></item><item android:gravity="bottom|end" android:width="18dp" android:height="2dp" android:right="6dp" android:bottom="1dp"><shape android:shape="rectangle"><solid android:color="#FFFF3DCB"/></shape></item></layer-list>',

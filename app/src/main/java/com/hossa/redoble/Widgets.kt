@@ -73,6 +73,18 @@ object Widgets {
     /** Tamaño del widget en dp (ancho y alto en vertical). */
     fun sizeDp(ctx: Context, mgr: AppWidgetManager, id: Int): Pair<Int, Int> {
         val o = try { mgr.getAppWidgetOptions(id) } catch (e: Exception) { null }
+        // Android 12+: lista de tamaños reales (vertical y horizontal). Se toma el ancho
+        // más angosto y el alto más alto, que es como se ve con el teléfono vertical.
+        if (Build.VERSION.SDK_INT >= 31) {
+            val sizes = try {
+                @Suppress("DEPRECATION")
+                o?.getParcelableArrayList<android.util.SizeF>(AppWidgetManager.OPTION_APPWIDGET_SIZES)
+            } catch (e: Exception) { null }
+            if (!sizes.isNullOrEmpty()) {
+                val w = sizes.minOf { it.width }.toInt(); val h = sizes.maxOf { it.height }.toInt()
+                if (w > 0 && h > 0) return Pair(w, h)
+            }
+        }
         val w = o?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) ?: 0
         val h = o?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT) ?: 0
         return Pair(if (w > 0) w else 320, if (h > 0) h else 160)
@@ -82,7 +94,11 @@ object Widgets {
         try {
             val (w, h) = sizeDp(ctx, mgr, id)
             val wPx = (w * ctx.resources.displayMetrics.density).toInt()
-            val v = if (kind == APPS) appsViews(ctx, id, w, h) else RockWidget.buildViews(ctx, wPx, kind = kind, hDp = h)
+            val v = when (kind) {
+                APPS -> appsViews(ctx, id, w, h)
+                PLAYER -> playerViews(ctx, w, h)
+                else -> RockWidget.buildViews(ctx, wPx, kind = kind, hDp = h)
+            }
             mgr.updateAppWidget(id, v)
         } catch (e: Exception) { }
     }
@@ -96,6 +112,30 @@ object Widgets {
     fun updateKind(ctx: Context, kind: Int) {
         val mgr = AppWidgetManager.getInstance(ctx)
         for (id in ids(ctx, kind)) update(ctx, mgr, id, kind)
+    }
+
+    // ---------------------------------------------------------------- widget Reproductor
+
+    private fun playerLayout(family: String) = when (family) {
+        "cristal" -> R.layout.widget_cristal_player; "claro" -> R.layout.widget_claro_player
+        "neon" -> R.layout.widget_neon_player; "lujo" -> R.layout.widget_lujo_player
+        else -> R.layout.widget_rock_player
+    }
+
+    /** Pequeño (bajito), mediano (carátula a la izquierda) o grande (carátula arriba). */
+    fun playerViews(ctx: Context, wDp: Int, hDp: Int): RemoteViews {
+        val th = Themes.widget(ctx)
+        val v = RemoteViews(ctx.packageName, playerLayout(th.family))
+        RockWidget.rootBackground(ctx, v, th)
+        val wPx = (wDp * ctx.resources.displayMetrics.density).toInt()
+        val fonts = Prefs.themeFonts(ctx)
+        when {
+            hDp < 120 -> Player.applyStandalone(ctx, v, 0, wPx, 44, fonts, showText = wDp >= 200)
+            hDp < 260 || wDp < 200 -> Player.applyStandalone(ctx, v, 1, wPx,
+                minOf(hDp - 24, (wDp * 0.42f).toInt()).coerceIn(56, 140), fonts)
+            else -> Player.applyStandalone(ctx, v, 2, wPx, minOf(wDp - 40, hDp - 160).coerceIn(80, 220), fonts)
+        }
+        return v
     }
 
     // ---------------------------------------------------------------- widget de Apps
@@ -141,7 +181,9 @@ object Widgets {
             cols = minOf(Prefs.awCols(ctx, id), ((wDp - 8 + 8) / 48).coerceAtLeast(1))
             rows = minOf(Prefs.awRows(ctx, id), ((inner + 8) / 44).coerceAtLeast(1))
         }
-        val rowH = ((inner - 8 * (rows - 1)) / rows).coerceAtLeast(36)
+        // Cada casilla con su alto normal (no se estira de más): el resto queda centrado
+        val cap = minOf(hs, 48) + 56
+        val rowH = ((inner - 8 * (rows - 1)) / rows).coerceIn(36, cap)
         val colW = (wDp - 8 - 8 * (cols - 1)) / cols
         val fits = rowH >= minOf(hs, 48) + 26 && colW >= 58
         val names = colW >= 40 && when (Prefs.awNames(ctx, id)) { "on" -> true; "off" -> false; else -> fits }

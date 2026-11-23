@@ -8,7 +8,7 @@
     android:targetCellHeight="1"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="0"
-    android:initialLayout="@layout/widget_rock_up"
+    android:initialLayout="@layout/widget_rock_player"
     android:previewLayout="@layout/preview_player"
     android:description="@string/w_player_desc"
     android:widgetCategory="home_screen" />
