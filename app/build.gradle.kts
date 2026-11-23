@@ -11,8 +11,8 @@ android {
         applicationId = "com.hossa.redoble"
         minSdk = 26
         targetSdk = 36
-        versionCode = 91
-        versionName = "14.4"
+        versionCode = 92
+        versionName = "14.5"
     }
 
     // Firma: si existen las variables (GitHub Secrets), se usan; si no, la clave
@@ -57,4 +57,6 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.activity:activity-ktx:1.9.0")
     implementation("androidx.work:work-runtime-ktx:2.9.0")
+    // Repetición del fondo animado sin salto
+    implementation("androidx.media3:media3-exoplayer:1.4.1")
 }

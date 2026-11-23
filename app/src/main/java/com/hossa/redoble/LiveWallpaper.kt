@@ -120,7 +120,9 @@ private class VideoRenderer(private val ctx: Context, private val scene: VideoSc
     private var eglCtx: EGLContext = EGL14.EGL_NO_CONTEXT
     private var eglSurf: EGLSurface = EGL14.EGL_NO_SURFACE
     private var prog = 0; private var w = 1; private var h = 1
-    private class Layer(val tex: Int, val st: SurfaceTexture, val player: MediaPlayer, val surface: Surface) { val m = FloatArray(16) }
+    // ExoPlayer (Media3): repite el video sin el salto que hacía MediaPlayer al reiniciar.
+    // Todo se llama desde el hilo del dibujo, que es el hilo del reproductor.
+    private class Layer(val tex: Int, val st: SurfaceTexture, val player: androidx.media3.exoplayer.ExoPlayer, val surface: Surface) { val m = FloatArray(16) }
     private val layers = ArrayList<Layer>()
     private val quad: FloatBuffer = ByteBuffer.allocateDirect(32).order(ByteOrder.nativeOrder()).asFloatBuffer().apply {
         put(floatArrayOf(-1f, -1f, 1f, -1f, -1f, 1f, 1f, 1f)); position(0) }
@@ -158,8 +160,17 @@ private class VideoRenderer(private val ctx: Context, private val scene: VideoSc
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
         val st = SurfaceTexture(t[0]); val surf = Surface(st)
         st.setOnFrameAvailableListener { fresh = true }
-        val mp = MediaPlayer.create(ctx, res) ?: return
-        mp.setSurface(surf); mp.isLooping = true; mp.setVolume(0f, 0f)
+        val looper = android.os.Looper.myLooper() ?: android.os.Looper.getMainLooper()
+        val mp = try {
+            androidx.media3.exoplayer.ExoPlayer.Builder(ctx).setLooper(looper).build().apply {
+                setVideoSurface(surf)
+                volume = 0f
+                repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
+                setMediaItem(androidx.media3.common.MediaItem.fromUri(
+                    android.net.Uri.parse("android.resource://${ctx.packageName}/$res")))
+                prepare()
+            }
+        } catch (e: Exception) { return }
         layers.add(Layer(t[0], st, mp, surf))
     }
 
@@ -168,8 +179,8 @@ private class VideoRenderer(private val ctx: Context, private val scene: VideoSc
     /** Hay un cuadro nuevo del video (si no, y el teléfono no se movió, no se redibuja). */
     @Volatile var fresh = true
     private var lastTx = 9f; private var lastTy = 9f
-    fun play() { layers.forEach { try { it.player.start() } catch (e: Exception) { } } }
-    fun pause() { layers.forEach { try { if (it.player.isPlaying) it.player.pause() } catch (e: Exception) { } } }
+    fun play() { layers.forEach { try { it.player.play() } catch (e: Exception) { } } }
+    fun pause() { layers.forEach { try { it.player.pause() } catch (e: Exception) { } } }
 
     fun draw(tx: Float, ty: Float, t: Float, force: Boolean = false) {
         if (prog == 0) return
@@ -183,7 +194,8 @@ private class VideoRenderer(private val ctx: Context, private val scene: VideoSc
         GLES20.glVertexAttribPointer(a, 2, GLES20.GL_FLOAT, false, 0, quad)
         layers.forEachIndexed { i, l ->
             try { l.st.updateTexImage(); l.st.getTransformMatrix(l.m) } catch (e: Exception) { }
-            val vw = l.player.videoWidth.coerceAtLeast(1); val vh = l.player.videoHeight.coerceAtLeast(1)
+            val vs = l.player.videoSize
+            val vw = vs.width.coerceAtLeast(1); val vh = vs.height.coerceAtLeast(1)
             val va = vw.toFloat() / vh; val sa = w.toFloat() / h
             // "cover": llena la pantalla recortando lo que sobra, con un margen para moverse
             val zoom = if (i == 0) 1.12f else 1.2f

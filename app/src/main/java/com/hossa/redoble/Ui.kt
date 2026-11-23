@@ -283,6 +283,8 @@ class Ui(val ctx: Context, val accent: Int) {
             setPadding(dp(4), dp(4), dp(4), dp(4))
         }
         var row = LinearLayout(ctx)
+        var current: TextView? = null
+        var picking = false
         options.forEachIndexed { idx, (value, label) ->
             val i = idx % perRow
             if (i == 0) {
@@ -300,7 +302,21 @@ class Ui(val ctx: Context, val accent: Int) {
                 setPadding(dp(2), 0, dp(2), 0)
                 minHeight = dp(48); minimumHeight = dp(48)
                 contentDescription = if (on) "$label, seleccionado" else label
-                setOnClickListener { if (!on) { tick(); onPick(value) } }
+                if (on) current = this
+                setOnClickListener {
+                    if (on || picking) return@setOnClickListener
+                    picking = true; tick()
+                    // Transición: la marca pasa de la opción anterior a esta y luego se aplica
+                    val sel = rect(ColorUtils.setAlphaComponent(accent, if (light) 0x26 else 0x33), 10f, accent, 1.5f)
+                    val none = rect(Color.TRANSPARENT, 10f)
+                    background = android.graphics.drawable.TransitionDrawable(arrayOf(none, sel)).also { it.startTransition(160) }
+                    setTextColor(HEAD)
+                    current?.let { prev ->
+                        prev.background = android.graphics.drawable.TransitionDrawable(arrayOf(sel, none)).also { it.startTransition(160) }
+                        prev.setTextColor(MUTED)
+                    }
+                    postDelayed({ onPick(value) }, 170)
+                }
             }
             val weight = label.length + 3f
             row.addView(b, LinearLayout.LayoutParams(0, dp(48), weight).apply { if (i > 0) marginStart = dp(3) })
