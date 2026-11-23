@@ -337,7 +337,7 @@ object Player {
                 val tw = wPx - (128 * d).toInt()
                 v.setViewVisibility(R.id.ws_texts, if (showText) View.VISIBLE else View.GONE)
                 // Muy angosto (2 celdas): carátula y ⏯; ⏭ solo si cabe
-                v.setViewVisibility(R.id.ws_next, if (wPx / d >= 150) View.VISIBLE else View.GONE)
+                v.setViewVisibility(R.id.ws_next, if (wPx / d >= 118) View.VISIBLE else View.GONE)
                 txt(R.id.ws_title, R.id.ws_title_bmp, title, S.semi, 14f, th.head, tw, neonCaps)
                 txt(R.id.ws_artist, R.id.ws_artist_bmp, artist, S.body, 11f, th.dim, tw)
                 v.setImageViewBitmap(R.id.ws_art, artBitmap(ctx, art, th, 44, playing))

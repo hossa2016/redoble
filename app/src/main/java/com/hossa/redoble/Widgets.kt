@@ -175,7 +175,7 @@ object Widgets {
         val inner = (hDp - 8).coerceAtLeast(40)
         val cols: Int; val rows: Int
         if (Prefs.awAuto(ctx, id)) {
-            cols = ((wDp - 8) / 76).coerceIn(1, 5)
+            cols = (wDp / 70).coerceIn(1, 5)  // 2 celdas de ancho ya son 2 columnas
             rows = ((inner + 8) / (minOf(hs, 48) + 28)).coerceIn(1, 4)
         } else {
             // A mano, pero sin pasarse de lo que cabe en el widget
