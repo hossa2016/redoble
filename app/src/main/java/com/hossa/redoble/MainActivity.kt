@@ -108,14 +108,21 @@ class MainActivity : AppCompatActivity() {
         if (uri == null) return@registerForActivityResult
         toast("Preparando tu video…")
         io.execute {
+            val tmp = java.io.File(filesDir, "video_propio.tmp")
             val ok = try {
-                val size = contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: -1L
-                if (size > 80L * 1024 * 1024) false else {
-                    contentResolver.openInputStream(uri)?.use { input ->
-                        java.io.File(filesDir, "video_propio.mp4").outputStream().use { input.copyTo(it) }
-                    } != null
-                }
-            } catch (e: Exception) { ErrorLog.soft(this, e, "video propio"); false }
+                var total = 0L
+                contentResolver.openInputStream(uri)?.use { input ->
+                    tmp.outputStream().use { out ->
+                        val buf = ByteArray(256 * 1024)
+                        while (true) {
+                            val r = input.read(buf); if (r < 0) break
+                            total += r; if (total > 80L * 1024 * 1024) throw java.io.IOException("muy grande")
+                            out.write(buf, 0, r)
+                        }
+                    }
+                } ?: throw java.io.IOException("sin video")
+                tmp.renameTo(java.io.File(filesDir, "video_propio.mp4"))
+            } catch (e: Exception) { tmp.delete(); ErrorLog.soft(this, e, "video propio"); false }
             onUi {
                 if (!ok) { toast("Ese video es muy grande o no se pudo abrir (máximo 80 MB)"); return@onUi }
                 Prefs.setLiveScene(this, "propio"); Prefs.setWallStyle(this, "anim")
@@ -217,7 +224,7 @@ class MainActivity : AppCompatActivity() {
     // Construcción de la pantalla: tres bloques (Estilo, Contenido, Reproductor)
     // ==================================================================
     internal fun build() {
-        val th = Themes.current(this)
+        val th = Themes.saved(this)
         applyUiMode()
         // Temas sin color propio (Claro): el acento de la marca, para que la app no quede apagada
         val base = if (th.light) Color.parseColor(if (Ui.light) "#A8443A" else "#E58272") else th.accent(this)

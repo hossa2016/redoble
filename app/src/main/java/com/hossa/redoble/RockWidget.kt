@@ -395,7 +395,7 @@ class RockWidget : AppWidgetProvider() {
             val dateInDay = dateInDay0 && !poster
             twin(v, R.id.date, R.id.date_bmp, dia && !dateInDay, dateFonts) {
                 if (poster) TextArt.render(ctx, Extras.posterLine(ctx), S.title, S.dsize, accent,
-                    0.12f, caps = true, shadow = S.shadow, maxWidthPx = colW)
+                    0.12f, caps = true, shadow = S.shadow, maxWidthPx = colW, translate = false)
                 else TextArt.render(ctx, fmt(dateFmt),
                     if (th.family == "lujo") S.med else S.body, S.dsize, if (th.family == "lujo") th.dim else th.head,
                     S.lls, caps = S.caps, shadow = S.shadow, maxWidthPx = colW)
@@ -509,7 +509,7 @@ class RockWidget : AppWidgetProvider() {
                 twin(v, LABELS[i], LABEL_BMPS[i], true, fonts, name) {
                     // Con 4 por fila, letra un poco menor para todas (así se ven parejas)
                     TextArt.render(ctx, name, S.label, labelSp, th.head, S.lls,
-                        caps = labelCaps, shadow = S.shadow, maxWidthPx = labelMax)
+                        caps = labelCaps, shadow = S.shadow, maxWidthPx = labelMax, translate = false)
                 }
                 Graphics.appIcon(ctx, pkg, mono = iconColor)?.let { v.setImageViewBitmap(ICONS[i], it) }
                 if (Build.VERSION.SDK_INT >= 31) {
@@ -632,6 +632,15 @@ class RockWidget : AppWidgetProvider() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
             am.setWindow(AlarmManager.RTC, cal.timeInMillis, 60_000L, pi)
+            // Setlist del Día: redibujo a las 8 p. m. y a las 5 a. m. (empieza y termina la noche)
+            if (Prefs.ruleNight(ctx)) for ((code, hour) in listOf(1 to 20, 2 to 5)) {
+                val t = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, hour); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 5); set(Calendar.MILLISECOND, 0)
+                    if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DAY_OF_YEAR, 1)
+                }
+                am.setWindow(AlarmManager.RTC, t.timeInMillis, 120_000L, PendingIntent.getBroadcast(ctx, 600 + code,
+                    internal(ctx, ACTION_REFRESH), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
+            }
         }
     }
 }

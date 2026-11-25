@@ -26,6 +26,7 @@ jobs:
         env:
           KS_B64: ${{ secrets.PRISMA_KEYSTORE_B64 }}
         run: |
+          if [ -z "$KS_B64" ]; then echo "::warning::Faltan los secretos de firma PRISMA_*: se firma con la clave del repositorio (ver docs/PLAY_STORE.md)"; fi
           if [ -n "$KS_B64" ]; then echo "$KS_B64" | base64 -d > $RUNNER_TEMP/prisma.jks; echo "PRISMA_KEYSTORE=$RUNNER_TEMP/prisma.jks" >> $GITHUB_ENV; fi
       - name: Compilar
         env:

@@ -59,15 +59,17 @@ object ErrorLog {
  */
 object Backup {
     private const val PREFS = "redoble"
-    /** Claves personales que no se comparten con otras personas. */
-    private val PERSONAL = setOf("city", "lat", "lon", "wxNow", "wxTomorrow", "wxAt", "wxCode", "wxTemp", "wxDesc",
-        "wxForecast", "wxSunrise", "wxSunset", "playerDismissed", "tourLog", "encore", "lastTitle", "lastArtist")
+    /** Lo único que viaja en un setup compartido: aspecto y diseño (nada personal, ni apps, ni historial). */
+    private val SHAREABLE = setOf("theme", "accent", "systemAccent", "iconMode", "dim", "wpMode", "wpPos", "wpZoom", "perRow",
+        "preset", "appsCount", "wallStyle", "wallColor", "widgetStyle", "widgetColor", "playerTop", "liveScene", "themeFonts",
+        "themeClock", "coverColor", "playerLarge", "playerSkin", "workshopFont", "liveStage", "stageScene", "coverAll", "poster",
+        "rockVoice", "amp11", "ruleRain", "ruleNight", "ruleHeadphones", "tempF") + Prefs.ELEMENTS.map { "el_$it" }
 
     fun toJson(ctx: Context, share: Boolean = false): JSONObject {
         val all = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).all
         val prefs = JSONObject()
         for ((k, v) in all) {
-            if (share && (k in PERSONAL || k.startsWith("label") || k.contains("_label") || k.endsWith("_name"))) continue
+            if (share && k !in SHAREABLE) continue
             val o = JSONObject()
             when (v) {
                 is Boolean -> o.put("t", "b").put("v", v)
@@ -95,14 +97,23 @@ object Backup {
     }
 
     /** Aplica una copia; devuelve cuántos ajustes se restauraron. */
-    fun apply(ctx: Context, root: JSONObject): Int {
+    fun apply(ctx: Context, root: JSONObject, only: Set<String>? = null): Int {
         if (root.optString("app") != "prisma-widgets") throw IllegalArgumentException("No es una copia de Prisma")
         val prefs = root.getJSONObject("prefs")
-        val ed = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val current = sp.all
+        val ed = sp.edit()
         var n = 0
+        val typeOf = mapOf("b" to Boolean::class, "i" to Int::class, "l" to Long::class, "f" to Float::class, "s" to String::class)
         for (k in prefs.keys()) {
-            val o = prefs.getJSONObject(k)
-            when (o.optString("t")) {
+            if (only != null && k !in only) continue
+            val o = prefs.optJSONObject(k) ?: continue
+            // Un valor con otro tipo que el guardado cerraría la app al leerlo: se ignora
+            val cur = current[k]
+            val t = o.optString("t")
+            if (cur != null && t != "set" && typeOf[t] != null && cur::class != typeOf[t]) continue
+            if (cur is Set<*> && t != "set") continue
+            when (t) {
                 "b" -> ed.putBoolean(k, o.getBoolean("v"))
                 "i" -> ed.putInt(k, o.getInt("v"))
                 "l" -> ed.putLong(k, o.getLong("v"))
@@ -114,15 +125,20 @@ object Backup {
             n++
         }
         ed.apply()
-        root.optString("photo").takeIf { it.isNotBlank() }?.let {
+        if (only == null) root.optString("photo").takeIf { it.isNotBlank() }?.let {
             File(ctx.filesDir, "fondo.jpg").writeBytes(Base64.decode(it, Base64.NO_WRAP))
         }
         return n
     }
 
     fun import(ctx: Context, uri: Uri): Int {
-        val text = ctx.contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) }
-            ?: throw java.io.IOException("No se pudo leer")
+        // Máximo 15 MB (una copia normal pesa mucho menos)
+        val text = ctx.contentResolver.openInputStream(uri)?.use { input ->
+            val bytes = java.io.ByteArrayOutputStream(); val buf = ByteArray(64 * 1024); var total = 0
+            while (true) { val r = input.read(buf); if (r < 0) break; total += r
+                if (total > 15 * 1024 * 1024) throw java.io.IOException("Archivo muy grande"); bytes.write(buf, 0, r) }
+            bytes.toString("UTF-8")
+        } ?: throw java.io.IOException("No se pudo leer")
         return apply(ctx, JSONObject(text))
     }
 
@@ -138,6 +154,6 @@ object Backup {
         val raw = code.trim().removePrefix("PRISMA:")
         val gz = Base64.decode(raw, Base64.NO_WRAP or Base64.URL_SAFE)
         val text = java.util.zip.GZIPInputStream(gz.inputStream()).use { it.readBytes().toString(Charsets.UTF_8) }
-        return apply(ctx, JSONObject(text))
+        return apply(ctx, JSONObject(text), SHAREABLE)
     }
 }

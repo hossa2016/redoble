@@ -71,9 +71,9 @@ object TextArt {
     fun render(
         ctx: Context, text: String, font: Int, sp: Float, color: Int,
         spacing: Float = 0f, caps: Boolean = false, shadow: Boolean = false, glow: Int = 0,
-        maxWidthPx: Int = 0,
+        maxWidthPx: Int = 0, translate: Boolean = true,
     ): Bitmap {
-        val text = I18n.tr(ctx, text)
+        val text = if (translate) I18n.tr(ctx, text) else text
         var t: CharSequence = if (caps) text.uppercase(I18n.locale(ctx)) else text
         val pad = pad(ctx, shadow, glow)
         var p = paint(ctx, font, sp, color, spacing, shadow, glow)

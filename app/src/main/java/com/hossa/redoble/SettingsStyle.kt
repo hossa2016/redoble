@@ -111,7 +111,7 @@ internal fun MainActivity.suggestedRow(): View {
  */
 internal fun MainActivity.wallpaperPlate(): View {
     val card = ui.plateCard()
-    val th = Themes.current(this)
+    val th = Themes.saved(this)
     card.addView(ui.sectionTitle("Fondo de pantalla"))
     val ws = Prefs.wallStyle(this)
     card.addView(ui.segmented(listOf("orig" to "Tema", "fade" to "Desvanecido", "solid" to "Fijo", "photo" to "Foto", "anim" to "Animado"), ws) {
@@ -434,7 +434,7 @@ internal fun MainActivity.knob(i: Int, selected: Boolean): View {
 
 internal fun MainActivity.themePlate(): View {
     val card = ui.plateCard()
-    val cur = Themes.current(this)
+    val cur = Themes.saved(this)
     card.addView(ui.sectionTitle("Tema", cur.name))
     val strip = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
     Themes.ALL.forEach { t ->
@@ -540,7 +540,7 @@ private fun MainActivity.openAutostart() {
 
 /** Paleta de colores: oscuros, claros, personalizado y "del tema". */
 internal fun MainActivity.colorSwatches(cur: Int, onPick: (Int) -> Unit): View {
-    val th = Themes.current(this)
+    val th = Themes.saved(this)
     val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
     fun line(title: String, colors: List<Int>) {
         box.addView(ui.label(title), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(12) })
@@ -677,7 +677,7 @@ internal fun MainActivity.rulesPlate(): View {
     card.addView(ui.sectionTitle("Setlist del Día"))
     card.addView(ui.note("El escenario cambia solo según el momento. Tus ajustes no se tocan: al pasar el momento, todo vuelve."))
     fun rule(label: String, key: String, on: Boolean, hint: String) {
-        card.addView(switchRow(label, on) { v -> Prefs.setRule(this, key, v); RockWidget.updateAll(this); build() },
+        card.addView(switchRow(label, on) { v -> Prefs.setRule(this, key, v); RockWidget.scheduleMidnight(this); Rules.forget(); RockWidget.updateAll(this); build() },
             LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
         card.addView(ui.note(hint))
     }

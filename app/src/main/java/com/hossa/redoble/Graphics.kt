@@ -66,7 +66,7 @@ object Graphics {
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
 
-        val text = dayName.uppercase(Locale.getDefault())
+        val text = dayName.uppercase(I18n.locale(ctx))
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             typeface = anton(ctx)
             letterSpacing = 0.03f

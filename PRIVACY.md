@@ -16,6 +16,7 @@ Prisma Widgets es un widget para la pantalla de inicio de Android que muestra la
 Si lo activas, Android le permite a la app ver las **sesiones de música activas**: título, artista, carátula y estado (sonando o en pausa), para mostrarlos en el widget con los botones ⏮ ⏯ ⏭.
 - La app **no lee, no guarda y no envía el contenido de tus notificaciones ni de tus mensajes**.
 - Si la app de música solo entrega la dirección de la carátula, Prisma Widgets la descarga directamente desde esa dirección para mostrarla.
+- Al pedir una carátula, el servidor de imágenes ve la dirección IP del teléfono, como cualquier página web.
 - Si la canción viene de YouTube y la app de música no entrega carátula, Prisma Widgets descarga la miniatura pública del video desde los servidores de imágenes de YouTube (i.ytimg.com), usando solo el identificador de la canción. No se envía nada más.
 - Puedes quitar este permiso cuando quieras en *Ajustes → Acceso a notificaciones*.
 
@@ -43,7 +44,7 @@ Si eliges un video tuyo como fondo animado, se copia al almacenamiento privado d
 
 ### Copias de ajustes y setups compartidos
 - **Copia de ajustes:** se guarda donde tú elijas, en un archivo. Incluye tus ajustes, tu ciudad y la foto del fondo.
-- **Compartir mi setup:** genera un código con el tema, colores y diseño, **sin** ciudad, fotos, nombres de apps ni historial.
+- **Compartir mi setup:** genera un código solo con el tema, colores, fondo animado elegido y diseño, **sin** ciudad, fotos, apps, música ni historial. Al pegar un código, la app lee el portapapeles solo para encontrarlo, y solo cambia esos ajustes de aspecto.
 - Android también puede incluir los ajustes en su copia de seguridad del teléfono.
 
 ### Informe de errores

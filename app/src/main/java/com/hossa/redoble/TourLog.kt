@@ -30,7 +30,7 @@ object TourLog {
     private fun p(ctx: Context) = ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
     fun enabled(ctx: Context) = Prefs.tourLog(ctx)
 
-    private fun weekKey(c: Calendar = Calendar.getInstance()) = "w" + c.get(Calendar.YEAR) + "_" + c.get(Calendar.WEEK_OF_YEAR)
+    private fun weekKey(c: Calendar = Calendar.getInstance()) = "w" + c.weekYear + "_" + c.get(Calendar.WEEK_OF_YEAR)
     private fun yearKey(c: Calendar = Calendar.getInstance()) = "y" + c.get(Calendar.YEAR)
 
     /** Lo llama el lector de música: cierra el tramo anterior y abre uno nuevo si suena algo. */
@@ -38,7 +38,7 @@ object TourLog {
         if (!enabled(ctx)) return
         val now = System.currentTimeMillis()
         val track = try { Player.nowTrack(ctx) } catch (e: Exception) { null }
-        val playing = try { Player.nowState(ctx).first } catch (e: Exception) { false }
+        val playing = try { Player.isPlayingNow(ctx) } catch (e: Exception) { false }
         val key = if (playing && track != null) track.first + "|" + track.second else ""
         if (key == curKey) return
         // Se cierra lo que sonaba (máximo 15 min por tramo, por si quedó colgado)
@@ -136,14 +136,14 @@ object ShareArt {
         c.drawLine(card.left + 70f, 1240f, card.right - 70f, 1240f, p); p.pathEffect = null
         val es = I18n.locale(ctx)
         val date = java.text.SimpleDateFormat("EEE d MMM yyyy", es).format(java.util.Date()).replace(".", "").uppercase(es)
-        val city = Prefs.city(ctx).substringBefore(",").trim().uppercase(es).ifBlank { "EN VIVO" }
+        val city = Prefs.city(ctx).substringBefore(",").trim().uppercase(es).ifBlank { I18n.tr(ctx, "EN VIVO") }
         text.typeface = font(ctx, R.font.barlow_condensed_semibold); text.color = Color.rgb(60, 52, 48)
         text.textSize = 46f
         c.drawText(date, card.left + 70f, 1340f, text)
         c.drawText(city, card.left + 70f, 1405f, text)
-        c.drawText("FILA A · ASIENTO 11", card.left + 70f, 1470f, text)
+        c.drawText(I18n.tr(ctx, "FILA A · ASIENTO 11"), card.left + 70f, 1470f, text)
         text.color = accent; text.textSize = 40f
-        c.drawText("ADMITE UNO · SOLD OUT", card.left + 70f, 1560f, text)
+        c.drawText(I18n.tr(ctx, "ADMITE UNO · SOLD OUT"), card.left + 70f, 1560f, text)
         text.typeface = font(ctx, R.font.barlow_condensed_light); text.color = Color.rgb(150, 140, 132); text.textSize = 34f
         c.drawText("Prisma Widgets", card.left + 70f, card.bottom - 50f, text)
         return b
@@ -163,33 +163,38 @@ object ShareArt {
         t.typeface = font(ctx, R.font.barlow_condensed_medium); t.color = accent; t.textSize = 60f
         c.drawText(sub, 150f, 430f, t)
         t.color = Color.rgb(200, 190, 182); t.textSize = 54f
-        c.drawText("${s.minutes} MINUTOS EN ESCENA", 150f, 530f, t)
+        c.drawText(I18n.tr(ctx, "{} MINUTOS EN ESCENA").replace("{}", s.minutes.toString()), 150f, 530f, t)
         t.typeface = font(ctx, R.font.barlow_condensed_semibold); t.color = Color.rgb(160, 150, 142); t.textSize = 44f
-        c.drawText("CABEZA DE CARTEL", 150f, 720f, t)
+        c.drawText(I18n.tr(ctx, "CABEZA DE CARTEL"), 150f, 720f, t)
         t.typeface = font(ctx, R.font.anton_regular); t.color = Color.rgb(243, 237, 231)
         val headliner = s.topArtist.uppercase().ifBlank { "—" }
         fit(t, headliner, w - 240f, 120f); c.drawText(headliner, 150f, 850f, t)
         t.typeface = font(ctx, R.font.barlow_condensed_semibold); t.color = Color.rgb(160, 150, 142); t.textSize = 44f
-        c.drawText("SETLIST", 150f, 1020f, t)
+        c.drawText(I18n.tr(ctx, "SETLIST"), 150f, 1020f, t)
         t.typeface = font(ctx, R.font.barlow_condensed_medium); t.color = Color.rgb(230, 222, 214)
         s.topTracks.forEachIndexed { i, tr ->
             val line = "${i + 1}. $tr"
             fit(t, line, w - 260f, 56f); c.drawText(line, 150f, 1110f + i * 90f, t)
         }
         t.typeface = font(ctx, R.font.barlow_condensed_light); t.color = Color.rgb(130, 120, 112); t.textSize = 36f
-        c.drawText("Prisma Widgets · Bitácora de Gira", 150f, h - 120f, t)
+        c.drawText(I18n.tr(ctx, "Prisma Widgets · Bitácora de Gira"), 150f, h - 120f, t)
         return b
     }
 
-    /** Guarda la imagen y abre «Compartir». */
-    fun share(ctx: Context, bmp: Bitmap, name: String, chooser: String) {
+    /** Guarda la imagen (llamar fuera del hilo principal) y devuelve su archivo. */
+    fun save(ctx: Context, bmp: Bitmap, name: String): File {
         val dir = File(ctx.cacheDir, "compartir").apply { mkdirs() }
         val f = File(dir, "$name.png")
         f.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        return f
+    }
+
+    /** Abre «Compartir» con una imagen ya guardada. */
+    fun share(ctx: Context, f: File, chooser: String) {
         val uri = FileProvider.getUriForFile(ctx, ctx.packageName + ".files", f)
         ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
             type = "image/png"; putExtra(Intent.EXTRA_STREAM, uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }, chooser))
+        }, I18n.tr(ctx, chooser)))
     }
 }
 

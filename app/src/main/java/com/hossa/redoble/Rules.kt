@@ -21,7 +21,16 @@ object Rules {
         return c in 51..67 || c in 80..82 || c in 95..99
     }
 
+    @Volatile private var hpAt = 0L
+    @Volatile private var hpVal = false
     fun headphones(ctx: Context): Boolean {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - hpAt < 5000) return hpVal
+        hpVal = headphones0(ctx); hpAt = now
+        return hpVal
+    }
+    fun forget() { hpAt = 0L }
+    private fun headphones0(ctx: Context): Boolean {
         val am = ctx.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return false
         return try {
             am.getDevices(AudioManager.GET_DEVICES_OUTPUTS).any {

@@ -59,7 +59,7 @@ internal fun MainActivity.weatherPlate(): View {
             io.execute {
                 var results: List<Triple<String, Double, Double>> = emptyList()
                 var offline = false
-                try { results = WeatherWorker.geocodeAll(name) } catch (e: IOException) { offline = true } catch (e: Exception) { }
+                try { WeatherWorker.geoLang = I18n.lang(this); results = WeatherWorker.geocodeAll(name) } catch (e: IOException) { offline = true } catch (e: Exception) { }
                 onUi {
                     val use = { r: Triple<String, Double, Double> ->
                         Prefs.setCity(this, r.first, r.second, r.third)

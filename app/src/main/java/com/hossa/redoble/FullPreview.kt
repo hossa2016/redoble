@@ -181,7 +181,7 @@ internal fun MainActivity.openFullPreview(animIndex: Int? = null) {
                 "fade" -> "Desvanecido" to "Color que se funde hacia abajo."
                 "solid" -> "Fijo" to "Un solo color de fondo."
                 "photo" -> "Tu foto" to "Pellizca para acercar y arrastra para encuadrar."
-                else -> "Del tema" to "El fondo propio de ${Themes.current(this).name}."
+                else -> "Del tema" to "El fondo propio de ${Themes.saved(this).name}."
             }
             panel.addView(ui.text(name, ui.anton, 24f, Ui.HEAD, 0.02f).apply { isSingleLine = true; ui.fitText(this, 24, 16) },
                 LinearLayout.LayoutParams(-1, ui.dp(40)))

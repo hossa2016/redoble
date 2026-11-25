@@ -43,7 +43,7 @@ internal fun MainActivity.onboardingView(): View {
     val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
     when (step) {
         0 -> {
-            val cur = Themes.current(this)
+            val cur = Themes.saved(this)
             val strip = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             Themes.ALL.forEach { t -> strip.addView(themeTile(t, t.id == cur.id) {
                 Prefs.setTheme(this, t.id); RockWidget.updateAll(this); build()

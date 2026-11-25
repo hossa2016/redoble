@@ -59,7 +59,10 @@ object Themes {
         Theme(6, "Lujo", "lujo", R.layout.widget_lujo, c("#EBD9AE"), c("#A8987A"), c("#D4B06A"), c("#A98545"), c("#0E0D0B")),
     )
 
+    /** Tema del widget (incluye la regla de noche del Setlist del Día). */
     fun current(ctx: Context): Theme = ALL.getOrNull(Rules.theme(ctx) ?: Prefs.theme(ctx)) ?: ALL[0]
+    /** Tema elegido por el usuario (lo que muestran los ajustes). */
+    fun saved(ctx: Context): Theme = ALL.getOrNull(Prefs.theme(ctx)) ?: ALL[0]
 
     fun isLight(c: Int) = ColorUtils.calculateLuminance(c) > 0.45
 

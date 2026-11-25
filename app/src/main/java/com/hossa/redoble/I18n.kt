@@ -13,6 +13,7 @@ object I18n {
     @Volatile private var loaded = false
     private val exact = HashMap<String, Array<String>>()
     private val patterns = ArrayList<Pair<Regex, Array<String>>>()
+    private val upper = HashMap<String, Array<String>>()
 
     /** "es", "en" o "pt". */
     fun lang(ctx: Context): String {
@@ -43,6 +44,9 @@ object I18n {
                     }
                 }
             } catch (e: Exception) { }
+            exact.forEach { (k, v) -> upper.putIfAbsent(k.uppercase(), v) }
+            // Los patrones más largos primero («Tema {}, elegido» antes que «Tema {}»)
+            patterns.sortByDescending { it.first.pattern.length }
             loaded = true
         }
     }
@@ -57,7 +61,7 @@ object I18n {
         exact[s]?.let { return it[i] }
         // Mayúsculas (títulos de sección)
         if (s == s.uppercase() && s != s.lowercase()) {
-            exact.entries.firstOrNull { it.key.uppercase() == s }?.let { return it.value[i].uppercase() }
+            upper[s]?.let { return it[i].uppercase() }
         }
         for ((rx, t) in patterns) {
             val m = rx.matchEntire(s) ?: continue

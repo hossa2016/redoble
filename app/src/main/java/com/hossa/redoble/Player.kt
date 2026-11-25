@@ -88,6 +88,9 @@ object Player {
         return playing to art?.let { coverAccent(it, false) }
     }
 
+    /** ¿Suena algo? (liviano: sin carátula ni colores) */
+    fun isPlayingNow(ctx: Context): Boolean = controller(ctx)?.let { isPlaying(it) } ?: false
+
     /** Título y artista de lo que suena ahora (o lo último que sonó). */
     fun nowTrack(ctx: Context): Pair<String, String>? {
         val c = try { controller(ctx) } catch (e: Exception) { null } ?: return null
@@ -244,7 +247,7 @@ object Player {
         val glow = if (th.family == "neon") accent else 0
         fun txt(tv: Int, bmp: Int, t: String, font: Int, sp: Float, col: Int, maxW: Int, caps: Boolean = false, sp2: Float = 0f) =
             RockWidget.twin(v, tv, bmp, t.isNotBlank(), fonts, t) {
-                TextArt.render(ctx, t, font, sp, col, sp2, caps, S.shadow, if (font == S.title) glow else 0, maxW)
+                TextArt.render(ctx, t, font, sp, col, sp2, caps, S.shadow, if (font == S.title) glow else 0, maxW, translate = false)
             }
 
         if (if (mode == 0) Prefs.playerLarge(ctx) else mode == 1) {
@@ -355,7 +358,7 @@ object Player {
         fun txt(tv: Int, bmp: Int, t: String, font: Int, sp: Float, col: Int, maxW: Int, caps: Boolean = false, sp2: Float = 0f) {
             v.setTextViewText(tv, t); v.setTextColor(tv, col)
             RockWidget.twin(v, tv, bmp, t.isNotBlank(), fonts, t) {
-                TextArt.render(ctx, t, font, sp, col, sp2, caps, S.shadow, 0, maxW.coerceAtLeast((40 * d).toInt()))
+                TextArt.render(ctx, t, font, sp, col, sp2, caps, S.shadow, 0, maxW.coerceAtLeast((40 * d).toInt()), translate = false)
             }
         }
         val neonCaps = th.family == "neon"
@@ -739,8 +742,14 @@ class MediaListener : NotificationListenerService() {
         attach(list); schedule()
     }
 
+    private val audioCb = object : android.media.AudioDeviceCallback() {
+        override fun onAudioDevicesAdded(added: Array<out android.media.AudioDeviceInfo>?) { Rules.forget(); Rules.check(this@MediaListener) }
+        override fun onAudioDevicesRemoved(removed: Array<out android.media.AudioDeviceInfo>?) { Rules.forget(); Rules.check(this@MediaListener) }
+    }
+
     override fun onListenerConnected() {
         super.onListenerConnected()
+        try { (getSystemService(AUDIO_SERVICE) as android.media.AudioManager).registerAudioDeviceCallback(audioCb, handler) } catch (e: Exception) { }
         val m = getSystemService(MEDIA_SESSION_SERVICE) as MediaSessionManager
         msm = m
         val me = ComponentName(this, MediaListener::class.java)
@@ -752,6 +761,7 @@ class MediaListener : NotificationListenerService() {
     }
 
     override fun onListenerDisconnected() {
+        try { (getSystemService(AUDIO_SERVICE) as android.media.AudioManager).unregisterAudioDeviceCallback(audioCb) } catch (e: Exception) { }
         try { msm?.removeOnActiveSessionsChangedListener(sessions) } catch (e: Exception) { }
         detach()
         schedule()

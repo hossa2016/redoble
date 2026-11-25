@@ -1,0 +1,13 @@
+<resources>
+    <string name="w_full">Prisma · Completo</string>
+    <string name="w_clock">Prisma · Hora e clima</string>
+    <string name="w_apps">Prisma · Apps</string>
+    <string name="w_player">Prisma · Player</string>
+    <string name="w_clock_desc">Dia, data, hora, clima e bateria</string>
+    <string name="w_apps_desc">Seus apps, ajustados ao tamanho</string>
+    <string name="w_player_desc">A música que está tocando, com seus botões</string>
+    <string name="widget_desc">Dia, hora, clima, música e seus apps em 7 estilos</string>
+    <string name="wallpaper_desc">Fundo animado que se move ao inclinar o telefone</string>
+    <string name="w_mini">Mini 1×1</string>
+    <string name="w_mini_desc">Dia, data e bateria em um quadradinho, com seu tema.</string>
+</resources>

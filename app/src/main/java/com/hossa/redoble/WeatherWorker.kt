@@ -107,10 +107,13 @@ class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
             }
         }
 
+        /** Idioma de los nombres de ciudades (lo fija la app al elegir idioma). */
+        @Volatile var geoLang = "es"
+
         /** Varias coincidencias (hasta 6) con región y país, para elegir la correcta. */
         fun geocodeAll(name: String): List<Triple<String, Double, Double>> {
             val q = URLEncoder.encode(name.trim(), "UTF-8")
-            val json = JSONObject(get("https://geocoding-api.open-meteo.com/v1/search?name=$q&count=6&language=es"))
+            val json = JSONObject(get("https://geocoding-api.open-meteo.com/v1/search?name=$q&count=6&language=" + geoLang))
             val results = json.optJSONArray("results") ?: return emptyList()
             return (0 until results.length()).map { i ->
                 val r = results.getJSONObject(i)
@@ -142,7 +145,7 @@ class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
         fun geocode(name: String): Triple<String, Double, Double>? {
             val q = URLEncoder.encode(name.trim(), "UTF-8")
             val json = JSONObject(
-                get("https://geocoding-api.open-meteo.com/v1/search?name=$q&count=1&language=es")
+                get("https://geocoding-api.open-meteo.com/v1/search?name=$q&count=1&language=" + geoLang)
             )
             val results = json.optJSONArray("results") ?: return null
             if (results.length() == 0) return null

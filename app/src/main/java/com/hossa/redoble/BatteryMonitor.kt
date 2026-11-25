@@ -53,6 +53,7 @@ object BatteryMonitor {
     fun refresh(ctx: Context) = synchronized(RockWidget) { refreshLocked(ctx) }
 
     private fun refreshLocked(ctx: Context) {
+        try { MiniWidget.updateAll(ctx) } catch (e: Exception) { }
         val mgr = AppWidgetManager.getInstance(ctx)
         // El Completo y el de Hora y clima usan el mismo diseño: se actualizan igual
         val ids = mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java)) + Widgets.ids(ctx, Widgets.CLOCK)

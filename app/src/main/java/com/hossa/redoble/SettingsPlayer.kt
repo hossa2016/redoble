@@ -124,7 +124,8 @@ internal fun MainActivity.playerPlate(): View {
             io.execute {
                 val bmp = ShareArt.ticket(this@playerPlate, tr.first, tr.second, Player.nowArt(this@playerPlate),
                     Stage.accent ?: ui.accent)
-                onUi { ShareArt.share(this@playerPlate, bmp, "entrada", "Compartir entrada") }
+                val f = ShareArt.save(this@playerPlate, bmp, "entrada")
+                onUi { ShareArt.share(this@playerPlate, f, "Compartir entrada") }
             }
         }
     }, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(12) })
@@ -135,7 +136,8 @@ internal fun MainActivity.playerPlate(): View {
     card.addView(ui.note(if (left > 0) "La música se pausa en unos $left min." else "Pausa la música después de un rato, para dormir."))
     card.addView(ui.segmented(listOf(15 to "15 min", 30 to "30 min", 45 to "45 min", 0 to "Apagado"), if (left > 0) -1 else 0) { m ->
         if (m == 0) { SleepTimer.cancel(this); toast("Temporizador apagado") }
-        else { SleepTimer.start(this, m); toast("La música se pausa en $m min") }
+        else if (!Player.enabled(this)) toast("Primero da el acceso a notificaciones (arriba, en esta sección)")
+        else { SleepTimer.start(this, m); toast(I18n.tr(this, "La música se pausa en {} min").replace("{}", m.toString())) }
         build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
 
@@ -146,11 +148,12 @@ internal fun MainActivity.playerPlate(): View {
     card.addView(ui.note("Guarda en tu teléfono qué escuchas, para armar tu setlist de la semana y el afiche del año. Nada sale del teléfono."))
     if (Prefs.tourLog(this)) {
         val wk = TourLog.week(this)
-        card.addView(ui.bodyText(if (wk.minutes > 0) "Semana ${TourLog.weekNumber()} · ${wk.minutes} min" +
-            (if (wk.topArtist.isNotBlank()) " · Más tocada: ${wk.topArtist}" else "") else "Aún no hay escucha esta semana.", Ui.HEAD, 15f),
+        card.addView(ui.bodyText(if (wk.minutes > 0) I18n.tr(this, "Semana {} · {} min").replaceFirst("{}", TourLog.weekNumber().toString())
+            .replaceFirst("{}", wk.minutes.toString()) +
+            (if (wk.topArtist.isNotBlank()) I18n.tr(this, " · Más tocada: {}").replace("{}", wk.topArtist) else "") else "Aún no hay escucha esta semana.", Ui.HEAD, 15f),
             LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
         fun posterBtn(label: String, make: () -> android.graphics.Bitmap) = card.addView(ui.textButton(label).apply {
-            setOnClickListener { io.execute { val b = make(); onUi { ShareArt.share(this@playerPlate, b, "afiche", label) } } }
+            setOnClickListener { io.execute { val f = ShareArt.save(this@playerPlate, make(), "afiche"); onUi { ShareArt.share(this@playerPlate, f, label) } } }
         }, LinearLayout.LayoutParams(-1, ui.dp(48)))
         posterBtn("Afiche de la semana") {
             ShareArt.poster(this, "SEMANA ${TourLog.weekNumber()}", "SETLIST DE LA SEMANA", TourLog.week(this), ui.accent)

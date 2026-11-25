@@ -257,7 +257,7 @@ object Widgets {
             v.setContentDescription(PADS[i], name)
             RockWidget.twin(v, LABELS[i], LABEL_BMPS[i], g.names, fonts, name) {
                 TextArt.render(ctx, name, S.label, labelSp, th.head, S.lls,
-                    caps = th.family == "neon" || th.family == "lujo", shadow = S.shadow, maxWidthPx = labelMax)
+                    caps = th.family == "neon" || th.family == "lujo", shadow = S.shadow, maxWidthPx = labelMax, translate = false)
             }
             v.setOnClickPendingIntent(PADS[i], PendingIntent.getActivity(ctx, id * 32 + i,
                 launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
@@ -322,7 +322,7 @@ class AppsWidgetConfig : AppCompatActivity() {
         val night = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
             android.content.res.Configuration.UI_MODE_NIGHT_YES
         Ui.setLight(when (Prefs.uiMode(this)) { "light" -> true; "system" -> !night; else -> false })
-        val th = Themes.current(this)
+        val th = Themes.saved(this)
         val ui = Ui(this, if (th.light) android.graphics.Color.parseColor(if (Ui.light) "#A8443A" else "#E58272") else th.accent(this))
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
