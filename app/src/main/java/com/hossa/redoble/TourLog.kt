@@ -134,7 +134,7 @@ object ShareArt {
         // Línea punteada (corte de la entrada)
         p.color = Color.rgb(190, 180, 170); p.strokeWidth = 5f; p.pathEffect = android.graphics.DashPathEffect(floatArrayOf(18f, 14f), 0f)
         c.drawLine(card.left + 70f, 1240f, card.right - 70f, 1240f, p); p.pathEffect = null
-        val es = java.util.Locale("es", "CO")
+        val es = I18n.locale(ctx)
         val date = java.text.SimpleDateFormat("EEE d MMM yyyy", es).format(java.util.Date()).replace(".", "").uppercase(es)
         val city = Prefs.city(ctx).substringBefore(",").trim().uppercase(es).ifBlank { "EN VIVO" }
         text.typeface = font(ctx, R.font.barlow_condensed_semibold); text.color = Color.rgb(60, 52, 48)

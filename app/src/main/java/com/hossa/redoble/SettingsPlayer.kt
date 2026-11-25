@@ -248,6 +248,15 @@ internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
         build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
 
+    // Idioma de la app y del widget
+    card.addView(ui.text("Idioma", ui.cond, 15f, Ui.MUTED), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(16); bottomMargin = ui.dp(6) })
+    card.addView(ui.segmented(listOf("auto" to "Automático", "es" to "Español", "en" to "English", "pt" to "Português"), Prefs.lang(this)) { l ->
+        Prefs.setLang(this, l)
+        WeatherWorker.runNow(this, force = true)
+        RockWidget.updateAll(this); Widgets.updateKind(this, Widgets.APPS)
+        recreate()
+    })
+
     // Ayuda y datos de la app, en un solo lugar
     card.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0F)) },
         LinearLayout.LayoutParams(-1, ui.dp(1)).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(4) })

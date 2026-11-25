@@ -59,7 +59,8 @@ object TextArt {
         spacing: Float = 0f, caps: Boolean = false, shadow: Boolean = false, glow: Int = 0,
         maxWidthPx: Int = 0,
     ): Bitmap {
-        var t: CharSequence = if (caps) text.uppercase(es) else text
+        val text = I18n.tr(ctx, text)
+        var t: CharSequence = if (caps) text.uppercase(I18n.locale(ctx)) else text
         val pad = pad(ctx, shadow, glow)
         var p = paint(ctx, font, sp, color, spacing, shadow, glow)
         // Si no cabe, primero se achica (hasta 72 %); solo después se corta con "…"
@@ -144,7 +145,7 @@ object TextArt {
                 (maxWidthPx - iconPx - gap * 2 - parts[0].width).toInt().coerceAtLeast(40))
         } else {
             val avail = (maxWidthPx - iconPx - gap).toInt().coerceAtLeast(40)
-            val one = if (extra.isBlank()) "$desc, $temp°" else "$desc, $temp° · ${extra.replace("Mañana:", "Mañana")}"
+            val one = if (extra.isBlank()) "$desc, $temp°" else "$desc, $temp° · ${extra.replace(":", "")}"
             val fits = paint(ctx, s.med, s.wsize, color, 0f, false, 0).measureText(one) + pad(ctx, false, 0) * 2 <= avail
             parts += if (extra.isBlank() || fits) render(ctx, one, s.med, s.wsize, color, maxWidthPx = avail)
                 else twoLines(ctx, "$desc, $temp°\n$extra", s.med, s.body, s.wsize, s.tomsize, color, dim, avail)

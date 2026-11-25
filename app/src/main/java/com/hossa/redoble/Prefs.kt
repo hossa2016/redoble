@@ -203,6 +203,9 @@ object Prefs {
     fun setWeatherExtra(ctx: Context, code: Int, temp: Int, desc: String) = p(ctx).edit()
         .putInt("wxCode", code).putInt("wxTemp", temp).putString("wxDesc", desc).apply()
     fun weatherAt(ctx: Context) = p(ctx).getLong("wxAt", 0L)
+    /** Idioma de la app y del widget: "auto" (el del teléfono), "es", "en" o "pt". */
+    fun lang(ctx: Context) = p(ctx).getString("lang", "auto") ?: "auto"
+    fun setLang(ctx: Context, v: String) = p(ctx).edit().putString("lang", v).apply()
     /** Bitácora de Gira: historial de escucha solo en el teléfono. */
     fun tourLog(ctx: Context) = p(ctx).getBoolean("tourLogOn", false)
     fun setTourLog(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("tourLogOn", v).apply()

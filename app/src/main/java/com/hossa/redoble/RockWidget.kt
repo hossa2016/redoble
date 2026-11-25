@@ -358,7 +358,7 @@ class RockWidget : AppWidgetProvider() {
             val narrow = solo && wDp < 260
 
             // Día
-            val day = DAYS[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1]
+            val day = I18n.tr(ctx, DAYS[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1])
             if (bigDay && dia) {
                 // En el widget Hora y clima, el día de Rock no pasa del alto del widget
                 val h = if (solo) (hDp - 28).coerceIn(80, 176) else if (playing) 150 else 176
@@ -375,8 +375,9 @@ class RockWidget : AppWidgetProvider() {
                 "cristal" -> "EEEE, d 'de' MMMM"; "neon" -> "EEEE '//' dd.MM"; "lujo" -> "EEEE · d 'de' MMMM"; else -> "EEEE"
             }
             // Fecha corta ("22 nov") cuando el widget es angosto: nunca "22 de novie…"
-            val dateFmt = if (narrow) "d MMM" else "d 'de' MMMM"
-            fun fmt(f: String) = java.text.SimpleDateFormat(f, ES).format(now).replace(".", "")
+            val dateFmt = I18n.dateFormat(ctx, if (narrow) "d MMM" else "d 'de' MMMM")
+            val loc = I18n.locale(ctx)
+            fun fmt(f: String) = java.text.SimpleDateFormat(I18n.dateFormat(ctx, f), loc).format(now).replace(".", "")
             v.setCharSequence(R.id.date, "setFormat12Hour", dateFmt)
             v.setCharSequence(R.id.date, "setFormat24Hour", dateFmt)
             // Cartel de Gira: la fecha se dibuja como afiche (necesita la imagen, no el reloj del sistema)
@@ -530,7 +531,7 @@ class RockWidget : AppWidgetProvider() {
                 TextArt.render(ctx, if (rock) "SETLIST" else "APPS", S.title, if (rock) 15f else 12f, th.head, S.tls, shadow = S.shadow)
             }
             val word = if (filled.size == 1) "app" else "apps"
-            v.setTextViewText(R.id.count, "${filled.size} $word")
+            v.setTextViewText(R.id.count, "${filled.size} " + I18n.tr(ctx, word))
         }
 
         /** Fondo del widget (como está, desvanecido o fijo) y colores de texto acordes. */

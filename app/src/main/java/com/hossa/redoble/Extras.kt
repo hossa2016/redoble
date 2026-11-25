@@ -12,7 +12,6 @@ import java.util.Locale
 
 /** Datos extra de la cabecera: próxima alarma y próximo evento de la agenda. */
 object Extras {
-    private val ES = Locale("es", "CO")
 
     /** "Alarma 6:30" (o "Alarma mañana 6:30"); vacío si no hay alarma en las próximas 24 h. */
     fun nextAlarm(ctx: Context): String {
@@ -20,7 +19,7 @@ object Extras {
         val t = am.nextAlarmClock?.triggerTime ?: return ""
         val now = System.currentTimeMillis()
         if (t - now > 24 * 3_600_000L || t < now) return ""
-        return "Alarma " + time(ctx, t)
+        return I18n.tr(ctx, "Alarma") + " " + time(ctx, t)
     }
 
     fun hasCalendar(ctx: Context) =
@@ -43,9 +42,9 @@ object Extras {
                     val begin = c.getLong(1); val allDay = c.getInt(2) == 1
                     val tomorrow = !sameDay(begin, now)
                     val whenTxt = when {
-                        allDay && tomorrow -> "mañana"
-                        allDay -> "hoy"
-                        tomorrow -> "mañana " + time(ctx, begin)
+                        allDay && tomorrow -> I18n.tr(ctx, "mañana")
+                        allDay -> I18n.tr(ctx, "hoy")
+                        tomorrow -> I18n.tr(ctx, "mañana") + " " + time(ctx, begin)
                         else -> time(ctx, begin)
                     }
                     return "${title.take(22)} · $whenTxt"
@@ -61,13 +60,14 @@ object Extras {
 
     private fun time(ctx: Context, t: Long): String {
         val h24 = android.text.format.DateFormat.is24HourFormat(ctx)
-        return SimpleDateFormat(if (h24) "H:mm" else "h:mm a", ES).format(java.util.Date(t)).replace(".", "")
+        return SimpleDateFormat(if (h24) "H:mm" else "h:mm a", I18n.locale(ctx)).format(java.util.Date(t)).replace(".", "")
     }
 
     /** Línea de fecha estilo «Cartel de Gira»: "MAR 24 NOV · ENVIGADO". */
     fun posterLine(ctx: Context): String {
-        val d = SimpleDateFormat("EEE d MMM", ES).format(java.util.Date()).replace(".", "").uppercase(ES)
-        val city = Prefs.city(ctx).substringBefore(",").trim().uppercase(ES)
+        val loc = I18n.locale(ctx)
+        val d = SimpleDateFormat("EEE d MMM", loc).format(java.util.Date()).replace(".", "").uppercase(loc)
+        val city = Prefs.city(ctx).substringBefore(",").trim().uppercase(loc)
         return if (city.isBlank()) d else "$d · $city"
     }
 }

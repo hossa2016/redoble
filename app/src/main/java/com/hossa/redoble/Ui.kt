@@ -90,7 +90,7 @@ class Ui(val ctx: Context, val accent: Int) {
     fun text(
         s: CharSequence, face: Typeface, sp: Float, color: Int = HEAD, spacing: Float = 0f
     ) = TextView(ctx).apply {
-        text = s
+        text = I18n.tr(ctx, s)
         typeface = face
         setTextSize(TypedValue.COMPLEX_UNIT_SP, sp)
         setTextColor(color)
@@ -167,7 +167,7 @@ class Ui(val ctx: Context, val accent: Int) {
     }
 
     private fun baseButton(label: String) = Button(ctx, null, 0).apply {
-        text = label
+        text = I18n.tr(ctx, label)
         isAllCaps = false
         typeface = condSemi
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)

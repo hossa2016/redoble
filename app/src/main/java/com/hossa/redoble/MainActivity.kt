@@ -216,9 +216,8 @@ class MainActivity : AppCompatActivity() {
             scroll?.let { sv -> sv.post { tabsView?.let { tv -> if (sv.scrollY > tv.top) sv.smoothScrollTo(0, (tv.top - ui.dp(8)).coerceAtLeast(0)) } } }
         }
         // TalkBack: cada opción se anuncia como «pestaña» (sin parada extra en el contenedor)
-        val tabNames = listOf("Estilo", "Contenido", "Widgets", "App")
         fun markTabs(v: View) {
-            if (v is android.widget.TextView && v.text.toString() in tabNames) {
+            if (v is android.widget.Button) {
                 ViewCompat.setAccessibilityDelegate(v, object : androidx.core.view.AccessibilityDelegateCompat() {
                     override fun onInitializeAccessibilityNodeInfo(host: View, info: androidx.core.view.accessibility.AccessibilityNodeInfoCompat) {
                         super.onInitializeAccessibilityNodeInfo(host, info)
@@ -432,7 +431,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** Aviso propio (píldora abajo que se desvanece), con el estilo de la app. */
-    internal fun toast(msg: String) {
+    internal fun toast(msg0: String) {
+        val msg = I18n.tr(this, msg0)
         val host = findViewById<android.view.ViewGroup>(android.R.id.content)
         if (host == null || fullPreviewOpen) { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show(); return }
         host.findViewWithTag<View>("pill")?.let { host.removeView(it) }
