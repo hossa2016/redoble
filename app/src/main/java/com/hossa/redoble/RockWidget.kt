@@ -75,6 +75,7 @@ class RockWidget : AppWidgetProvider() {
                 try { update(ctx, mgr, id) } catch (e: Exception) { }
             }
             Widgets.updatePieces(ctx)
+            MiniWidget.updateAll(ctx)
         }
 
         private val mainH = android.os.Handler(android.os.Looper.getMainLooper())
@@ -106,6 +107,7 @@ class RockWidget : AppWidgetProvider() {
 
         /** Al encender la pantalla: hora al día y lo que quedó pendiente. */
         fun onScreenOn(ctx: Context) {
+            Rules.check(ctx)
             if (pendingWhileOff) { pendingWhileOff = false; updateAll(ctx) } else updateClock(ctx)
         }
 
@@ -325,7 +327,8 @@ class RockWidget : AppWidgetProvider() {
             val stale = wxAt > 0 && System.currentTimeMillis() - wxAt > 6 * 3_600_000L
             var clima = (if (solo) Prefs.cw(ctx, "clima") else Prefs.el(ctx, "clima")) && !stale
             // Próxima alarma y evento de la agenda van en la línea de «Mañana»
-            val extra = listOf(if (Prefs.showAlarm(ctx)) Extras.nextAlarm(ctx) else "",
+            val extra = listOf(Encore.today(ctx)?.let { I18n.tr(ctx, "Hoy") + ": " + it } ?: "",
+                if (Prefs.showAlarm(ctx)) Extras.nextAlarm(ctx) else "",
                 if (Prefs.showAgenda(ctx)) Extras.nextEvent(ctx) else "").filter { it.isNotBlank() }.joinToString(" · ")
             var manana = (if (solo) Prefs.cw(ctx, "manana") && wDp >= 230 else Prefs.el(ctx, "manana")) || extra.isNotBlank()
             val poster = Prefs.poster(ctx)
@@ -605,7 +608,9 @@ class RockWidget : AppWidgetProvider() {
             } else {
                 v.setViewVisibility(R.id.batt_bolt, View.GONE)
             }
-            val bt = if (th.family == "lujo") "BATERÍA $level %" else "$level %"
+            val bt0 = if (th.family == "lujo") I18n.tr(ctx, "BATERÍA") + " $level %" else "$level %"
+            // «Este va hasta el 11»: guiño al llegar al 100 % cargando
+            val bt = if (Prefs.amp11(ctx) && charging && level >= 100) "$bt0 · " + I18n.tr(ctx, "¡hasta el 11!") else bt0
             val bc = if (!charging && level <= 15) Graphics.alert(ctx) else th.head
             v.setTextViewText(R.id.batt_txt, bt)
             v.setTextColor(R.id.batt_txt, bc)

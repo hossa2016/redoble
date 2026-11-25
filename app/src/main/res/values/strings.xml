@@ -9,4 +9,6 @@
     <string name="w_player_desc">La canción que suena, con sus botones</string>
     <string name="widget_desc">Día, hora, clima, música y tus apps en 7 estilos</string>
     <string name="wallpaper_desc">Fondo animado que se mueve al inclinar el teléfono</string>
+    <string name="w_mini">Mini 1×1</string>
+    <string name="w_mini_desc">Día, fecha y batería en un cuadrito, con tu tema.</string>
 </resources>

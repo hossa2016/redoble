@@ -85,6 +85,12 @@ internal fun MainActivity.playerPlate(): View {
     card.addView(ui.segmented(listOf(true to "Según la carátula", false to "El del tema"), Prefs.coverColor(this)) { on ->
         Prefs.setCoverColor(this, on); Player.updateAll(this); Widgets.updateKind(this, Widgets.PLAYER); build()
     }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(4) })
+    // Piel del reproductor
+    card.addView(ui.text("Piel del reproductor", ui.cond, 15f, Ui.MUTED), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
+    card.addView(ui.segmented(listOf("normal" to "Carátula", "vinilo" to "Vinilo", "casete" to "Casete"), Prefs.playerSkin(this)) { s ->
+        Prefs.setPlayerSkin(this, s); Player.updateAll(this); Widgets.updateKind(this, Widgets.PLAYER); build()
+    })
+    card.addView(ui.note("Vinilo y Casete muestran cuánto va de la canción; se actualiza cada vez que se redibuja el widget."))
     card.addView(switchRow("Color de la carátula en todo el widget", Prefs.coverAll(this)) { on ->
         Prefs.setCoverAll(this, on); Stage.changed(this); RockWidget.updateAll(this)
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
@@ -99,6 +105,15 @@ internal fun MainActivity.playerPlate(): View {
     if (Prefs.liveStage(this)) card.addView(ui.segmented(listOf("escenario" to "Escenario", "concierto" to "Concierto", "bateria" to "Batería"),
         Prefs.stageScene(this)) { s -> Prefs.setStageScene(this, s); Stage.changed(this); build() },
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+
+    // Puente con RockPlay IA
+    val rockplay = packageManager.getLaunchIntentForPackage(Player.DEFAULT_MUSIC_APP)
+    if (rockplay != null) card.addView(ui.textButton("Descubrir bandas en RockPlay IA").apply {
+        setOnClickListener {
+            val deep = Intent(Intent.ACTION_VIEW, Uri.parse("rockplay://descubrir")).setPackage(Player.DEFAULT_MUSIC_APP)
+            try { startActivity(deep) } catch (e: Exception) { startActivity(rockplay) }
+        }
+    }, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(12) })
 
     // Entrada de concierto
     card.addView(ui.textButton("Compartir entrada de concierto").apply {

@@ -488,6 +488,23 @@ internal fun MainActivity.themePlate(): View {
     card.addView(ui.note("Batería al instante (con una notificación fija).",
         "Mantiene la batería al día y permite la hora con la letra del tema. Android exige mostrar una " +
         "notificación fija mientras está activa; al encenderla te pedirá el permiso de notificaciones."))
+    // Taller de Afiches: la letra de títulos y textos del widget
+    card.addView(ui.text("Taller de Afiches · letra del widget", ui.cond, 15f, Ui.MUTED),
+        LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(16); bottomMargin = ui.dp(6) })
+    card.addView(HorizontalScrollView(this).apply {
+        isHorizontalScrollBarEnabled = false
+        addView(LinearLayout(this@themePlate).apply {
+            orientation = LinearLayout.HORIZONTAL
+            val cur = Prefs.workshopFont(this@themePlate)
+            TextArt.WORKSHOP_FONTS.forEach { (name, id) ->
+                addView(ui.option(if (name == "tema") "Del tema" else name, name == cur).apply {
+                    if (id != 0) typeface = ui.font(id)
+                    setOnClickListener { Prefs.setWorkshopFont(this@themePlate, name); RockWidget.updateAll(this@themePlate); build() }
+                }, LinearLayout.LayoutParams(-2, ui.dp(48)).apply { marginEnd = ui.dp(8) })
+            }
+        })
+    })
+    card.addView(ui.note("Funciona con «Letras del tema» activado. La hora conserva la letra del tema."))
     return card
 }
 
@@ -651,4 +668,62 @@ internal fun MainActivity.decodeSampled(uri: Uri, reqW: Int, reqH: Int): Bitmap?
     while ((opts.outWidth.toLong() / sample) * (opts.outHeight.toLong() / sample) > 4_000_000L) sample *= 2
     val real = BitmapFactory.Options().apply { inSampleSize = sample }
     return contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, real) }
+}
+
+
+/** «Setlist del Día»: reglas automáticas, fechas especiales y video propio. */
+internal fun MainActivity.rulesPlate(): View {
+    val card = ui.plateCard()
+    card.addView(ui.sectionTitle("Setlist del Día"))
+    card.addView(ui.note("El escenario cambia solo según el momento. Tus ajustes no se tocan: al pasar el momento, todo vuelve."))
+    fun rule(label: String, key: String, on: Boolean, hint: String) {
+        card.addView(switchRow(label, on) { v -> Prefs.setRule(this, key, v); RockWidget.updateAll(this); build() },
+            LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+        card.addView(ui.note(hint))
+    }
+    rule("Lluvia: Lluvia y café", "ruleRain", Prefs.ruleRain(this), "Cuando el clima dice lluvia, el fondo animado pasa a «Lluvia y café».")
+    rule("Noche: Ámbar y fogata", "ruleNight", Prefs.ruleNight(this), "De 8 p. m. a 5 a. m., tema Ámbar y fondo Fogata.")
+    rule("Audífonos: Música grande", "ruleHeadphones", Prefs.ruleHeadphones(this), "Con audífonos conectados, el widget Completo muestra el reproductor grande.")
+    card.addView(ui.note("Las reglas se revisan al encender la pantalla."))
+
+    // Encore: fechas especiales
+    card.addView(ui.label("FECHAS ESPECIALES"), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(18); bottomMargin = ui.dp(4) })
+    card.addView(ui.note("Ese día el widget lo celebra y el fondo pasa a «Concierto»."))
+    Encore.all(this).forEachIndexed { i, (md, text) ->
+        card.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL
+            minimumHeight = ui.dp(48)
+            val shown = try { java.text.SimpleDateFormat("d MMM", I18n.locale(this@rulesPlate))
+                .format(java.text.SimpleDateFormat("MM-dd", java.util.Locale.US).parse(md)!!) } catch (e: Exception) { md }
+            addView(ui.text("$shown · $text", ui.cond, 17f, Ui.HEAD), LinearLayout.LayoutParams(0, -2, 1f))
+            addView(ui.textButton("Quitar").apply { setOnClickListener { Encore.remove(this@rulesPlate, i); RockWidget.updateAll(this@rulesPlate); build() } })
+        })
+    }
+    card.addView(ui.textButton("Agregar una fecha").apply {
+        setOnClickListener {
+            val c = java.util.Calendar.getInstance()
+            android.app.DatePickerDialog(this@rulesPlate, { _, _, m, d ->
+                val field = android.widget.EditText(this@rulesPlate).apply {
+                    hint = "Por ejemplo: Mi primer concierto"; setSingleLine()
+                    setTextColor(if (Ui.light) 0xFF1C1A17.toInt() else 0xFFF2ECE4.toInt()); setHintTextColor(Ui.DIM)
+                }
+                ui.sheet("¿Qué se celebra?", content = field, actions = listOf("Guardar" to {
+                    val t = field.text.toString().trim()
+                    if (t.isNotEmpty()) { Encore.add(this, String.format(java.util.Locale.US, "%02d-%02d", m + 1, d), t.take(30)); RockWidget.updateAll(this); build() }
+                }))
+            }, c.get(java.util.Calendar.YEAR), c.get(java.util.Calendar.MONTH), c.get(java.util.Calendar.DAY_OF_MONTH)).show()
+        }
+    }, LinearLayout.LayoutParams(-1, ui.dp(48)))
+
+    // Video propio y batería
+    card.addView(ui.label("MI VIDEO"), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(18); bottomMargin = ui.dp(4) })
+    card.addView(ui.note("Un clip tuyo (de un concierto, por ejemplo) como fondo animado. Máximo 80 MB; los cortos y en 1080p van mejor."))
+    card.addView(ui.textButton(if (java.io.File(filesDir, "video_propio.mp4").exists()) "Cambiar mi video" else "Usar un video mío").apply {
+        setOnClickListener { pickVideo.launch(androidx.activity.result.PickVisualMediaRequest(
+            androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.VideoOnly)) }
+    }, LinearLayout.LayoutParams(-1, ui.dp(48)))
+    card.addView(switchRow("Batería «hasta el 11»", Prefs.amp11(this)) { v -> Prefs.setAmp11(this, v); RockWidget.updateAll(this) },
+        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
+    card.addView(ui.note("Al llegar al 100 % cargando, el widget lo celebra."))
+    return card
 }

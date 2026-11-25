@@ -58,7 +58,9 @@ object VideoScenes {
         Info("agua", "Agua", "Superficie del mar moviéndose en calma", R.raw.vid_agua),
         Info("brasas", "Brasas", "Chispas naranjas saltando en la oscuridad", R.raw.vid_brasas, null, true),
     )
-    fun find(id: String) = ALL.firstOrNull { it.id == id } ?: ALL[0]
+    /** Escena con un video propio del usuario (guardado en la app). */
+    val PROPIO = Info("propio", "Mi video", "Tu propio clip como fondo animado", 0)
+    fun find(id: String) = if (id == "propio") PROPIO else ALL.firstOrNull { it.id == id } ?: ALL[0]
     /** Miniatura (un cuadro del video, con su capa delantera) para elegir la escena. */
     private val THUMBS = mapOf(
         "fogata" to R.drawable.thumb_fogata,
@@ -167,8 +169,10 @@ private class VideoRenderer(private val ctx: Context, private val scene: VideoSc
                 setVideoSurface(surf)
                 volume = 0f
                 repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
+                val own = java.io.File(ctx.filesDir, "video_propio.mp4")
                 setMediaItem(androidx.media3.common.MediaItem.fromUri(
-                    android.net.Uri.parse("android.resource://${ctx.packageName}/$res")))
+                    if (res == 0 && own.exists()) android.net.Uri.fromFile(own)
+                    else android.net.Uri.parse("android.resource://${ctx.packageName}/${if (res == 0) R.raw.vid_fogata else res}")))
                 prepare()
             }
         } catch (e: Exception) { return }
@@ -266,7 +270,7 @@ class PrismaWallpaper : WallpaperService() {
         /** Escena que toca ahora: la elegida o, con Escenario Vivo y música sonando, la de concierto. */
         private fun wanted(): String {
             val c = this@PrismaWallpaper
-            return if (Prefs.liveStage(c) && Stage.playing) Prefs.stageScene(c) else Prefs.liveScene(c)
+            return if (Prefs.liveStage(c) && Stage.playing) Prefs.stageScene(c) else Rules.scene(c) ?: Prefs.liveScene(c)
         }
         private fun applyTint() {
             val c = this@PrismaWallpaper

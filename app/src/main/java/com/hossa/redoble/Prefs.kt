@@ -85,7 +85,8 @@ object Prefs {
     fun usedSlots(ctx: Context) = perRow(ctx) * 2
     fun preset(ctx: Context) = p(ctx).getString("preset", "completo") ?: "completo"
     val ELEMENTS = listOf("dia", "hora", "clima", "manana", "bateria", "player")
-    fun el(ctx: Context, key: String) = p(ctx).getBoolean("el_$key", true)
+    fun el(ctx: Context, key: String) =
+        if ((key == "manana" || key == "bateria") && Rules.musicLayout(ctx)) false else p(ctx).getBoolean("el_$key", true)
     fun setEl(ctx: Context, key: String, v: Boolean) =
         p(ctx).edit().putBoolean("el_$key", v).putString("preset", "custom").apply()
     fun appsCount(ctx: Context) = p(ctx).getInt("appsCount", 6)
@@ -168,7 +169,7 @@ object Prefs {
     /** El reproductor toma el color de la carátula de cada canción. */
     fun coverColor(ctx: Context) = p(ctx).getBoolean("coverColor", true)
     fun setCoverColor(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("coverColor", on).apply()
-    fun playerLarge(ctx: Context) = p(ctx).getBoolean("playerLarge", false)
+    fun playerLarge(ctx: Context) = Rules.musicLayout(ctx) || p(ctx).getBoolean("playerLarge", false)
     fun setPlayerLarge(ctx: Context, v: Boolean) =
         p(ctx).edit().putBoolean("playerLarge", v).putString("preset", "custom").apply()
 
@@ -203,6 +204,32 @@ object Prefs {
     fun setWeatherExtra(ctx: Context, code: Int, temp: Int, desc: String) = p(ctx).edit()
         .putInt("wxCode", code).putInt("wxTemp", temp).putString("wxDesc", desc).apply()
     fun weatherAt(ctx: Context) = p(ctx).getLong("wxAt", 0L)
+    /** Setlist del Día: reglas automáticas. */
+    fun ruleRain(ctx: Context) = p(ctx).getBoolean("ruleRain", false)
+    fun ruleNight(ctx: Context) = p(ctx).getBoolean("ruleNight", false)
+    fun ruleHeadphones(ctx: Context) = p(ctx).getBoolean("ruleHeadphones", false)
+    fun setRule(ctx: Context, key: String, v: Boolean) = p(ctx).edit().putBoolean(key, v).apply()
+    /** Encore: fechas especiales "MM-dd;texto|…". */
+    fun encore(ctx: Context) = p(ctx).getString("encore", "") ?: ""
+    fun setEncore(ctx: Context, v: String) = p(ctx).edit().putString("encore", v).apply()
+    /** Batería «hasta el 11» al llegar al 100 % cargando. */
+    fun amp11(ctx: Context) = p(ctx).getBoolean("amp11", false)
+    fun setAmp11(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("amp11", v).apply()
+    /** Días distintos en que se abrió la app (para pedir la reseña una sola vez, al tercer día). */
+    fun markDayUsed(ctx: Context): Int {
+        val today = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US).format(java.util.Date())
+        val set = HashSet(p(ctx).getStringSet("daysUsed", emptySet()) ?: emptySet())
+        if (set.add(today)) p(ctx).edit().putStringSet("daysUsed", if (set.size > 5) HashSet(set.sorted().takeLast(5)) else set).apply()
+        return set.size
+    }
+    fun reviewAsked(ctx: Context) = p(ctx).getBoolean("reviewAsked", false)
+    fun setReviewAsked(ctx: Context) = p(ctx).edit().putBoolean("reviewAsked", true).apply()
+    /** Taller de Afiches: letra propia ("tema" = la del tema). */
+    fun workshopFont(ctx: Context) = p(ctx).getString("workshopFont", "tema") ?: "tema"
+    fun setWorkshopFont(ctx: Context, v: String) = p(ctx).edit().putString("workshopFont", v).apply()
+    /** Piel del reproductor: "normal", "vinilo" o "casete". */
+    fun playerSkin(ctx: Context) = p(ctx).getString("playerSkin", "normal") ?: "normal"
+    fun setPlayerSkin(ctx: Context, v: String) = p(ctx).edit().putString("playerSkin", v).apply()
     /** Idioma de la app y del widget: "auto" (el del teléfono), "es", "en" o "pt". */
     fun lang(ctx: Context) = p(ctx).getString("lang", "auto") ?: "auto"
     fun setLang(ctx: Context, v: String) = p(ctx).edit().putString("lang", v).apply()

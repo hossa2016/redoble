@@ -59,7 +59,7 @@ object Themes {
         Theme(6, "Lujo", "lujo", R.layout.widget_lujo, c("#EBD9AE"), c("#A8987A"), c("#D4B06A"), c("#A98545"), c("#0E0D0B")),
     )
 
-    fun current(ctx: Context): Theme = ALL.getOrNull(Prefs.theme(ctx)) ?: ALL[0]
+    fun current(ctx: Context): Theme = ALL.getOrNull(Rules.theme(ctx) ?: Prefs.theme(ctx)) ?: ALL[0]
 
     fun isLight(c: Int) = ColorUtils.calculateLuminance(c) > 0.45
 
@@ -81,6 +81,7 @@ object Themes {
     )
 
     fun widget(ctx: Context): Theme {
+        TextArt.fontOverride = TextArt.WORKSHOP_FONTS.firstOrNull { it.first == Prefs.workshopFont(ctx) }?.second ?: 0
         var t = textTheme(ctx)
         // Mientras suena música: el color de la carátula en todo el widget (si se eligió)
         if (Prefs.coverAll(ctx) && Stage.playing) Stage.accent?.let { a ->

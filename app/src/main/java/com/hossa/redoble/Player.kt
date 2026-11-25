@@ -208,6 +208,7 @@ object Player {
         v.setViewVisibility(R.id.player_c, View.GONE)
         if (mode < 0 || (mode == 0 && !Prefs.el(ctx, "player"))) return false
         val c = try { controller(ctx) } catch (e: Exception) { null }
+        prog = progressOf(c)
         val md = c?.metadata
         val title = clean(md?.getString(MediaMetadata.METADATA_KEY_TITLE)
             ?: md?.description?.title?.toString() ?: "")
@@ -312,6 +313,7 @@ object Player {
         v.setViewVisibility(R.id.wl, if (variant == 2) View.VISIBLE else View.GONE)
 
         val c = try { controller(ctx) } catch (e: Exception) { null }
+        prog = progressOf(c)
         val md = c?.metadata
         var title = clean(md?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: md?.description?.title?.toString() ?: "")
         val live = c != null && md != null && title.isNotBlank()
@@ -540,7 +542,75 @@ object Player {
         return b
     }
 
+    /** Avance de la canción (0..1) o -1 si no se sabe. Lo usan las pieles Vinilo y Casete. */
+    @Volatile private var prog = -1f
+    private fun progressOf(c: MediaController?): Float {
+        val st = c?.playbackState ?: return -1f
+        val dur = c.metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
+        if (dur <= 0) return -1f
+        var pos = st.position
+        if (st.state == PlaybackState.STATE_PLAYING && st.lastPositionUpdateTime > 0)
+            pos += ((android.os.SystemClock.elapsedRealtime() - st.lastPositionUpdateTime) * st.playbackSpeed).toLong()
+        return (pos.toFloat() / dur).coerceIn(0f, 1f)
+    }
+
+    /** Pieles del reproductor: la carátula como vinilo o casete, con el avance de la canción. */
+    private fun skinBitmap(ctx: Context, src: Bitmap, th: Theme, sizeDp: Int, skin: String): Bitmap {
+        val accent = th.accent(ctx)
+        val s = dp(ctx, sizeDp.toFloat()).toInt()
+        val out = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888)
+        val c = Canvas(out)
+        val p = Paint(Paint.ANTI_ALIAS_FLAG)
+        val cx = s / 2f; val cy = s / 2f
+        if (skin == "vinilo") {
+            // Disco negro con surcos, la carátula como etiqueta y el avance como arco
+            p.color = 0xFF0E0D0C.toInt(); c.drawCircle(cx, cy, s / 2f - dp(ctx, 2f), p)
+            p.style = Paint.Style.STROKE; p.strokeWidth = dp(ctx, 0.6f); p.color = 0x22FFFFFF
+            var rr = s / 2f - dp(ctx, 5f); while (rr > s * 0.22f) { c.drawCircle(cx, cy, rr, p); rr -= dp(ctx, 2.2f) }
+            p.style = Paint.Style.FILL
+            val lr = s * 0.2f
+            c.save(); c.clipPath(Path().apply { addCircle(cx, cy, lr, Path.Direction.CW) })
+            val sc = maxOf(2 * lr / src.width, 2 * lr / src.height)
+            c.drawBitmap(src, null, RectF(cx - src.width * sc / 2, cy - src.height * sc / 2, cx + src.width * sc / 2, cy + src.height * sc / 2), Paint(Paint.FILTER_BITMAP_FLAG))
+            c.restore()
+            p.color = 0xFF0E0D0C.toInt(); c.drawCircle(cx, cy, dp(ctx, 2f), p)
+            if (prog >= 0f) {
+                p.style = Paint.Style.STROKE; p.strokeWidth = dp(ctx, 2.2f); p.strokeCap = Paint.Cap.ROUND; p.color = accent
+                val inset = dp(ctx, 1.5f)
+                c.drawArc(RectF(inset, inset, s - inset, s - inset), -90f, 360f * prog, false, p)
+            }
+        } else {
+            // Casete: carcasa, ventana con dos bobinas (la cinta pasa de una a otra) y la carátula como etiqueta
+            val body = RectF(dp(ctx, 1f), s * 0.18f, s - dp(ctx, 1f), s * 0.82f)
+            p.color = if (th.light) 0xFF2A2522.toInt() else 0xFF1E1A18.toInt(); c.drawRoundRect(body, dp(ctx, 5f), dp(ctx, 5f), p)
+            val label = RectF(body.left + dp(ctx, 4f), body.top + dp(ctx, 4f), body.right - dp(ctx, 4f), body.top + body.height() * 0.42f)
+            c.save(); c.clipRect(label)
+            val sc = maxOf(label.width() / src.width, label.height() / src.height)
+            c.drawBitmap(src, null, RectF(label.centerX() - src.width * sc / 2, label.centerY() - src.height * sc / 2,
+                label.centerX() + src.width * sc / 2, label.centerY() + src.height * sc / 2), Paint(Paint.FILTER_BITMAP_FLAG))
+            c.restore()
+            val win = RectF(body.left + body.width() * 0.2f, label.bottom + dp(ctx, 3f), body.right - body.width() * 0.2f, body.bottom - dp(ctx, 4f))
+            p.color = 0xFF0A0908.toInt(); c.drawRoundRect(win, dp(ctx, 3f), dp(ctx, 3f), p)
+            val f = if (prog >= 0f) prog else 0.5f
+            val maxR = win.height() * 0.46f; val minR = maxR * 0.4f
+            val ry = win.centerY()
+            p.color = 0xFF5A4A3E.toInt()
+            c.drawCircle(win.left + win.width() * 0.25f, ry, minR + (maxR - minR) * (1 - f), p)
+            c.drawCircle(win.right - win.width() * 0.25f, ry, minR + (maxR - minR) * f, p)
+            p.color = accent
+            c.drawCircle(win.left + win.width() * 0.25f, ry, minR * 0.5f, p)
+            c.drawCircle(win.right - win.width() * 0.25f, ry, minR * 0.5f, p)
+        }
+        return out
+    }
+
     private fun artBitmap(ctx: Context, src: Bitmap?, th: Theme, sizeDp: Int, badge: Boolean): Bitmap {
+        val skin = Prefs.playerSkin(ctx)
+        if (src != null && skin != "normal") return try { skinBitmap(ctx, src, th, sizeDp, skin) } catch (e: Exception) { artBitmap0(ctx, src, th, sizeDp, badge) }
+        return artBitmap0(ctx, src, th, sizeDp, badge)
+    }
+
+    private fun artBitmap0(ctx: Context, src: Bitmap?, th: Theme, sizeDp: Int, badge: Boolean): Bitmap {
         val accent = th.accent(ctx)
         val s = dp(ctx, sizeDp.toFloat()).toInt()
         val r = dp(ctx, if (th.family == "neon") 4f else sizeDp / 6f)

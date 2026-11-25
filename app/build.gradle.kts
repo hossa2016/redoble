@@ -59,4 +59,6 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     // Repetición del fondo animado sin salto
     implementation("androidx.media3:media3-exoplayer:1.4.1")
+    // Reseña dentro de la app (solo funciona si se instaló desde Google Play)
+    implementation("com.google.android.play:review-ktx:2.0.2")
 }

@@ -44,7 +44,21 @@ object TextArt {
             80f, 12f, 18f, 12f, 12f, 0.22f, 0.12f, 0f, caps = true, shadow = true),
     )
 
-    fun spec(family: String): Spec = SPECS[family] ?: SPECS.getValue("rock")
+    /** «Taller de Afiches»: letra elegida por el usuario para títulos y textos (0 = la del tema). */
+    @Volatile var fontOverride: Int = 0
+
+    fun spec(family: String): Spec {
+        val b = SPECS[family] ?: SPECS.getValue("rock")
+        val f = fontOverride
+        if (f == 0) return b
+        return Spec(b.time, b.colon, f, f, f, f, b.label, b.tsize, b.dsize, b.wsize, b.tomsize, b.lsize,
+            b.tls, b.lls, b.tspace, b.caps, b.shadow, b.glow)
+    }
+
+    /** Letras disponibles en el Taller de Afiches. */
+    val WORKSHOP_FONTS = listOf("tema" to 0, "Anton" to R.font.anton_regular, "Orbitron" to R.font.orbitron_medium,
+        "Rajdhani" to R.font.rajdhani_semibold, "Jakarta" to R.font.jakarta_semibold, "Cormorant" to R.font.cormorant_medium,
+        "Montserrat" to R.font.montserrat_medium, "Barlow" to R.font.barlow_condensed_medium)
 
     private val faces = java.util.concurrent.ConcurrentHashMap<Int, Typeface>()
     private fun face(ctx: Context, id: Int): Typeface = faces.getOrPut(id) {

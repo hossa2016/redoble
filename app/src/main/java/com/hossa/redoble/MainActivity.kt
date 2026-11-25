@@ -66,6 +66,19 @@ class MainActivity : AppCompatActivity() {
         if (uri != null) loadPhoto(uri)
     }
 
+    /** Reseña dentro de la app: una sola vez, al tercer día de uso, nunca durante la guía. */
+    private fun maybeAskReview() {
+        if (!Prefs.onboarded(this) || Prefs.reviewAsked(this)) return
+        if (Prefs.markDayUsed(this) < 3) return
+        Prefs.setReviewAsked(this)
+        try {
+            val rm = com.google.android.play.core.review.ReviewManagerFactory.create(this)
+            rm.requestReviewFlow().addOnCompleteListener { t ->
+                if (t.isSuccessful) try { rm.launchReviewFlow(this, t.result) } catch (e: Exception) { }
+            }
+        } catch (e: Exception) { }
+    }
+
     /** Copia de los ajustes: guardar y restaurar un archivo elegido por el usuario. */
     internal val exportDoc = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) io.execute {
@@ -88,6 +101,30 @@ class MainActivity : AppCompatActivity() {
         toast("Ajustes restaurados")
         preview = null; mainCol = null; photo = null
         recreate()
+    }
+
+    /** Video propio para el fondo animado (selector del sistema: no pide permisos). */
+    internal val pickVideo = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri == null) return@registerForActivityResult
+        toast("Preparando tu video…")
+        io.execute {
+            val ok = try {
+                val size = contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: -1L
+                if (size > 80L * 1024 * 1024) false else {
+                    contentResolver.openInputStream(uri)?.use { input ->
+                        java.io.File(filesDir, "video_propio.mp4").outputStream().use { input.copyTo(it) }
+                    } != null
+                }
+            } catch (e: Exception) { ErrorLog.soft(this, e, "video propio"); false }
+            onUi {
+                if (!ok) { toast("Ese video es muy grande o no se pudo abrir (máximo 80 MB)"); return@onUi }
+                Prefs.setLiveScene(this, "propio"); Prefs.setWallStyle(this, "anim")
+                RockWidget.updateAll(this)
+                val ours = android.app.WallpaperManager.getInstance(this).wallpaperInfo?.packageName == packageName
+                if (ours) toast("Fondo aplicado: Mi video") else launchLiveWallpaper()
+                build()
+            }
+        }
     }
 
     /** Permiso opcional de la agenda (solo al activar «Próximo evento»). */
@@ -161,6 +198,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        maybeAskReview()
         // Desde la ventana del widget de Apps: abrir Apps con ese grupo
         intent?.getIntExtra("appsGroup", -1)?.takeIf { it >= 0 }?.let { g ->
             appsGroup = g
@@ -245,6 +283,8 @@ class MainActivity : AppCompatActivity() {
                 col.addView(fold(themePlate(), "tema"))
                 col.addView(fold(wallpaperPlate(), "fondo", wallName))
                 col.addView(fold(widgetBgPlate(), "fondoWidget", widgetBgName))
+                col.addView(fold(rulesPlate(), "reglas", Rules.act(this).ifBlank {
+                    if (Prefs.ruleRain(this) || Prefs.ruleNight(this) || Prefs.ruleHeadphones(this)) "Esperando su momento" else "Apagado" }))
                 if (th.usesUserAccent) col.addView(fold(accentPlate(), "acento",
                     Prefs.NAMES[Prefs.accentIndex(this).coerceIn(0, Prefs.NAMES.size - 1)]))
             }
@@ -458,7 +498,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         /** En qué pestaña vive cada sección. */
         val TAB_OF = mapOf(
-            "tema" to 0, "fondo" to 0, "fondoWidget" to 0, "acento" to 0,
+            "tema" to 0, "fondo" to 0, "fondoWidget" to 0, "reglas" to 0, "acento" to 0,
             "diseno" to 1, "apps" to 1, "cabecera" to 1, "clima" to 1, "reproductor" to 1,
             "w_pack" to 2, "w_clock" to 2, "w_apps" to 2, "w_player" to 2, "dream" to 2,
             "apariencia" to 3)
