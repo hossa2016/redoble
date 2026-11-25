@@ -709,7 +709,7 @@ internal fun MainActivity.rulesPlate(): View {
                 }
                 ui.sheet("¿Qué se celebra?", content = field, actions = listOf("Guardar" to {
                     val t = field.text.toString().trim()
-                    if (t.isNotEmpty()) { Encore.add(this, String.format(java.util.Locale.US, "%02d-%02d", m + 1, d), t.take(30)); RockWidget.updateAll(this); build() }
+                    if (t.isNotEmpty()) { Encore.add(this@rulesPlate, String.format(java.util.Locale.US, "%02d-%02d", m + 1, d), t.take(30)); RockWidget.updateAll(this@rulesPlate); build() }
                 }))
             }, c.get(java.util.Calendar.YEAR), c.get(java.util.Calendar.MONTH), c.get(java.util.Calendar.DAY_OF_MONTH)).show()
         }
