@@ -27,7 +27,7 @@ internal fun MainActivity.appsWidgetsPlate(): View {
     val card = ui.plateCard()
     val ids = Widgets.ids(this, Widgets.APPS)
     card.addView(ui.sectionTitle("Widgets de Apps"))
-    card.addView(ui.note("Se acomodan solos al tamaño. Toca uno para cambiar su grupo o su tamaño."))
+    card.addView(ui.note("Toca uno para ponerle nombre o cambiar su grupo y tamaño."))
     ids.forEachIndexed { n, id ->
         if (n > 0) card.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0F)) }, LinearLayout.LayoutParams(-1, ui.dp(1)))
         card.addView(LinearLayout(this).apply {
@@ -38,7 +38,7 @@ internal fun MainActivity.appsWidgetsPlate(): View {
             addView(LinearLayout(this@appsWidgetsPlate).apply {
                 orientation = LinearLayout.VERTICAL
                 addView(ui.text(Prefs.awName(this@appsWidgetsPlate, id)
-                    ?: if (ids.size == 1) "Tu widget de Apps" else "Widget ${n + 1}", ui.cond, 18f, Ui.HEAD))
+                    ?: Widgets.shapeName(this@appsWidgetsPlate, id), ui.cond, 18f, Ui.HEAD))
                 // Hasta dos líneas: el resumen ya no se corta con «…»
                 addView(ui.text(Widgets.appsSummary(this@appsWidgetsPlate, id), ui.cond, 14f, Ui.DIM).apply { maxLines = 2 })
                 // Sus primeras apps, para distinguir una copia de otra
@@ -54,7 +54,7 @@ internal fun MainActivity.appsWidgetsPlate(): View {
                 }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(6) })
             }, LinearLayout.LayoutParams(0, -2, 1f))
             addView(ui.text("›", ui.condLight, 22f, Ui.DIM).apply { setPadding(ui.dp(8), 0, 0, ui.dp(2)) })
-            val title = Prefs.awName(this@appsWidgetsPlate, id) ?: "Widget ${n + 1}"
+            val title = Prefs.awName(this@appsWidgetsPlate, id) ?: Widgets.shapeName(this@appsWidgetsPlate, id)
             contentDescription = "$title, ver opciones"
             setOnClickListener {
                 ui.sheet(title, items = listOf("Cambiar grupo o tamaño", "Ponerle nombre"), onItem = { which ->
@@ -87,15 +87,15 @@ internal fun MainActivity.playerWidgetPlate(): View {
 internal fun MainActivity.packPlate(): View {
     val card = ui.plateCard()
     val list = listOf(
-        Widgets.FULL to ("Completo" to "Todo junto: hora, clima, música y apps"),
-        Widgets.CLOCK to ("Hora y clima" to "Día, fecha, hora, clima y batería"),
-        Widgets.APPS to ("Apps" to "Tus apps, se acomodan al tamaño"),
-        Widgets.PLAYER to ("Reproductor" to "La canción con sus botones"))
-    val placed = list.count { Widgets.has(this, it.first) }
+        Widgets.has(this, Widgets.FULL) to ("Completo" to "Todo junto: hora, clima, música y apps"),
+        Widgets.has(this, Widgets.CLOCK) to ("Hora y clima" to "Día, fecha, hora, clima y batería"),
+        Widgets.has(this, Widgets.APPS) to ("Apps" to "Tus apps, se acomodan al tamaño"),
+        Widgets.has(this, Widgets.PLAYER) to ("Reproductor" to "La canción con sus botones"),
+        MiniWidget.placed(this) to ("Mini 1×1" to "Día, fecha y batería en un cuadrito"))
+    val placed = list.count { it.first }
     card.addView(ui.sectionTitle("Tus widgets"))
     card.addView(ui.note("Ponlos juntos o por separado; todos usan tu tema."))
-    list.forEach { (kind, nd) ->
-        val on = Widgets.has(this, kind)
+    list.forEach { (on, nd) ->
         card.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL

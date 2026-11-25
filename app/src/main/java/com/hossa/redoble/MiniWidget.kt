@@ -21,6 +21,8 @@ class MiniWidget : AppWidgetProvider() {
     }
 
     companion object {
+        fun placed(ctx: Context) = AppWidgetManager.getInstance(ctx).getAppWidgetIds(ComponentName(ctx, MiniWidget::class.java)).isNotEmpty()
+
         fun updateAll(ctx: Context) {
             val mgr = AppWidgetManager.getInstance(ctx)
             for (id in mgr.getAppWidgetIds(ComponentName(ctx, MiniWidget::class.java))) {

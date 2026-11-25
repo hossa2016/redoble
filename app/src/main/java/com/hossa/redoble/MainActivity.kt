@@ -253,13 +253,7 @@ class MainActivity : AppCompatActivity() {
         // Si hay una sección abierta (por ejemplo, desde la ventana de un widget), manda su pestaña.
         var tab = Prefs.settingsTab(this)
         openSections.firstOrNull()?.let { TAB_OF[it] }?.let { if (it != tab) { tab = it; Prefs.setSettingsTab(this, it) } }
-        val tabs = ui.segmented(listOf(0 to "Estilo", 1 to "Contenido", 2 to "Widgets", 3 to "App"), tab) { t ->
-            Prefs.setSettingsTab(this, t)
-            openSections.clear(); Prefs.setOpenSections(this, openSections)
-            build()
-            // Que las pestañas queden a la vista al cambiar
-            scroll?.let { sv -> sv.post { tabsView?.let { tv -> if (sv.scrollY > tv.top) sv.smoothScrollTo(0, (tv.top - ui.dp(8)).coerceAtLeast(0)) } } }
-        }
+        val tabs = ui.segmented(TAB_NAMES, tab) { t -> selectTab(t) }
         // TalkBack: cada opción se anuncia como «pestaña» (sin parada extra en el contenedor)
         fun markTabs(v: View) {
             if (v is android.widget.Button) {
@@ -296,25 +290,36 @@ class MainActivity : AppCompatActivity() {
                     Prefs.NAMES[Prefs.accentIndex(this).coerceIn(0, Prefs.NAMES.size - 1)]))
             }
             1 -> {
-                // Lo que muestran los widgets (Diseño es del widget Completo)
+                // El widget: qué muestra y cómo están los widgets sueltos
                 if (Widgets.has(this, Widgets.FULL) || !hasWidget) col.addView(fold(designPlate(), "diseno"))
                 col.addView(fold(setlistPlate(), "apps"))
                 col.addView(fold(headerExtrasPlate(), "cabecera", listOfNotNull(
                     "Cartel".takeIf { Prefs.poster(this) }, "Alarma".takeIf { Prefs.showAlarm(this) },
                     "Agenda".takeIf { Prefs.showAgenda(this) }).joinToString(" · ").ifBlank { "Fecha normal" }))
                 col.addView(fold(weatherPlate(), "clima", Prefs.city(this).substringBefore(",").ifBlank { "Agregar ciudad ›" }))
-                col.addView(fold(playerPlate(), "reproductor", if (Player.enabled(this)) "Activo" else "Falta dar permiso ›"))
-            }
-            2 -> {
-                // Cuáles tienes y las opciones propias de cada widget suelto
-                col.addView(fold(packPlate(), "w_pack", "${intArrayOf(Widgets.FULL, Widgets.CLOCK, Widgets.APPS, Widgets.PLAYER).count { Widgets.has(this, it) }} de 4 en pantalla"))
-                if (clockW) col.addView(fold(clockWidgetPlate(), "w_clock"))
+                val total = listOf(Widgets.has(this, Widgets.FULL), clockW, appsW, playerW, MiniWidget.placed(this)).count { it }
+                col.addView(fold(packPlate(), "w_pack", I18n.tr(this, "{} de 5 en pantalla").replace("{}", total.toString())))
+                if (clockW) col.addView(fold(clockWidgetPlate(), "w_clock", listOfNotNull(
+                    "Día".takeIf { Prefs.cw(this, "dia") }, "Clima".takeIf { Prefs.cw(this, "clima") },
+                    "Mañana".takeIf { Prefs.cw(this, "manana") }, "Batería".takeIf { Prefs.cw(this, "bateria") }).joinToString(" · ")))
                 if (appsW) col.addView(fold(appsWidgetsPlate(), "w_apps", Widgets.ids(this, Widgets.APPS).size.let { if (it == 1) "1 widget" else "$it widgets" }))
                 if (playerW) col.addView(fold(playerWidgetPlate(), "w_player", if (Prefs.pwIdle(this) == "last") "Sin música: última canción" else "Sin música: nada sonando"))
-                col.addView(fold(dreamPlate(), "dream", if (Prefs.dreamBg(this) == "black") "Fondo negro" else "Con tu fondo"))
             }
-            else -> col.addView(fold(appearancePlate(hasWidget), "apariencia",
-                when (Prefs.uiMode(this)) { "system" -> "Sistema"; "light" -> "Claro"; else -> "Oscuro" }))
+            2 -> {
+                col.addView(fold(playerPlate(), "reproductor", if (Player.enabled(this)) "Activo" else "Falta dar permiso ›"))
+                col.addView(fold(musicExtrasPlate(), "musica_extras", listOfNotNull(
+                    "Escenario Vivo".takeIf { Prefs.liveStage(this) }, "Temporizador".takeIf { SleepTimer.left(this) > 0 },
+                    "Historial".takeIf { Prefs.tourLog(this) }).joinToString(" · ").ifBlank { "Apagado" }))
+                col.addView(fold(sharePlate(), "comparte", "Entrada, afiches y setup"))
+            }
+            else -> {
+                col.addView(fold(appearancePlate(hasWidget), "apariencia",
+                    when (Prefs.uiMode(this)) { "system" -> "Sistema"; "light" -> "Claro"; else -> "Oscuro" }))
+                col.addView(fold(performancePlate(), "rendimiento", if (Prefs.liveUpdates(this)) "Actualización en vivo" else "Normal"))
+                col.addView(fold(dreamPlate(), "dream", if (Prefs.dreamBg(this) == "black") "Fondo negro" else "Con tu fondo"))
+                col.addView(fold(funPlate(), "divertidos", listOfNotNull("Voz rock".takeIf { Prefs.rockVoice(this) },
+                    "Hasta el 11".takeIf { Prefs.amp11(this) }).joinToString(" · ").ifBlank { "Apagado" }))
+            }
         }
 
         col.addView(ui.text("Prisma Widgets " + BuildConfig.VERSION_NAME, ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
@@ -325,54 +330,65 @@ class MainActivity : AppCompatActivity() {
         previewPill()
     }
 
+    /** Cambia de pestaña y deja las pestañas a la vista. */
+    internal fun selectTab(t: Int) {
+        Prefs.setSettingsTab(this, t)
+        openSections.clear(); Prefs.setOpenSections(this, openSections)
+        build()
+        scroll?.let { sv -> sv.post { tabsView?.let { tv -> if (sv.scrollY > tv.top) sv.smoothScrollTo(0, (tv.top - ui.dp(8)).coerceAtLeast(0)) } } }
+    }
+
     /**
-     * Botón flotante «Vista previa»: aparece cuando la vista previa sale de la pantalla,
-     * para ver el resultado sin volver arriba.
+     * Barra fija arriba al bajar: miniatura del widget (tócala para verlo en grande)
+     * y las pestañas. Reemplaza al botón flotante, que tapaba los títulos.
      */
     internal fun previewPill() {
         val host = findViewById<android.view.ViewGroup>(android.R.id.content) ?: return
         val sv = scroll ?: return
-        var pill = host.findViewWithTag<TextView>("pvPill")
-        if (pill == null) {
-            pill = ui.text("Vista previa", ui.condSemi, 15f, Ui.HEAD).apply {
-                tag = "pvPill"
-                gravity = Gravity.CENTER
-                minHeight = ui.dp(48); minimumHeight = ui.dp(48)
-                background = ui.rect(Ui.PLATE_TOP, 22f, ui.accentLine, 1.5f)
-                setPadding(ui.dp(18), 0, ui.dp(18), 0)
-                elevation = ui.dp(6).toFloat()
-                contentDescription = "Ver la vista previa del widget"
-                visibility = View.GONE
-                setOnClickListener { visibility = View.GONE; openFullPreview() }
-            }
-            // Centrado arriba, bajo la barra de estado y el recorte de la cámara (los márgenes
-            // se toman cuando la ventana ya los conoce, no al crear el botón)
-            host.addView(pill, android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
-                topMargin = ui.dp(10)
-            })
-            ViewCompat.setOnApplyWindowInsetsListener(pill) { v, ins ->
-                val b = ins.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-                (v.layoutParams as? android.widget.FrameLayout.LayoutParams)?.let { lp ->
-                    lp.topMargin = b.top + ui.dp(10); v.layoutParams = lp
+        host.findViewWithTag<View>("pvPill")?.let { host.removeView(it) }
+        val thumb = android.widget.ImageView(this).apply {
+            scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+            background = ui.rect(Ui.PLATE_TOP, 10f, Ui.headA(0x33), 1f)
+            clipToOutline = true
+            outlineProvider = object : android.view.ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: android.graphics.Outline) {
+                    outline.setRoundRect(0, 0, view.width, view.height, ui.dp(10).toFloat())
                 }
-                ins
             }
-            ViewCompat.requestApplyInsets(pill)
-        } else {
-            // Colores al día si cambió el modo claro/oscuro o el acento
-            pill.setTextColor(Ui.HEAD)
-            pill.background = ui.rect(Ui.PLATE_TOP, 22f, ui.accentLine, 1.5f)
+            contentDescription = "Ver la vista previa del widget"
+            setOnClickListener { openFullPreview() }
         }
-        val p = pill
+        val bar = LinearLayout(this).apply {
+            tag = "pvPill"
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setBackgroundColor(Ui.INK)
+            elevation = ui.dp(4).toFloat()
+            setPadding(ui.dp(12), ui.dp(6), ui.dp(12), ui.dp(6))
+            visibility = View.GONE
+            addView(thumb, LinearLayout.LayoutParams(ui.dp(40), ui.dp(56)).apply { marginEnd = ui.dp(10) })
+            addView(ui.segmented(TAB_NAMES, Prefs.settingsTab(this@MainActivity)) { t -> selectTab(t) },
+                LinearLayout.LayoutParams(0, -2, 1f))
+        }
+        host.addView(bar, android.widget.FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
+        ViewCompat.setOnApplyWindowInsetsListener(bar) { v, ins ->
+            val b = ins.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            v.setPadding(ui.dp(12) + b.left, ui.dp(6) + b.top, ui.dp(12) + b.right, ui.dp(6)); ins
+        }
+        ViewCompat.requestApplyInsets(bar)
         fun update() {
-            val card = preview?.card
-            // Solo en la pantalla de ajustes (nunca durante la guía de inicio)
+            val tv = tabsView
             val onMain = Prefs.onboarded(this) && sv.getChildAt(0) === mainCol
-            val hidden = onMain && card != null && card.parent === mainCol && sv.scrollY > card.bottom - ui.dp(40)
-            val want = if (hidden && !fullPreviewOpen) View.VISIBLE else View.GONE
-            if (p.visibility != want) {
-                if (want == View.VISIBLE) { p.alpha = 0f; p.visibility = View.VISIBLE; p.animate().alpha(1f).setDuration(150).start() }
-                else p.visibility = View.GONE
+            val want = if (onMain && !fullPreviewOpen && tv != null && tv.parent != null && sv.scrollY > tv.bottom) View.VISIBLE else View.GONE
+            if (bar.visibility != want) {
+                if (want == View.VISIBLE) {
+                    // Foto del momento de la vista previa para la miniatura
+                    preview?.frame?.let { fr -> if (fr.width > 0) try {
+                        val bmp = android.graphics.Bitmap.createBitmap(fr.width, fr.height, android.graphics.Bitmap.Config.ARGB_8888)
+                        fr.draw(android.graphics.Canvas(bmp)); thumb.setImageBitmap(bmp)
+                    } catch (e: Exception) { } }
+                    bar.alpha = 0f; bar.visibility = View.VISIBLE; bar.animate().alpha(1f).setDuration(150).start()
+                } else bar.visibility = View.GONE
             }
         }
         sv.setOnScrollChangeListener { _, _, _, _, _ -> update() }
@@ -505,11 +521,13 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         /** En qué pestaña vive cada sección. */
+        val TAB_NAMES = listOf(0 to "Estilo", 1 to "Widget", 2 to "Música", 3 to "Más")
         val TAB_OF = mapOf(
             "tema" to 0, "fondo" to 0, "fondoWidget" to 0, "reglas" to 0, "acento" to 0,
-            "diseno" to 1, "apps" to 1, "cabecera" to 1, "clima" to 1, "reproductor" to 1,
-            "w_pack" to 2, "w_clock" to 2, "w_apps" to 2, "w_player" to 2, "dream" to 2,
-            "apariencia" to 3)
+            "diseno" to 1, "apps" to 1, "cabecera" to 1, "clima" to 1,
+            "w_pack" to 1, "w_clock" to 1, "w_apps" to 1, "w_player" to 1,
+            "reproductor" to 2, "musica_extras" to 2, "comparte" to 2,
+            "apariencia" to 3, "rendimiento" to 3, "dream" to 3, "divertidos" to 3)
     }
     internal var permCelebrated = false
 }

@@ -35,7 +35,8 @@ internal fun MainActivity.weatherPlate(): View {
             textCursorDrawable = GradientDrawable().apply { setColor(ui.accent); setSize(ui.dp(1.5f), ui.dp(20)) }
         }
     }
-    val save = ui.primary("Guardar")
+    // Acción secundaria: el relleno del acento queda para la acción principal de cada pantalla
+    val save = ui.secondary("Guardar")
     // Campo a todo el ancho y Guardar debajo: con letra grande nada se corta
     card.addView(field, LinearLayout.LayoutParams(-1, ui.dp(52)))
     card.addView(save, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(10) })
@@ -93,21 +94,20 @@ internal fun MainActivity.weatherPlate(): View {
     val fc = Prefs.forecast(this).split("|").mapNotNull { d -> d.split(";").takeIf { it.size == 4 } }
     if (fc.isNotEmpty()) {
         card.addView(ui.label("PRÓXIMOS DÍAS"), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(16); bottomMargin = ui.dp(6) })
-        card.addView(LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            fc.forEach { d ->
-                addView(LinearLayout(this@weatherPlate).apply {
-                    orientation = LinearLayout.VERTICAL
-                    gravity = Gravity.CENTER_HORIZONTAL
-                    addView(ui.text(d[0], ui.condSemi, 15f, Ui.HEAD))
-                    addView(ui.text(WeatherWorker.describe(d[1].toIntOrNull() ?: -1), ui.cond, 13f, Ui.DIM).apply {
-                        gravity = Gravity.CENTER; ui.fitText(this, 13, 11)
-                    }, LinearLayout.LayoutParams(-1, -2))
-                    addView(ui.text("${d[2]}°–${d[3]}°", ui.cond, 15f, Ui.HEAD))
-                    contentDescription = "${d[0]}: ${WeatherWorker.describe(d[1].toIntOrNull() ?: -1)}, mínima ${d[2]}, máxima ${d[3]} grados"
-                }, LinearLayout.LayoutParams(0, -2, 1f))
-            }
-        })
+        // Lista vertical: una fila de 44 dp por día (día · estado · mín/máx a la derecha)
+        fc.forEach { d ->
+            val desc = I18n.tr(this, WeatherWorker.describe(d[1].toIntOrNull() ?: -1))
+            card.addView(LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                minimumHeight = ui.dp(44)
+                addView(ui.text(d[0], ui.condSemi, 17f, Ui.HEAD), LinearLayout.LayoutParams(ui.dp(64), -2))
+                addView(ui.text(desc, ui.cond, 15f, Ui.MUTED).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END },
+                    LinearLayout.LayoutParams(0, -2, 1f))
+                addView(ui.text("${d[2]}°  ·  ${d[3]}°", ui.cond, 17f, Ui.HEAD))
+                contentDescription = "${d[0]}: $desc, ${d[2]}° – ${d[3]}°"
+            }, LinearLayout.LayoutParams(-1, -2))
+        }
         val (rise, set) = Prefs.sunTimes(this)
         if (rise.isNotBlank()) card.addView(ui.bodyText("Amanecer $rise · Atardecer $set", Ui.MUTED, 14f),
             LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
@@ -116,10 +116,6 @@ internal fun MainActivity.weatherPlate(): View {
     card.addView(ui.segmented(listOf(false to "°C Celsius", true to "°F Fahrenheit"), Prefs.tempF(this)) { f ->
         Prefs.setTempF(this, f); WeatherWorker.runNow(this, force = true); onUiDelayed(4000) { build() }; build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
-    card.addView(switchRow("Clima con voz rock", Prefs.rockVoice(this)) { on ->
-        Prefs.setRockVoice(this, on); WeatherWorker.runNow(this, force = true); onUiDelayed(4000) { refreshCityStatus() }
-    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-    card.addView(ui.note("Frases como «Tormenta afuera: noche de distorsión»."))
     return card
 }
 
@@ -163,6 +159,8 @@ internal fun MainActivity.setlistPlate(): View {
     val extraFilled = appsWidget && (8 until Prefs.GROUP_SLOTS).any { Prefs.app(this, it, group).isNotBlank() }
     val showAll = moreSlots || extraFilled
     val used = if (appsWidget) (if (showAll) Prefs.GROUP_SLOTS else 8) else Prefs.usedSlots(this)
+    // Sin huecos: las apps suben a los primeros lugares (el número de la fila es su posición real)
+    if (Prefs.compactApps(this, group, used)) RockWidget.updateAll(this)
     val filled = (0 until used).count { Prefs.app(this, it, group).isNotBlank() }
     card.addView(ui.sectionTitle("Apps", if (appsWidget) "${Prefs.GROUP_NAMES[group]} · $filled de $used"
         else "$filled de $used · ${Prefs.perRow(this)} por fila"))
@@ -347,18 +345,18 @@ internal fun MainActivity.switchRow(label: String, on: Boolean, onChange: (Boole
 internal fun MainActivity.headerExtrasPlate(): View {
     val card = ui.plateCard()
     card.addView(ui.sectionTitle("Fecha, alarma y agenda"))
-    card.addView(switchRow("Fecha estilo Cartel de Gira", Prefs.poster(this)) { on ->
+    card.addView(switchRow("Fecha estilo cartel", Prefs.poster(this)) { on ->
         Prefs.setPoster(this, on); RockWidget.updateAll(this); build()
     })
     card.addView(ui.note("«${Extras.posterLine(this)}», como un afiche de concierto."))
     card.addView(switchRow("Próxima alarma", Prefs.showAlarm(this)) { on ->
         Prefs.setShowAlarm(this, on); RockWidget.updateAll(this); build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-    card.addView(ui.note("Si suena en las próximas 24 horas. No pide permisos."))
+    card.addView(ui.note("Si suena en las próximas 24 horas."))
     card.addView(switchRow("Próximo evento de la agenda", Prefs.showAgenda(this) && Extras.hasCalendar(this)) { on ->
         if (on && !Extras.hasCalendar(this)) calendarPerm.launch(android.Manifest.permission.READ_CALENDAR)
         else { Prefs.setShowAgenda(this, on); RockWidget.updateAll(this); build() }
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-    card.addView(ui.note("Pide permiso para leer tu calendario. Solo se lee en el teléfono; nada sale de él."))
+    card.addView(ui.note("Pide permiso para leer tu calendario.", "Solo se lee en el teléfono; nada sale de él."))
     return card
 }

@@ -249,8 +249,46 @@ class Ui(val ctx: Context, val accent: Int) {
     /**
      * Descripción de una línea; si hay más que contar, un botón ⓘ la abre en una ventana.
      */
-    fun note(short: String, more: String? = null, color: Int = MUTED, sp: Float = 13f): View {
-        val t = bodyText(short, color, sp)
+    /**
+     * Sistema de texto (tokens): Título 20 condSemi · Etiqueta 17 cond HEAD ·
+     * Ayuda 15 cond MUTED (una o dos líneas; lo largo va al ⓘ) · Pie 12 DIM.
+     * Espacios: 4 / 8 / 12 / 16 / 24 dp.
+     */
+    fun caption(s: String) = text(s, cond, 12f, DIM)
+
+    /**
+     * Acción dentro de una sección: fila de 56 dp con ícono, texto y flecha
+     * (nunca texto gris suelto, que parece un párrafo).
+     */
+    fun actionRow(label: String, icon: Int, sub: String? = null): LinearLayout = LinearLayout(ctx).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        background = rowBg()
+        minimumHeight = dp(56)
+        setPadding(dp(10), dp(6), dp(6), dp(6))
+        isClickable = true; isFocusable = true
+        addView(FrameLayout(ctx).apply {
+            background = rect(ColorUtils.setAlphaComponent(accent, if (light) 0x22 else 0x2E), 12f)
+            addView(ImageView(ctx).apply {
+                setImageResource(icon); imageTintList = ColorStateList.valueOf(accent)
+                scaleType = ImageView.ScaleType.CENTER_INSIDE
+            }, FrameLayout.LayoutParams(dp(22), dp(22), Gravity.CENTER))
+        }, LinearLayout.LayoutParams(dp(36), dp(36)))
+        addView(LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), 0, dp(8), 0)
+            addView(text(label, cond, 17f, HEAD))
+            if (sub != null) addView(text(sub, cond, 13f, DIM))
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        addView(ImageView(ctx).apply {
+            setImageResource(R.drawable.ic_chevron); imageTintList = ColorStateList.valueOf(DIM)
+        }, LinearLayout.LayoutParams(dp(22), dp(22)))
+        contentDescription = label
+    }
+
+    fun note(short: String, more: String? = null, color: Int = MUTED, sp: Float = 15f): View {
+        // Ayuda en la misma familia que las etiquetas (condensada), una sola voz tipográfica
+        val t = text(short, cond, sp, color).apply { setLineSpacing(0f, 1.08f) }
         if (more == null) return t
         return LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL

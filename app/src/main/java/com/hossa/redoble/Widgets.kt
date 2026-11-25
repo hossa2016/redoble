@@ -272,6 +272,14 @@ object Widgets {
     }
 
     /** Resumen de una copia del widget de Apps (para la configuración). */
+    /** Nombre por defecto según la forma: «Columna 1×3», «Fila 4×1», «Bloque 2×4». */
+    fun shapeName(ctx: Context, id: Int): String {
+        val (w, h) = sizeDp(ctx, AppWidgetManager.getInstance(ctx), id)
+        val g = grid(ctx, id, w, h, Themes.widget(ctx).family)
+        val kind = when { g.cols == 1 -> "Columna"; g.rows == 1 -> "Fila"; else -> "Bloque" }
+        return I18n.tr(ctx, kind) + " ${g.cols}×${g.rows}"
+    }
+
     fun appsSummary(ctx: Context, id: Int): String {
         val mgr = AppWidgetManager.getInstance(ctx)
         val (w, h) = sizeDp(ctx, mgr, id)

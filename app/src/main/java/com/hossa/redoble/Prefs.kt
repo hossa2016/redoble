@@ -290,6 +290,19 @@ object Prefs {
         return found
     }
 
+    /** Sube las apps a los primeros lugares (sin huecos); devuelve true si movió algo. */
+    fun compactApps(ctx: Context, group: Int, count: Int): Boolean {
+        val items = (0 until count).map { app(ctx, it, group) to label(ctx, it, group) }
+        val filled = items.filter { it.first.isNotBlank() }
+        val hasGap = items.indexOfFirst { it.first.isBlank() }.let { g -> g >= 0 && items.drop(g).any { it.first.isNotBlank() } }
+        if (!hasGap) return false
+        for (k in 0 until count) {
+            val (pkg, lbl) = filled.getOrNull(k) ?: ("" to "")
+            setApp(ctx, k, pkg, group); setLabel(ctx, k, lbl, group)
+        }
+        return true
+    }
+
     /** Lee el lugar tal cual (sin poner apps por defecto en los lugares nunca usados). */
     fun rawApp(ctx: Context, slot: Int, group: Int = 0): String =
         p(ctx).getString(gk(group, "app$slot"), "") ?: ""

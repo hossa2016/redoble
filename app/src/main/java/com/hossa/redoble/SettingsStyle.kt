@@ -154,9 +154,13 @@ internal fun MainActivity.animSection(card: LinearLayout) {
         grid.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
     }
     card.addView(grid, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-    val apply = ui.primary("Ver y aplicar")
-    apply.setOnClickListener { openFullPreview() }
-    card.addView(apply, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(14) })
+    // Mi video: un clip propio como fondo animado (va con los demás fondos)
+    val hasOwn = java.io.File(filesDir, "video_propio.mp4").exists()
+    card.addView(ui.actionRow(if (hasOwn) "Cambiar mi video" else "Usar un video mío", R.drawable.ic_video,
+        if (hasOwn && info.id == "propio") "En uso" else "Hasta 80 MB · los cortos van mejor").apply {
+        setOnClickListener { pickVideo.launch(androidx.activity.result.PickVisualMediaRequest(
+            androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.VideoOnly)) }
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
     card.addView(ui.note("Toca uno para verlo en grande y aplicarlo.",
         "Al tocar uno lo ves a pantalla completa, donde puedes deslizar para ver los demás y aplicarlo. " +
         "Se mueve solo con la pantalla encendida y en el inicio; al abrir una app o bloquear el teléfono se pausa para no gastar batería."),
@@ -460,37 +464,10 @@ internal fun MainActivity.themePlate(): View {
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
     card.addView(ui.note("Clima, batería, música y apps con la letra de cada tema.",
         "La hora, el día y la fecha usan el reloj del sistema, que nunca se atrasa. " +
-        "Si quieres que también lleven la letra del tema, activa «Hora con la letra del tema»."))
-    if (fonts) {
-        // Solo cuenta como encendida si la actualización en vivo también lo está (es quien la avanza)
-        card.addView(switchRow("Hora con la letra del tema", Prefs.themeClock(this) && live) { on ->
-            Prefs.setThemeClock(this, on)
-            // Necesita la actualización en vivo: se enciende con ella en un solo toque
-            if (on && !live) { Prefs.setLiveUpdates(this, true); askNotifications(); LiveService.start(this) }
-            RockWidget.updateAll(this)
-            build()
-            if (on) showKeepAliveSteps()
-        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-        card.addView(ui.note("Se dibuja cada minuto con la actualización en vivo.",
-            "Con esto Prisma Widgets dibuja la hora, el día y la fecha cada minuto, y para eso enciende la " +
-            "actualización en vivo. Si HyperOS cierra la app para ahorrar batería, la hora se congela. " +
-            "Si la actualización en vivo se detiene, el widget vuelve solo al reloj del sistema, que nunca se atrasa."))
-    }
-    card.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0F)) },
-        LinearLayout.LayoutParams(-1, ui.dp(1)).apply { topMargin = ui.dp(10); bottomMargin = ui.dp(4) })
-    card.addView(switchRow("Actualización en vivo", live) { on ->
-        Prefs.setLiveUpdates(this, on)
-        // Android exige una notificación fija para esto; el permiso se pide solo aquí, ya explicado
-        if (on) { askNotifications(); LiveService.start(this) } else LiveService.stop(this)
-        RockWidget.updateAll(this)
-        build()
-    })
-    card.addView(ui.note("Batería al instante (con una notificación fija).",
-        "Mantiene la batería al día y permite la hora con la letra del tema. Android exige mostrar una " +
-        "notificación fija mientras está activa; al encenderla te pedirá el permiso de notificaciones."))
+        "Para que también lleven la letra del tema: Más › Rendimiento › «Hora con la letra del tema»."))
     // Taller de Afiches: la letra de títulos y textos del widget
-    card.addView(ui.text("Taller de Afiches · letra del widget", ui.cond, 15f, Ui.MUTED),
-        LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(16); bottomMargin = ui.dp(6) })
+    card.addView(ui.text("Letra del widget", ui.cond, 17f, Ui.HEAD), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(16) })
+    card.addView(ui.caption("Taller de Afiches"), LinearLayout.LayoutParams(-2, -2).apply { bottomMargin = ui.dp(6) })
     card.addView(HorizontalScrollView(this).apply {
         isHorizontalScrollBarEnabled = false
         addView(LinearLayout(this@themePlate).apply {
@@ -499,12 +476,19 @@ internal fun MainActivity.themePlate(): View {
             TextArt.WORKSHOP_FONTS.forEach { (name, id) ->
                 addView(ui.option(if (name == "tema") "Del tema" else name, name == cur).apply {
                     if (id != 0) typeface = ui.font(id)
-                    setOnClickListener { Prefs.setWorkshopFont(this@themePlate, name); RockWidget.updateAll(this@themePlate); build() }
+                    setOnClickListener {
+                        Prefs.setWorkshopFont(this@themePlate, name)
+                        // Elegir una letra enciende «Letras del tema» (sin dependencias escondidas)
+                        if (name != "tema" && !Prefs.themeFonts(this@themePlate)) {
+                            Prefs.setThemeFonts(this@themePlate, true); toast("Letras del tema activadas")
+                        }
+                        RockWidget.updateAll(this@themePlate); build()
+                    }
                 }, LinearLayout.LayoutParams(-2, ui.dp(48)).apply { marginEnd = ui.dp(8) })
             }
         })
     })
-    card.addView(ui.note("Funciona con «Letras del tema» activado. La hora conserva la letra del tema."))
+    card.addView(ui.note("La hora conserva la letra del tema."))
     return card
 }
 
@@ -674,21 +658,22 @@ internal fun MainActivity.decodeSampled(uri: Uri, reqW: Int, reqH: Int): Bitmap?
 /** «Setlist del Día»: reglas automáticas, fechas especiales y video propio. */
 internal fun MainActivity.rulesPlate(): View {
     val card = ui.plateCard()
-    card.addView(ui.sectionTitle("Setlist del Día"))
-    card.addView(ui.note("El escenario cambia solo según el momento. Tus ajustes no se tocan: al pasar el momento, todo vuelve."))
+    card.addView(ui.sectionTitle("Cambio automático"))
+    card.addView(ui.note("Setlist del Día · cambia solo con el clima, la hora o tus audífonos.",
+        "Tus ajustes no se tocan: al pasar el momento, todo vuelve. Si eliges algo a mano mientras una regla actúa, " +
+        "manda lo que elegiste hasta el próximo cambio. La noche y los audífonos se revisan solos; la lluvia, con cada dato del clima."))
     fun rule(label: String, key: String, on: Boolean, hint: String) {
         card.addView(switchRow(label, on) { v -> Prefs.setRule(this, key, v); RockWidget.scheduleMidnight(this); Rules.forget(); RockWidget.updateAll(this); build() },
             LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
         card.addView(ui.note(hint))
     }
-    rule("Lluvia: Lluvia y café", "ruleRain", Prefs.ruleRain(this), "Cuando el clima dice lluvia, el fondo animado pasa a «Lluvia y café».")
-    rule("Noche: Ámbar y fogata", "ruleNight", Prefs.ruleNight(this), "De 8 p. m. a 5 a. m., tema Ámbar y fondo Fogata.")
-    rule("Audífonos: Música grande", "ruleHeadphones", Prefs.ruleHeadphones(this), "Con audífonos conectados, el widget Completo muestra el reproductor grande.")
-    card.addView(ui.note("Las reglas se revisan al encender la pantalla."))
+    rule("Con lluvia", "ruleRain", Prefs.ruleRain(this), "Fondo «Lluvia y café».")
+    rule("De noche", "ruleNight", Prefs.ruleNight(this), "8 p. m. a 5 a. m.: tema Ámbar y fondo Fogata.")
+    rule("Con audífonos", "ruleHeadphones", Prefs.ruleHeadphones(this), "Reproductor grande en el widget Completo.")
 
     // Encore: fechas especiales
     card.addView(ui.label("FECHAS ESPECIALES"), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(18); bottomMargin = ui.dp(4) })
-    card.addView(ui.note("Ese día el widget lo celebra y el fondo pasa a «Concierto»."))
+    card.addView(ui.note("Encore · ese día el widget lo celebra."))
     Encore.all(this).forEachIndexed { i, (md, text) ->
         card.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL
@@ -699,7 +684,7 @@ internal fun MainActivity.rulesPlate(): View {
             addView(ui.textButton("Quitar").apply { setOnClickListener { Encore.remove(this@rulesPlate, i); RockWidget.updateAll(this@rulesPlate); build() } })
         })
     }
-    card.addView(ui.textButton("Agregar una fecha").apply {
+    card.addView(ui.actionRow("Agregar una fecha", R.drawable.ic_calendar).apply {
         setOnClickListener {
             val c = java.util.Calendar.getInstance()
             android.app.DatePickerDialog(this@rulesPlate, { _, _, m, d ->
@@ -713,17 +698,7 @@ internal fun MainActivity.rulesPlate(): View {
                 }))
             }, c.get(java.util.Calendar.YEAR), c.get(java.util.Calendar.MONTH), c.get(java.util.Calendar.DAY_OF_MONTH)).show()
         }
-    }, LinearLayout.LayoutParams(-1, ui.dp(48)))
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(4) })
 
-    // Video propio y batería
-    card.addView(ui.label("MI VIDEO"), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(18); bottomMargin = ui.dp(4) })
-    card.addView(ui.note("Un clip tuyo (de un concierto, por ejemplo) como fondo animado. Máximo 80 MB; los cortos y en 1080p van mejor."))
-    card.addView(ui.textButton(if (java.io.File(filesDir, "video_propio.mp4").exists()) "Cambiar mi video" else "Usar un video mío").apply {
-        setOnClickListener { pickVideo.launch(androidx.activity.result.PickVisualMediaRequest(
-            androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.VideoOnly)) }
-    }, LinearLayout.LayoutParams(-1, ui.dp(48)))
-    card.addView(switchRow("Batería «hasta el 11»", Prefs.amp11(this)) { v -> Prefs.setAmp11(this, v); RockWidget.updateAll(this) },
-        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
-    card.addView(ui.note("Al llegar al 100 % cargando, el widget lo celebra."))
     return card
 }

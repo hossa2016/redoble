@@ -35,7 +35,7 @@ internal fun MainActivity.previewPlate(): View {
     // Tamaño real aproximado del widget: ancho de pantalla y 4/5 del alto útil
     val wPx = sw - (16 * dens).toInt()
     val hPx = (sh * 0.78f).toInt()
-    val boxW = ui.dp(140)
+    val boxW = (sw * 0.52f).toInt()
     val scale = boxW.toFloat() / sw
     val boxH = (sh * scale).toInt()
 

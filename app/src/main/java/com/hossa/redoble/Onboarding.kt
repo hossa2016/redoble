@@ -69,7 +69,7 @@ internal fun MainActivity.onboardingView(): View {
             // Solo lo esencial; cada sección tiene su propia explicación (ⓘ) en la app
             val tips = listOf(
                 "Vista previa" to "Arriba ves tu widget. Tócala para verla a pantalla completa con el fondo.",
-                "Secciones" to "Arriba eliges Estilo, Contenido, Widgets o App. Toca un título para abrirlo; ⓘ explica cada opción.",
+                "Secciones" to "Arriba eliges Estilo, Widget, Música o Más. Toca un título para abrirlo; ⓘ explica cada opción.",
                 "Fondos" to "Toca un fondo para verlo en grande, desliza para ver los demás y toca Aplicar.",
                 "Más widgets" to "Además del Completo hay Hora y clima, Apps y Reproductor. Agrégalos desde la lista de widgets del teléfono."
             )
@@ -82,7 +82,7 @@ internal fun MainActivity.onboardingView(): View {
                     addView(ui.bodyText(d, Ui.MUTED, 14f).apply { setPadding(0, ui.dp(4), 0, 0) })
                 }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(8) })
             }
-            content.addView(ui.bodyText("Puedes volver a ver esta guía en App → Apariencia y ayuda → «Ver la guía de inicio».", Ui.DIM, 14f).apply {
+            content.addView(ui.bodyText("Puedes volver a ver esta guía en Más → Apariencia y ayuda → «Ver la guía de inicio».", Ui.DIM, 14f).apply {
                 setPadding(0, ui.dp(6), 0, 0)
             })
         }
@@ -104,7 +104,7 @@ internal fun MainActivity.onboardingView(): View {
                     .setInterpolator(android.view.animation.OvershootInterpolator(3f)).start()
                 give.tick()
             }
-            content.addView(ui.bodyText("Puedes hacerlo después en Contenido › Música.", Ui.DIM, 14f).apply {
+            content.addView(ui.bodyText("Puedes hacerlo después en la pestaña Música.", Ui.DIM, 14f).apply {
                 setPadding(0, ui.dp(12), 0, 0)
             })
         }
