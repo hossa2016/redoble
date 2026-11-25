@@ -57,8 +57,8 @@ internal fun MainActivity.openEditor() {
     }
     bar.addView(back, LinearLayout.LayoutParams(ui.dp(48), ui.dp(48)))
     bar.addView(ui.text("Editar widget", ui.condSemi, 22f), LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = ui.dp(4) })
-    val reset = ui.secondary("Restablecer")
-    bar.addView(reset)
+    // Arriba a la derecha, donde se busca «Guardar»: Listo (los cambios ya quedaron guardados)
+    bar.addView(ui.primary("Listo").apply { setOnClickListener { d.dismiss() } })
     root.addView(bar, LinearLayout.LayoutParams(-1, -2))
 
     // ---- El widget sobre el fondo, a escala ----
@@ -207,7 +207,7 @@ internal fun MainActivity.openEditor() {
         val p = sel
         if (p == null) {
             panel.addView(ui.text("Toca una parte del widget", ui.condSemi, 21f))
-            panel.addView(ui.note("Cambia su orden, tamaño, letra y color, u ocúltala. Lo ves al instante arriba."), rowLp(6))
+            panel.addView(ui.note("Cambia su orden, tamaño, letra y color, u ocúltala. Cada cambio se guarda solo, al instante."), rowLp(6))
             val hidden = names.keys.filter { it != "apps" && !Prefs.el(this, it) &&
                 (it !in Prefs.HEAD_PARTS || WidgetPieces.of(Themes.widget(this).family, it) != 0) }
             if (hidden.isNotEmpty()) {
@@ -223,6 +223,18 @@ internal fun MainActivity.openEditor() {
             // Salida clara, además de la flecha y el gesto de volver
             panel.addView(ui.primary("Listo").apply { setOnClickListener { d.dismiss() } },
                 LinearLayout.LayoutParams(-1, ui.dp(52)).apply { topMargin = ui.dp(24) })
+            // Volver al diseño original: abajo, discreto y con confirmación
+            panel.addView(ui.textButton("Volver al diseño original").apply {
+                setTextColor(Ui.ALERT)
+                setOnClickListener {
+                    android.app.AlertDialog.Builder(this@openEditor)
+                        .setMessage(I18n.tr(this@openEditor, "¿Deshacer todos los cambios del editor (orden, tamaños, letras y colores)?"))
+                        .setPositiveButton(I18n.tr(this@openEditor, "Deshacer")) { _, _ ->
+                            Prefs.resetEditor(this@openEditor); sel = null; fillPanel(); changed()
+                        }
+                        .setNegativeButton(I18n.tr(this@openEditor, "Cancelar"), null).show()
+                }
+            }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
         } else {
             val title = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
             title.addView(ui.text(names.getValue(p), ui.condSemi, 22f), LinearLayout.LayoutParams(0, -2, 1f))
@@ -300,15 +312,11 @@ internal fun MainActivity.openEditor() {
                 panel.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(strip) }, rowLp(6))
             }
 
-            panel.addView(ui.primary("Listo").apply { setOnClickListener { sel = null; drawOverlay(); fillPanel() } },
+            panel.addView(ui.secondary("Elegir otra parte").apply { setOnClickListener { sel = null; drawOverlay(); fillPanel() } },
                 LinearLayout.LayoutParams(-1, ui.dp(52)).apply { topMargin = ui.dp(18) })
         }
     }
 
-    reset.setOnClickListener {
-        Prefs.resetEditor(this); sel = null; fillPanel(); changed()
-        toast("Widget como venía")
-    }
 
     // Bordes del sistema (barra de estado y de navegación)
     ViewCompat.setOnApplyWindowInsetsListener(root) { v, ins ->
