@@ -220,6 +220,10 @@ object Prefs {
         return found
     }
 
+    /** Lee el lugar tal cual (sin poner apps por defecto en los lugares nunca usados). */
+    fun rawApp(ctx: Context, slot: Int, group: Int = 0): String =
+        p(ctx).getString(gk(group, "app$slot"), "") ?: ""
+
     fun setApp(ctx: Context, slot: Int, pkg: String, group: Int = 0) =
         p(ctx).edit().putString(gk(group, "app$slot"), pkg).remove(gk(group, "label$slot")).apply()
 
@@ -277,9 +281,10 @@ object Prefs {
     fun moveAw(ctx: Context, from: Int, to: Int) {
         if (!awExists(ctx, from)) return
         setAw(ctx, to, awGroup(ctx, from), awNames(ctx, from), awAuto(ctx, from), awCols(ctx, from), awRows(ctx, from))
+        setAwName(ctx, to, awName(ctx, from))
         clearAw(ctx, from)
     }
     fun clearAw(ctx: Context, id: Int) = p(ctx).edit().apply {
-        listOf("group", "names", "auto", "cols", "rows").forEach { remove("aw_${id}_$it") }
+        listOf("group", "names", "auto", "cols", "rows", "name").forEach { remove("aw_${id}_$it") }
     }.apply()
 }

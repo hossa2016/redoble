@@ -118,18 +118,24 @@ internal fun MainActivity.updatePreview() {
         Widgets.has(this, Widgets.PLAYER) -> Widgets.PLAYER
         else -> Widgets.APPS
     }
-    val hDp = when (kind) { Widgets.CLOCK -> 230; Widgets.PLAYER -> 200; Widgets.APPS -> 300; else -> 0 }
+    // Widgets sueltos: al tamaño real del primero que esté puesto (como en la pantalla de inicio)
+    val firstId = if (kind == Widgets.FULL) null else Widgets.ids(this, kind).firstOrNull()
+    val real = firstId?.let { try { Widgets.sizeDp(this, android.appwidget.AppWidgetManager.getInstance(this), it) } catch (e: Exception) { null } }
+    val fallbackH = when (kind) { Widgets.CLOCK -> 230; Widgets.PLAYER -> 200; Widgets.APPS -> 300; else -> 0 }
+    val wDp = real?.first?.takeIf { it > 0 } ?: (p.wPx / dens).toInt()
+    val hDp = real?.second?.takeIf { it > 0 } ?: fallbackH
+    val wPx = if (kind == Widgets.FULL) p.wPx else (wDp * dens).toInt().coerceAtMost(p.wPx)
     val childH = if (kind == Widgets.FULL) p.hPx else (hDp * dens).toInt()
-    val appsId = if (kind == Widgets.APPS) Widgets.ids(this, Widgets.APPS).firstOrNull() else null
+    val appsId = if (kind == Widgets.APPS) firstId else null
     io.execute {
         var err: Throwable? = null
         val rv = try {
             when {
-                kind == Widgets.APPS && appsId != null ->
-                    Widgets.appsViews(appCtx, appsId, (p.wPx / dens).toInt(), hDp)
-                kind == Widgets.APPS -> RockWidget.buildViews(appCtx, p.wPx, preview = true)
-                kind == Widgets.FULL -> RockWidget.buildViews(appCtx, p.wPx, preview = true)
-                else -> RockWidget.buildViews(appCtx, p.wPx, preview = true, kind = kind, hDp = hDp)
+                kind == Widgets.APPS && appsId != null -> Widgets.appsViews(appCtx, appsId, wDp, hDp)
+                // El Reproductor suelto tiene sus propias plantillas (las mismas del widget real)
+                kind == Widgets.PLAYER -> Widgets.playerViews(appCtx, wDp, hDp)
+                kind == Widgets.CLOCK -> RockWidget.buildViews(appCtx, wPx, preview = true, kind = kind, hDp = hDp)
+                else -> RockWidget.buildViews(appCtx, p.wPx, preview = true)
             }
         } catch (e: Throwable) { err = e; null }
         onUi {
@@ -140,7 +146,7 @@ internal fun MainActivity.updatePreview() {
                     // rechazan setImageBitmap desde RemoteViews y el widget no se dibujaba.
                     val fresh = it.apply(applicationContext, p.holder)
                     p.holder.removeAllViews()
-                    p.holder.addView(fresh, FrameLayout.LayoutParams(p.wPx, childH))
+                    p.holder.addView(fresh, FrameLayout.LayoutParams(wPx, childH))
                     fresh.post {
                         // Diagnóstico: si el widget quedó sin tamaño, se avisa en la vista previa
                         if (fresh.width == 0 || fresh.height == 0) showPreviewError(p, "Widget sin tamaño (${fresh.width}x${fresh.height})")

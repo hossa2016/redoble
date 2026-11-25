@@ -220,9 +220,11 @@ internal fun MainActivity.slotRow(i: Int, group: Int = 0): View {
                     else -> ui.sheet("¿Quitar $name?", "Las apps que siguen suben un lugar para no dejar huecos.",
                         actions = listOf("Quitar" to {
                             // Se corre todo un lugar hacia arriba (con sus nombres propios)
-                            val last = Prefs.GROUP_SLOTS - 1
+                            // Solo los lugares que usa este grupo (sin widget de Apps, los del Completo)
+                            val last = (if (Widgets.has(this@slotRow, Widgets.APPS)) Prefs.GROUP_SLOTS
+                                        else Prefs.usedSlots(this@slotRow)) - 1
                             for (k in i until last) {
-                                val nextPkg = Prefs.app(this@slotRow, k + 1, group)
+                                val nextPkg = Prefs.rawApp(this@slotRow, k + 1, group)
                                 val nextLabel = Prefs.label(this@slotRow, k + 1, group)
                                 Prefs.setApp(this@slotRow, k, nextPkg, group)
                                 Prefs.setLabel(this@slotRow, k, nextLabel, group)
