@@ -206,7 +206,8 @@ object Player {
      * Reproductor por separado, grande o compacto (sin música muestra la última canción
      * o «Nada sonando»).
      */
-    fun apply(ctx: Context, v: RemoteViews, fonts: Boolean = false, widthPx: Int = 0, preview: Boolean = false, mode: Int = 0): Boolean {
+    fun apply(ctx: Context, v: RemoteViews, fonts: Boolean = false, widthPx: Int = 0, preview: Boolean = false, mode: Int = 0,
+              sample: Boolean = false): Boolean {
         v.setViewVisibility(R.id.player, View.GONE)
         v.setViewVisibility(R.id.player_c, View.GONE)
         if (mode < 0 || (mode == 0 && !Prefs.el(ctx, "player"))) return false
@@ -217,6 +218,8 @@ object Player {
             ?: md?.description?.title?.toString() ?: "")
         if (c == null || md == null || title.isBlank()) {
             if (mode != 0) idle(ctx, v, fonts, widthPx, mode == 1)
+            // Editor visual: sin música se muestra igual, para poder elegirlo y moverlo
+            else if (sample) idle(ctx, v, fonts, widthPx, Prefs.playerLarge(ctx))
             return false
         }
         val artist = clean(md.getString(MediaMetadata.METADATA_KEY_ARTIST)

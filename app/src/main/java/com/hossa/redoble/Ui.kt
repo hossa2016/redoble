@@ -65,11 +65,28 @@ class Ui(val ctx: Context, val accent: Int) {
 
     /** Colores claros (plata, ámbar, verde, cian) llevan texto oscuro encima. */
     val silver = ColorUtils.calculateLuminance(accent) > 0.35
-    val onAccent = if (silver) Color.parseColor("#14110E") else Color.WHITE
+    /**
+     * Texto sobre el color de acento: el que más contraste da (blanco o casi negro).
+     * Si ni así llega a 4,5:1 (WCAG AA), el relleno del botón se oscurece o aclara un poco.
+     */
+    val onAccent: Int
+    private val btnBase: Int
+    init {
+        val dark = Color.parseColor("#14110E")
+        val text = if (ColorUtils.calculateContrast(Color.WHITE, accent) >= ColorUtils.calculateContrast(dark, accent)) Color.WHITE else dark
+        var base = accent
+        var k = 0
+        // Se mide contra la parte más clara (arriba) del degradado del botón
+        while (k < 14 && ColorUtils.calculateContrast(text,
+                if (text == Color.WHITE) ColorUtils.blendARGB(base, Color.WHITE, 0.08f) else ColorUtils.blendARGB(base, Color.BLACK, 0.18f)) < 4.6) {
+            base = ColorUtils.blendARGB(base, if (text == Color.WHITE) Color.BLACK else Color.WHITE, 0.06f); k++
+        }
+        onAccent = text; btnBase = base
+    }
     val accentSoft = ColorUtils.setAlphaComponent(accent, 0x29)
     val accentLine = ColorUtils.setAlphaComponent(accent, 0x8C)
-    val accentDark = ColorUtils.blendARGB(accent, Color.BLACK, 0.18f)
-    val accentLight = ColorUtils.blendARGB(accent, Color.WHITE, 0.08f)
+    val accentDark = ColorUtils.blendARGB(btnBase, Color.BLACK, 0.18f)
+    val accentLight = ColorUtils.blendARGB(btnBase, Color.WHITE, 0.08f)
 
     private val fonts = HashMap<Int, Typeface>()
     fun font(id: Int): Typeface = fonts.getOrPut(id) {

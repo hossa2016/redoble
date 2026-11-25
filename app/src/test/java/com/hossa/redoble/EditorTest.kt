@@ -67,4 +67,20 @@ class EditorTest {
         assertEquals(1.5f, raw.getFloat("es_hora", 1f), 0.001f)
         Prefs.resetEditor(ctx)
     }
+
+    @Test fun samplePlayerInEditor() {
+        val rv = RockWidget.buildViews(ctx, 1000, preview = true, sample = true)
+        val v = rv.apply(ctx, FrameLayout(ctx))
+        val shown = listOf(R.id.player, R.id.player_c).any { v.findViewById<View>(it)?.visibility == View.VISIBLE }
+        assertTrue("el reproductor se ve en el editor aunque no suene música", shown)
+    }
+
+    @Test fun primaryButtonContrast() {
+        for (a in Prefs.ACCENTS) {
+            val ui = Ui(ctx, a)
+            val c = androidx.core.graphics.ColorUtils.calculateContrast(ui.onAccent, ui.accentLight)
+            val c2 = androidx.core.graphics.ColorUtils.calculateContrast(ui.onAccent, ui.accentDark)
+            assertTrue("contraste del botón con ${Integer.toHexString(a)}: $c / $c2", minOf(c, c2) >= 4.5)
+        }
+    }
 }

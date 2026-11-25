@@ -608,3 +608,14 @@ Volver al diseño original	Back to the original design	Voltar ao design original
 ¿Deshacer todos los cambios del editor (orden, tamaños, letras y colores)?	Undo all editor changes (order, sizes, fonts and colors)?	Desfazer todas as mudanças do editor (ordem, tamanhos, fontes e cores)?
 Deshacer	Undo	Desfazer
 Elegir otra parte	Pick another part	Escolher outra parte
+Se movió toda la cabecera: día, hora, clima y batería van juntos	The whole header moved: day, time, weather and battery go together	O cabeçalho inteiro se moveu: dia, hora, clima e bateria vão juntos
+mueve toda la cabecera	moves the whole header	move o cabeçalho inteiro
+no disponible	not available	indisponível
+Cabecera	Header	Cabeçalho
+Bloques	Blocks	Blocos
+Día, hora, fecha, clima y batería se ordenan entre ellos. Al pasar el borde, se mueve toda la cabecera.	Day, time, date, weather and battery reorder among themselves. Past the edge, the whole header moves.	Dia, hora, data, clima e bateria se ordenam entre si. Ao passar da borda, o cabeçalho inteiro se move.
+PARTES	PARTS	PARTES
+La batería no se ve mientras tienes audífonos (regla «Con audífonos» en Estilo › Cambio automático).	The battery is hidden while you wear headphones (“With headphones” rule in Style › Automatic changes).	A bateria some enquanto você usa fones (regra “Com fones” em Estilo › Mudança automática).
+El clima no se ve porque falta tu ciudad (Widget › Clima).	The weather isn't shown because your city is missing (Widget › Weather).	O clima não aparece porque falta sua cidade (Widget › Clima).
+El clima no se ve porque el dato es viejo. Se actualiza solo en unos minutos.	The weather isn't shown because the data is old. It updates itself in a few minutes.	O clima não aparece porque o dado é antigo. Ele se atualiza sozinho em alguns minutos.
+Las apps no se ven porque elegiste 0 apps (Widget › Apps).	Apps aren't shown because you chose 0 apps (Widget › Apps).	Os apps não aparecem porque você escolheu 0 apps (Widget › Apps).

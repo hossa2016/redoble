@@ -42,6 +42,24 @@ internal fun MainActivity.openEditor() {
     var sel: String? = null
 
     val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Ui.INK) }
+    // Capa de arriba para los avisos del editor (el aviso normal quedaba debajo de esta pantalla)
+    val shell = FrameLayout(this).apply { addView(root, FrameLayout.LayoutParams(-1, -1)) }
+    fun say(msg0: String) {
+        val msg = I18n.tr(this, msg0)
+        shell.findViewWithTag<View>("edPill")?.let { shell.removeView(it) }
+        val pill = ui.text(msg, ui.condMedium, 16f, Ui.HEAD).apply {
+            tag = "edPill"; gravity = Gravity.CENTER
+            background = ui.rect(Ui.PLATE_TOP, 24f, ui.accent, 1.5f)
+            setPadding(ui.dp(20), ui.dp(12), ui.dp(20), ui.dp(12))
+            elevation = ui.dp(8).toFloat(); alpha = 0f
+        }
+        shell.addView(pill, FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+            bottomMargin = root.paddingBottom + ui.dp(28); marginStart = ui.dp(24); marginEnd = ui.dp(24)
+        })
+        pill.animate().alpha(1f).setDuration(160).start()
+        pill.postDelayed({ pill.animate().alpha(0f).setDuration(250).withEndAction { shell.removeView(pill) }.start() }, 2600)
+        root.announceForAccessibility(msg)
+    }
 
     // ---- Barra de arriba ----
     val bar = LinearLayout(this).apply {
@@ -115,12 +133,17 @@ internal fun MainActivity.openEditor() {
         }
     }
 
+    // Partes que de verdad se ven ahora en el widget (para el panel)
+    var shown = listOf<String>()
+
     fun drawOverlay() {
         overlay.removeAllViews()
         val wr = widgetRoot ?: return
-        val minH = (ui.dp(44) / scale).toInt()
-        val stroke = 1.5f / scale
+        val minH = (ui.dp(48) / scale).toInt()
+        val minW = (ui.dp(48) / scale).toInt()
+        val pad = (5 / scale).toInt()
         val fam = Themes.widget(this).family
+        val boxes = LinkedHashMap<String, Rect>()
         for ((p, ids) in viewsOf) {
             if (p in Prefs.HEAD_PARTS && WidgetPieces.of(fam, p) == 0 && p != "dia") continue
             var box: Rect? = null
@@ -132,19 +155,43 @@ internal fun MainActivity.openEditor() {
                 box = box?.apply { union(r) } ?: r
             }
             val b = box ?: continue
+            b.inset(-pad, -pad)
             if (b.height() < minH) { val c = b.centerY(); b.top = c - minH / 2; b.bottom = c + minH / 2 }
+            if (b.width() < minW) { val c = b.centerX(); b.left = c - minW / 2; b.right = c + minW / 2 }
+            boxes[p] = b
+        }
+        // Si dos se pisan (uno encima del otro), se reparten el espacio por la mitad
+        val list = boxes.entries.sortedBy { it.value.centerY() }
+        for (i in list.indices) for (j in i + 1 until list.size) {
+            val a = list[i].value; val c = list[j].value
+            val sideBySide = a.right <= c.left || c.right <= a.left
+            if (!sideBySide && a.bottom > c.top) {
+                val cut = ((a.bottom + c.top) / 2).coerceIn(a.top + 1, (c.bottom - 1).coerceAtLeast(a.top + 1))
+                a.bottom = cut; c.top = cut
+            }
+        }
+        // Siempre dentro del widget
+        boxes.values.forEach { it.intersect(0, 0, wPx, hPx) }
+        shown = boxes.keys.toList()
+        for ((p, b) in boxes) {
             val on = sel == p
-            val pad = (6 / scale).toInt()
             overlay.addView(View(this).apply {
                 background = if (on) ui.rect(ColorUtils.setAlphaComponent(ui.accent, 0x22), 12f / scale, ui.accent, 3f / scale)
                     else android.graphics.drawable.GradientDrawable().apply {
                         cornerRadius = ui.dp(12f / scale).toFloat()
-                        setStroke(ui.dp(stroke), Color.argb(0x88, 255, 255, 255), ui.dp(6f / scale).toFloat(), ui.dp(5f / scale).toFloat())
+                        setStroke(ui.dp(1.5f / scale), Color.argb(0x88, 255, 255, 255), ui.dp(6f / scale).toFloat(), ui.dp(5f / scale).toFloat())
                     }
                 contentDescription = I18n.tr(this@openEditor, "Editar") + " " + I18n.tr(this@openEditor, names.getValue(p))
                 setOnClickListener { sel = p; drawOverlay(); fillPanel() }
-            }, FrameLayout.LayoutParams(b.width() + pad * 2, b.height() + pad * 2).apply {
-                leftMargin = b.left - pad; topMargin = b.top - pad
+            }, FrameLayout.LayoutParams(b.width(), b.height()).apply { leftMargin = b.left; topMargin = b.top })
+            // Nombre de la parte elegida, pegado a su recuadro
+            if (on) overlay.addView(ui.text(names.getValue(p), ui.condSemi, 13f / scale, ui.onAccent).apply {
+                background = ui.rect(ui.accent, 8f / scale)
+                setPadding(ui.dp(8f / scale), ui.dp(2f / scale), ui.dp(8f / scale), ui.dp(2f / scale))
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            }, FrameLayout.LayoutParams(-2, -2).apply {
+                leftMargin = b.left + ui.dp(6f / scale)
+                topMargin = (b.top - ui.dp(22f / scale)).coerceAtLeast(0)
             })
         }
     }
@@ -156,43 +203,65 @@ internal fun MainActivity.openEditor() {
 
     refresh = {
         io.execute {
-            val rv = try { RockWidget.buildViews(app, wPx, preview = true) } catch (e: Throwable) { null }
+            val rv = try { RockWidget.buildViews(app, wPx, preview = true, sample = true) } catch (e: Throwable) { null }
             onUi {
                 try {
                     rv?.let {
                         val v = it.apply(app, holder)
                         holder.removeAllViews(); holder.addView(v, FrameLayout.LayoutParams(wPx, hPx))
                         widgetRoot = v as? ViewGroup
-                        v.post { drawOverlay() }
+                        v.post { drawOverlay(); if (sel == null) fillPanel() }
                     }
                 } catch (e: Throwable) { }
             }
         }
     }
 
-    // Subir o bajar una parte. Las de la cabecera se mueven entre ellas; si ya está
-    // en el borde, se mueve la cabecera entera (hora, clima y batería van juntos).
-    fun move(p: String, up: Boolean) {
+    // Bloques que se ven (los ocultos no cuentan al mover: si no, «no pasaba nada»)
+    fun blockVisible(b: String) = when (b) {
+        "player" -> Prefs.el(this, "player")
+        "apps" -> Prefs.appRows(this) > 0
+        else -> Prefs.HEAD_PARTS.any { Prefs.el(this, it) }
+    }
+    fun blockOf(p: String) = when (p) { "player" -> "player"; "apps" -> "apps"; else -> "head" }
+    fun headVisible(): List<String> {
         val fam = Themes.widget(this).family
+        return Prefs.headOrder(this).filter { WidgetPieces.of(fam, it) != 0 && Prefs.el(this, it) }
+    }
+    /** Hacia dónde puede ir: null = no se mueve; "parte" = entre las de la cabecera; "bloque" = el bloque entero. */
+    fun moveKind(p: String, up: Boolean): String? {
         if (p in Prefs.HEAD_PARTS) {
-            val all = Prefs.headOrder(this).toMutableList()
-            val vis = all.filter { WidgetPieces.of(fam, it) != 0 && Prefs.el(this, it) }
-            val i = vis.indexOf(p)
-            val j = if (up) i - 1 else i + 1
-            if (i >= 0 && j in vis.indices) {
-                val a = all.indexOf(p); val b = all.indexOf(vis[j])
-                all[a] = vis[j]; all[b] = p
+            val vis = headVisible(); val i = vis.indexOf(p); val j = if (up) i - 1 else i + 1
+            if (i >= 0 && j in vis.indices) return "parte"
+        }
+        val bl = Prefs.blockOrder(this).filter { blockVisible(it) || it == blockOf(p) }
+        val i = bl.indexOf(blockOf(p)); val j = if (up) i - 1 else i + 1
+        return if (j in bl.indices) "bloque" else null
+    }
+
+    fun move(p: String, up: Boolean) {
+        when (moveKind(p, up)) {
+            null -> { say(if (up) "Ya está arriba del todo" else "Ya está abajo del todo"); return }
+            "parte" -> {
+                val all = Prefs.headOrder(this).toMutableList()
+                val vis = headVisible(); val i = vis.indexOf(p); val other = vis[if (up) i - 1 else i + 1]
+                val a = all.indexOf(p); val b = all.indexOf(other)
+                all[a] = other; all[b] = p
                 Prefs.setHeadOrder(this, all)
-                changed(); return
+            }
+            else -> {
+                val block = blockOf(p)
+                val full = Prefs.blockOrder(this).toMutableList()
+                val vis = full.filter { blockVisible(it) || it == block }
+                val i = vis.indexOf(block); val target = vis[if (up) i - 1 else i + 1]
+                // Se intercambia con el bloque visible de al lado (saltando los ocultos)
+                val a = full.indexOf(block); val b = full.indexOf(target)
+                full[a] = target; full[b] = block
+                Prefs.setBlockOrder(this, full)
+                if (block == "head") say("Se movió toda la cabecera: día, hora, clima y batería van juntos")
             }
         }
-        val block = when (p) { "player" -> "player"; "apps" -> "apps"; else -> "head" }
-        val bl = Prefs.blockOrder(this).toMutableList()
-        val i = bl.indexOf(block); val j = if (up) i - 1 else i + 1
-        if (j !in bl.indices) { toast(if (up) "Ya está arriba del todo" else "Ya está abajo del todo"); return }
-        bl[i] = bl[j]; bl[j] = block
-        Prefs.setBlockOrder(this, bl)
-        changed()
+        changed(); fillPanel()
     }
 
     fun label(s: String) = ui.text(s, ui.cond, 15f, Ui.DIM).apply { minWidth = ui.dp(64) }
@@ -208,18 +277,38 @@ internal fun MainActivity.openEditor() {
         if (p == null) {
             panel.addView(ui.text("Toca una parte del widget", ui.condSemi, 21f))
             panel.addView(ui.note("Cambia su orden, tamaño, letra y color, u ocúltala. Cada cambio se guarda solo, al instante."), rowLp(6))
-            val hidden = names.keys.filter { it != "apps" && !Prefs.el(this, it) &&
-                (it !in Prefs.HEAD_PARTS || WidgetPieces.of(Themes.widget(this).family, it) != 0) }
-            if (hidden.isNotEmpty()) {
-                panel.addView(ui.label("OCULTAS · TOCA PARA VOLVER A PONERLAS"), rowLp(18))
+            val fam = Themes.widget(this).family
+            fun exists(k: String) = k !in Prefs.HEAD_PARTS || k == "dia" || WidgetPieces.of(fam, k) != 0
+            fun chipRow(items: List<Pair<String, () -> Unit>>, dashed: Boolean): View {
                 val chips = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-                hidden.forEach { h ->
-                    chips.addView(ui.secondary("+ " + I18n.tr(this, names.getValue(h))).apply {
-                        setOnClickListener { Prefs.setEl(this@openEditor, h, true); fillPanel(); changed() }
+                items.forEach { (t, act) ->
+                    chips.addView(ui.secondary(t).apply {
+                        if (dashed) background = ui.dashedHolder()
+                        setOnClickListener { act() }
                     }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = ui.dp(8) })
                 }
-                panel.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(chips) }, rowLp(8))
+                return HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(chips) }
             }
+            // Partes: otra forma de elegir (y la que usa TalkBack sin tener que buscar en el dibujo)
+            if (shown.isNotEmpty()) {
+                panel.addView(ui.label("PARTES"), rowLp(18))
+                panel.addView(chipRow(shown.map { k -> I18n.tr(this, names.getValue(k)) to { sel = k; drawOverlay(); fillPanel() } }, false), rowLp(8))
+            }
+            val hidden = names.keys.filter { it != "apps" && exists(it) && !Prefs.elRaw(this, it) }
+            if (hidden.isNotEmpty()) {
+                panel.addView(ui.label("OCULTAS · TOCA PARA VOLVER A PONERLAS"), rowLp(18))
+                panel.addView(chipRow(hidden.map { h -> ("+ " + I18n.tr(this, names.getValue(h))) to {
+                    Prefs.setEl(this@openEditor, h, true); fillPanel(); changed() } }, true), rowLp(8))
+            }
+            // Por qué falta algo que está encendido
+            val why = mutableListOf<String>()
+            if (Prefs.elRaw(this, "bateria") && Rules.musicLayout(this))
+                why += "La batería no se ve mientras tienes audífonos (regla «Con audífonos» en Estilo › Cambio automático)."
+            if (Prefs.el(this, "clima") && widgetRoot != null && "clima" !in shown)
+                why += if (Prefs.city(this).isBlank()) "El clima no se ve porque falta tu ciudad (Widget › Clima)."
+                       else "El clima no se ve porque el dato es viejo. Se actualiza solo en unos minutos."
+            if (Prefs.appRows(this) == 0) why += "Las apps no se ven porque elegiste 0 apps (Widget › Apps)."
+            why.forEach { panel.addView(ui.note(it, sp = 14f), rowLp(10)) }
             // Salida clara, además de la flecha y el gesto de volver
             panel.addView(ui.primary("Listo").apply { setOnClickListener { d.dismiss() } },
                 LinearLayout.LayoutParams(-1, ui.dp(52)).apply { topMargin = ui.dp(24) })
@@ -244,11 +333,29 @@ internal fun MainActivity.openEditor() {
             })
             panel.addView(title)
 
-            // Orden
-            panel.addView(row(label("Orden"),
-                ui.secondary("↑ " + I18n.tr(this, "Subir")).apply { setOnClickListener { move(p, true) } },
-                View(this).apply { layoutParams = LinearLayout.LayoutParams(ui.dp(8), 1) },
-                ui.secondary("↓ " + I18n.tr(this, "Bajar")).apply { setOnClickListener { move(p, false) } }), rowLp())
+            // Orden: flechas apagadas en los extremos y un mapa de los tres bloques
+            fun arrow(up: Boolean) = ui.secondary((if (up) "↑ " else "↓ ") + I18n.tr(this, if (up) "Subir" else "Bajar")).apply {
+                val k = moveKind(p, up)
+                isEnabled = k != null; alpha = if (k != null) 1f else 0.4f
+                contentDescription = I18n.tr(this@openEditor, if (up) "Subir" else "Bajar") + " " + I18n.tr(this@openEditor, names.getValue(p)) +
+                    (if (k == "bloque" && p in Prefs.HEAD_PARTS) ", " + I18n.tr(this@openEditor, "mueve toda la cabecera") else "") +
+                    (if (k == null) ", " + I18n.tr(this@openEditor, "no disponible") else "")
+                setOnClickListener { move(p, up) }
+            }
+            panel.addView(row(label("Orden"), arrow(true),
+                View(this).apply { layoutParams = LinearLayout.LayoutParams(ui.dp(8), 1) }, arrow(false)), rowLp())
+            val map = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            val blockNames = mapOf("head" to "Cabecera", "player" to "Reproductor", "apps" to "Apps")
+            Prefs.blockOrder(this).filter { blockVisible(it) || it == blockOf(p) }.forEachIndexed { i, b ->
+                if (i > 0) map.addView(ui.text("›", ui.cond, 15f, Ui.DIM).apply { setPadding(ui.dp(6), 0, ui.dp(6), 0) })
+                val here = b == blockOf(p)
+                map.addView(ui.text(blockNames.getValue(b), if (here) ui.condSemi else ui.cond, 14f, if (here) Ui.HEAD else Ui.DIM).apply {
+                    background = if (here) ui.rect(ColorUtils.setAlphaComponent(ui.accent, 0x33), 8f, ui.accent, 1f) else null
+                    setPadding(ui.dp(8), ui.dp(4), ui.dp(8), ui.dp(4))
+                })
+            }
+            panel.addView(row(label("Bloques"), map), rowLp(8))
+            if (p in Prefs.HEAD_PARTS) panel.addView(ui.note("Día, hora, fecha, clima y batería se ordenan entre ellos. Al pasar el borde, se mueve toda la cabecera.", sp = 13f), rowLp(6))
 
             // Tamaño
             when (p) {
@@ -323,7 +430,7 @@ internal fun MainActivity.openEditor() {
         val b = ins.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
         v.setPadding(b.left, b.top, b.right, b.bottom); ins
     }
-    d.setContentView(root)
+    d.setContentView(shell)
     d.window?.let { w ->
         w.setLayout(-1, -1)
         WindowCompat.setDecorFitsSystemWindows(w, false)

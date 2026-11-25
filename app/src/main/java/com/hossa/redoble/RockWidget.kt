@@ -243,7 +243,8 @@ class RockWidget : AppWidgetProvider() {
          * ajustes ([preview] = true: sin efectos secundarios como pedir el clima).
          * Está dividido por secciones: cabecera, clima/batería y apps.
          */
-        fun buildViews(ctx: Context, W: Int, preview: Boolean = false, kind: Int = Widgets.FULL, hDp: Int = 0): RemoteViews {
+        fun buildViews(ctx: Context, W: Int, preview: Boolean = false, kind: Int = Widgets.FULL, hDp: Int = 0,
+                       sample: Boolean = false): RemoteViews {
             // El widget Reproductor suelto usa la variante con el reproductor arriba
             val th = Themes.widget(ctx).let { if (kind == Widgets.PLAYER) Themes.up(it) else it }
             val v = RemoteViews(ctx.packageName, th.layout)
@@ -271,7 +272,7 @@ class RockWidget : AppWidgetProvider() {
                 }
                 else -> {
                     // Reproductor primero: de él depende cuánto espacio queda.
-                    val playing = Player.apply(ctx, v, fonts, W, preview)
+                    val playing = Player.apply(ctx, v, fonts, W, preview, sample = sample)
                     if (!preview) Prefs.setLastPlaying(ctx, playing)
                     headerSection(ctx, v, th, W, playing, fonts, preview)
                     appsSection(ctx, v, th, W, playing, fonts)

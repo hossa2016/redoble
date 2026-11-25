@@ -116,6 +116,8 @@ object Prefs {
     }
     fun el(ctx: Context, key: String) =
         if ((key == "manana" || key == "bateria") && Rules.musicLayout(ctx)) false else p(ctx).getBoolean("el_$key", true)
+    /** Lo que eligió el usuario, sin las reglas automáticas (p. ej. audífonos). */
+    fun elRaw(ctx: Context, key: String) = p(ctx).getBoolean("el_$key", true)
     fun setEl(ctx: Context, key: String, v: Boolean) =
         p(ctx).edit().putBoolean("el_$key", v).putString("preset", "custom").apply()
     fun appsCount(ctx: Context) = p(ctx).getInt("appsCount", 6)
