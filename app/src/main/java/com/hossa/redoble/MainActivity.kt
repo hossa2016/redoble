@@ -66,6 +66,37 @@ class MainActivity : AppCompatActivity() {
         if (uri != null) loadPhoto(uri)
     }
 
+    /** Copia de los ajustes: guardar y restaurar un archivo elegido por el usuario. */
+    internal val exportDoc = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) io.execute {
+            val ok = try { Backup.export(this, uri); true } catch (e: Exception) { ErrorLog.soft(this, e, "exportar"); false }
+            onUi { toast(if (ok) "Copia guardada" else "No se pudo guardar la copia") }
+        }
+    }
+    internal val importDoc = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) io.execute {
+            val n = try { Backup.import(this, uri) } catch (e: Exception) { ErrorLog.soft(this, e, "restaurar"); -1 }
+            onUi { afterRestore(n) }
+        }
+    }
+
+    /** Tras restaurar una copia o un setup: se redibuja todo con los ajustes nuevos. */
+    internal fun afterRestore(n: Int) {
+        if (n < 0) { toast("Ese archivo no es una copia de Prisma"); return }
+        RockWidget.updateAll(this)
+        Widgets.updateKind(this, Widgets.APPS)
+        toast("Ajustes restaurados")
+        preview = null; mainCol = null; photo = null
+        recreate()
+    }
+
+    /** Permiso opcional de la agenda (solo al activar «Próximo evento»). */
+    internal val calendarPerm = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        Prefs.setShowAgenda(this, ok)
+        if (!ok) toast("Sin permiso de la agenda no se puede mostrar el próximo evento")
+        RockWidget.updateAll(this); build()
+    }
+
     /** Android 13+: permiso para que se vea la notificación del widget en vivo. */
     internal val notifPerm = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
@@ -222,6 +253,9 @@ class MainActivity : AppCompatActivity() {
                 // Lo que muestran los widgets (Diseño es del widget Completo)
                 if (Widgets.has(this, Widgets.FULL) || !hasWidget) col.addView(fold(designPlate(), "diseno"))
                 col.addView(fold(setlistPlate(), "apps"))
+                col.addView(fold(headerExtrasPlate(), "cabecera", listOfNotNull(
+                    "Cartel".takeIf { Prefs.poster(this) }, "Alarma".takeIf { Prefs.showAlarm(this) },
+                    "Agenda".takeIf { Prefs.showAgenda(this) }).joinToString(" · ").ifBlank { "Fecha normal" }))
                 col.addView(fold(weatherPlate(), "clima", Prefs.city(this).substringBefore(",").ifBlank { "Agregar ciudad ›" }))
                 col.addView(fold(playerPlate(), "reproductor", if (Player.enabled(this)) "Activo" else "Falta dar permiso ›"))
             }
@@ -425,7 +459,7 @@ class MainActivity : AppCompatActivity() {
         /** En qué pestaña vive cada sección. */
         val TAB_OF = mapOf(
             "tema" to 0, "fondo" to 0, "fondoWidget" to 0, "acento" to 0,
-            "diseno" to 1, "apps" to 1, "clima" to 1, "reproductor" to 1,
+            "diseno" to 1, "apps" to 1, "cabecera" to 1, "clima" to 1, "reproductor" to 1,
             "w_pack" to 2, "w_clock" to 2, "w_apps" to 2, "w_player" to 2, "dream" to 2,
             "apariencia" to 3)
     }

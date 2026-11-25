@@ -201,6 +201,25 @@ object Prefs {
     fun setWeatherExtra(ctx: Context, code: Int, temp: Int, desc: String) = p(ctx).edit()
         .putInt("wxCode", code).putInt("wxTemp", temp).putString("wxDesc", desc).apply()
     fun weatherAt(ctx: Context) = p(ctx).getLong("wxAt", 0L)
+    /** Cabecera: fecha estilo cartel, próxima alarma y próximo evento. */
+    fun poster(ctx: Context) = p(ctx).getBoolean("poster", false)
+    fun setPoster(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("poster", v).apply()
+    fun showAlarm(ctx: Context) = p(ctx).getBoolean("showAlarm", false)
+    fun setShowAlarm(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("showAlarm", v).apply()
+    fun showAgenda(ctx: Context) = p(ctx).getBoolean("showAgenda", false)
+    fun setShowAgenda(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("showAgenda", v).apply()
+    /** Temperatura en grados Fahrenheit (si no, Celsius). */
+    fun tempF(ctx: Context) = p(ctx).getBoolean("tempF", false)
+    fun setTempF(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("tempF", v).remove("wxAt").apply()
+    /** Clima con frases de la marca («Tormenta afuera: noche de distorsión»). */
+    fun rockVoice(ctx: Context) = p(ctx).getBoolean("rockVoice", false)
+    fun setRockVoice(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("rockVoice", v).apply()
+    /** Pronóstico de los próximos días: "día;código;mín;máx" separados por "|". */
+    fun forecast(ctx: Context) = p(ctx).getString("wxForecast", "") ?: ""
+    fun setForecast(ctx: Context, v: String) = p(ctx).edit().putString("wxForecast", v).apply()
+    /** Amanecer y atardecer de hoy ("06:02", "18:11"). */
+    fun sunTimes(ctx: Context) = (p(ctx).getString("wxSunrise", "") ?: "") to (p(ctx).getString("wxSunset", "") ?: "")
+    fun setSunTimes(ctx: Context, rise: String, set: String) = p(ctx).edit().putString("wxSunrise", rise).putString("wxSunset", set).apply()
     fun setWeather(ctx: Context, now: String, tomorrow: String) = p(ctx).edit()
         .putString("wxNow", now).putString("wxTomorrow", tomorrow)
         .putLong("wxAt", System.currentTimeMillis()).apply()

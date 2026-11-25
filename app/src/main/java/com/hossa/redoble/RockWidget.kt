@@ -324,7 +324,11 @@ class RockWidget : AppWidgetProvider() {
             val wxAt = Prefs.weatherAt(ctx)
             val stale = wxAt > 0 && System.currentTimeMillis() - wxAt > 6 * 3_600_000L
             var clima = (if (solo) Prefs.cw(ctx, "clima") else Prefs.el(ctx, "clima")) && !stale
-            var manana = if (solo) Prefs.cw(ctx, "manana") && wDp >= 230 else Prefs.el(ctx, "manana")
+            // Próxima alarma y evento de la agenda van en la línea de «Mañana»
+            val extra = listOf(if (Prefs.showAlarm(ctx)) Extras.nextAlarm(ctx) else "",
+                if (Prefs.showAgenda(ctx)) Extras.nextEvent(ctx) else "").filter { it.isNotBlank() }.joinToString(" · ")
+            var manana = (if (solo) Prefs.cw(ctx, "manana") && wDp >= 230 else Prefs.el(ctx, "manana")) || extra.isNotBlank()
+            val poster = Prefs.poster(ctx)
             var bateria = if (solo) Prefs.cw(ctx, "bateria") else Prefs.el(ctx, "bateria")
             // Widget Hora y clima: según el alto se quitan líneas enteras (nunca se cortan).
             // Orden en que se quitan: batería, mañana, clima, día y fecha.
@@ -375,17 +379,20 @@ class RockWidget : AppWidgetProvider() {
             fun fmt(f: String) = java.text.SimpleDateFormat(f, ES).format(now).replace(".", "")
             v.setCharSequence(R.id.date, "setFormat12Hour", dateFmt)
             v.setCharSequence(R.id.date, "setFormat24Hour", dateFmt)
-            val dateFonts = fonts && bitmapDate(ctx)
+            // Cartel de Gira: la fecha se dibuja como afiche (necesita la imagen, no el reloj del sistema)
+            val dateFonts = (fonts && bitmapDate(ctx)) || poster
             twin(v, R.id.day_txt, R.id.day_txt_bmp, !bigDay && dia, dateFonts) {
                 TextArt.render(ctx, fmt(dayFmt), S.title, 13f, dayColor,
                     S.tls, caps = true, glow = if (th.family == "neon") th.accent2 else 0, maxWidthPx = colW)
             }
             v.setContentDescription(R.id.day_txt_bmp, fmt(dayFmt))
-            v.setContentDescription(R.id.date_bmp, fmt(dateFmt))
+            v.setContentDescription(R.id.date_bmp, if (poster) Extras.posterLine(ctx) else fmt(dateFmt))
             // Cristal, Neón y Lujo llevan la fecha en la misma línea del día.
-            val dateInDay = dateInDay0
+            val dateInDay = dateInDay0 && !poster
             twin(v, R.id.date, R.id.date_bmp, dia && !dateInDay, dateFonts) {
-                TextArt.render(ctx, fmt(dateFmt),
+                if (poster) TextArt.render(ctx, Extras.posterLine(ctx), S.title, S.dsize, accent,
+                    0.12f, caps = true, shadow = S.shadow, maxWidthPx = colW)
+                else TextArt.render(ctx, fmt(dateFmt),
                     if (th.family == "lujo") S.med else S.body, S.dsize, if (th.family == "lujo") th.dim else th.head,
                     S.lls, caps = S.caps, shadow = S.shadow, maxWidthPx = colW)
             }
@@ -407,7 +414,8 @@ class RockWidget : AppWidgetProvider() {
             v.setTextColor(R.id.colon, when (th.family) { "claro" -> th.head; "neon" -> th.accent2; else -> accent })
 
             // Clima
-            val tomorrow = Prefs.weatherTomorrow(ctx)
+            val tomorrow = listOf(if (if (solo) Prefs.cw(ctx, "manana") else Prefs.el(ctx, "manana")) Prefs.weatherTomorrow(ctx) else "", extra)
+                .filter { it.isNotBlank() }.joinToString(" · ")
             v.setTextViewText(R.id.wx_tomorrow, tomorrow)
             val nowFull = now0(ctx)
             val fitsFull = TextArt.commonSize(ctx, listOf(nowFull), if (th.family == "lujo") S.body else S.med, S.wsize,

@@ -57,22 +57,27 @@ internal fun MainActivity.weatherPlate(): View {
         } else {
             setStatus(Ui.DIM, null, "Buscando $name…")
             io.execute {
-                var result: Triple<String, Double, Double>? = null
+                var results: List<Triple<String, Double, Double>> = emptyList()
                 var offline = false
-                try { result = WeatherWorker.geocode(name) } catch (e: IOException) { offline = true } catch (e: Exception) { }
+                try { results = WeatherWorker.geocodeAll(name) } catch (e: IOException) { offline = true } catch (e: Exception) { }
                 onUi {
-                    val r = result
+                    val use = { r: Triple<String, Double, Double> ->
+                        Prefs.setCity(this, r.first, r.second, r.third)
+                        field.setText(r.first)
+                        setStatus(Ui.DIM, r.first, " Consultando el clima…")
+                        WeatherWorker.runNow(this, force = true)
+                        WeatherWorker.schedule(this)
+                        RockWidget.updateAll(this)
+                        onUiDelayed(5000) { refreshCityStatus() }
+                    }
                     when {
                         offline -> setStatus(Ui.ALERT, null, "Sin conexión. Inténtalo cuando vuelva la red.")
-                        r == null -> setStatus(Ui.ALERT, null, "No encontramos esa ciudad. Revisa la ortografía o agrega el departamento.")
+                        results.isEmpty() -> setStatus(Ui.ALERT, null, "No encontramos esa ciudad. Revisa la ortografía o agrega el departamento.")
+                        results.size == 1 -> use(results[0])
                         else -> {
-                            Prefs.setCity(this, r.first, r.second, r.third)
-                            field.setText(r.first)
-                            setStatus(Ui.DIM, r.first, " Consultando el clima…")
-                            WeatherWorker.runNow(this, force = true)
-                            WeatherWorker.schedule(this)
-                            RockWidget.updateAll(this)
-                            onUiDelayed(5000) { refreshCityStatus() }
+                            // Varias ciudades con ese nombre: se elige la correcta
+                            setStatus(Ui.DIM, null, "Elige tu ciudad.")
+                            ui.sheet("¿Cuál $name?", items = results.map { it.first }, onItem = { i -> use(results[i]) })
                         }
                     }
                 }
@@ -83,6 +88,38 @@ internal fun MainActivity.weatherPlate(): View {
     field.setOnEditorActionListener { _, action, _ ->
         if (action == EditorInfo.IME_ACTION_DONE) { doSave(); true } else false
     }
+
+    // Pronóstico de los próximos días
+    val fc = Prefs.forecast(this).split("|").mapNotNull { d -> d.split(";").takeIf { it.size == 4 } }
+    if (fc.isNotEmpty()) {
+        card.addView(ui.label("PRÓXIMOS DÍAS"), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(16); bottomMargin = ui.dp(6) })
+        card.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            fc.forEach { d ->
+                addView(LinearLayout(this@weatherPlate).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    addView(ui.text(d[0], ui.condSemi, 15f, Ui.HEAD))
+                    addView(ui.text(WeatherWorker.describe(d[1].toIntOrNull() ?: -1), ui.cond, 13f, Ui.DIM).apply {
+                        gravity = Gravity.CENTER; ui.fitText(this, 13, 11)
+                    }, LinearLayout.LayoutParams(-1, -2))
+                    addView(ui.text("${d[2]}°–${d[3]}°", ui.cond, 15f, Ui.HEAD))
+                    contentDescription = "${d[0]}: ${WeatherWorker.describe(d[1].toIntOrNull() ?: -1)}, mínima ${d[2]}, máxima ${d[3]} grados"
+                }, LinearLayout.LayoutParams(0, -2, 1f))
+            }
+        })
+        val (rise, set) = Prefs.sunTimes(this)
+        if (rise.isNotBlank()) card.addView(ui.bodyText("Amanecer $rise · Atardecer $set", Ui.MUTED, 14f),
+            LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+    }
+    // Unidad y voz
+    card.addView(ui.segmented(listOf(false to "°C Celsius", true to "°F Fahrenheit"), Prefs.tempF(this)) { f ->
+        Prefs.setTempF(this, f); WeatherWorker.runNow(this, force = true); onUiDelayed(4000) { build() }; build()
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
+    card.addView(switchRow("Clima con voz rock", Prefs.rockVoice(this)) { on ->
+        Prefs.setRockVoice(this, on); WeatherWorker.runNow(this, force = true); onUiDelayed(4000) { refreshCityStatus() }
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
+    card.addView(ui.note("Frases como «Tormenta afuera: noche de distorsión»."))
     return card
 }
 
@@ -303,4 +340,25 @@ internal fun MainActivity.switchRow(label: String, on: Boolean, onChange: (Boole
     row.addView(sw)
     row.setOnClickListener { sw.toggle() }
     return row
+}
+
+
+/** Cabecera: fecha estilo Cartel de Gira, próxima alarma y próximo evento de la agenda. */
+internal fun MainActivity.headerExtrasPlate(): View {
+    val card = ui.plateCard()
+    card.addView(ui.sectionTitle("Fecha, alarma y agenda"))
+    card.addView(switchRow("Fecha estilo Cartel de Gira", Prefs.poster(this)) { on ->
+        Prefs.setPoster(this, on); RockWidget.updateAll(this); build()
+    })
+    card.addView(ui.note("«${Extras.posterLine(this)}», como un afiche de concierto."))
+    card.addView(switchRow("Próxima alarma", Prefs.showAlarm(this)) { on ->
+        Prefs.setShowAlarm(this, on); RockWidget.updateAll(this); build()
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
+    card.addView(ui.note("Si suena en las próximas 24 horas. No pide permisos."))
+    card.addView(switchRow("Próximo evento de la agenda", Prefs.showAgenda(this) && Extras.hasCalendar(this)) { on ->
+        if (on && !Extras.hasCalendar(this)) calendarPerm.launch(android.Manifest.permission.READ_CALENDAR)
+        else { Prefs.setShowAgenda(this, on); RockWidget.updateAll(this); build() }
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
+    card.addView(ui.note("Pide permiso para leer tu calendario. Solo se lee en el teléfono; nada sale de él."))
+    return card
 }

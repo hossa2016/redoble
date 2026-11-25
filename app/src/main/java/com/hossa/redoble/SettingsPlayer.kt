@@ -197,6 +197,22 @@ internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
         setPadding(ui.dp(4), 0, ui.dp(4), 0)
         setOnClickListener { action() }
     }, LinearLayout.LayoutParams(-1, ui.dp(48)))
+    link("Guardar una copia de mis ajustes") {
+        exportDoc.launch("prisma-ajustes-" + java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date()) + ".json")
+    }
+    link("Restaurar una copia") { importDoc.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
+    link("Compartir mi setup") {
+        val code = Backup.shareCode(this)
+        startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, "Mi escenario en Prisma Widgets. Para usarlo: Prisma › App › Usar un setup compartido, y pega este código:\n\n$code")
+        }, "Compartir mi setup"))
+    }
+    link("Usar un setup compartido") { askSetupCode() }
+    if (ErrorLog.has(this)) link("Enviar informe de errores") {
+        ui.sheet("Informe de errores", "Prisma guardó en tu teléfono el detalle de algunos cierres. No incluye datos personales. ¿Quieres compartirlo?",
+            actions = listOf("Compartir" to { ErrorLog.share(this) }, "Borrar el informe" to { ErrorLog.clear(this); build() }))
+    }
     link("Ver la guía de inicio") { restartOnboarding() }
     link("Política de privacidad") {
         try {
@@ -204,4 +220,25 @@ internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
         } catch (e: Exception) { }
     }
     return card
+}
+
+
+/** Pegar el código de un setup compartido (sin datos personales). */
+internal fun MainActivity.askSetupCode() {
+    val field = android.widget.EditText(this).apply {
+        hint = "PRISMA:…"
+        maxLines = 4
+        setTextColor(if (Ui.light) 0xFF1C1A17.toInt() else 0xFFF2ECE4.toInt())
+        setHintTextColor(Ui.DIM)
+        // Si hay un código copiado, se pega solo
+        val clip = (getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager)
+            ?.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.text?.toString()
+        clip?.let { c -> Regex("PRISMA:[A-Za-z0-9_\\-=]+").find(c)?.value?.let { setText(it) } }
+    }
+    ui.sheet("Usar un setup compartido", "Cambia tema, fondo, colores y diseño. Tu ciudad y tus fotos no se tocan.", content = field,
+        actions = listOf("Aplicar" to {
+            val n = try { Backup.applyCode(this, Regex("PRISMA:[A-Za-z0-9_\\-=]+").find(field.text.toString())?.value ?: field.text.toString()) }
+                catch (e: Exception) { -1 }
+            if (n < 0) toast("Ese código no es válido") else afterRestore(n)
+        }))
 }

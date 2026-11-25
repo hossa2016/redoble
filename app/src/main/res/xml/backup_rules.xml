@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 o anterior: se copian los ajustes y la foto del fondo -->
+<full-backup-content>
+    <include domain="sharedpref" path="redoble.xml" />
+    <include domain="file" path="fondo.jpg" />
+</full-backup-content>
