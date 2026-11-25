@@ -463,10 +463,10 @@ internal fun MainActivity.themePlate(): View {
             build()
             if (on) showKeepAliveSteps()
         }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-        card.addView(ui.note("Usa la actualización en vivo. Si la hora se queda quieta, apágalo.",
+        card.addView(ui.note("Se dibuja cada minuto con la actualización en vivo.",
             "Con esto Prisma Widgets dibuja la hora, el día y la fecha cada minuto, y para eso enciende la " +
             "actualización en vivo. Si HyperOS cierra la app para ahorrar batería, la hora se congela. " +
-            "Apagado, se usa el reloj del sistema, que nunca se atrasa."))
+            "Apagado, se usa el reloj del sistema, que nunca se atrasa. Si alguna vez la ves quieta, apágalo."))
     }
     card.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0F)) },
         LinearLayout.LayoutParams(-1, ui.dp(1)).apply { topMargin = ui.dp(10); bottomMargin = ui.dp(4) })

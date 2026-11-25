@@ -17,7 +17,7 @@ import android.widget.Toast
 
 internal fun MainActivity.playerPlate(): View {
     val card = ui.plateCard()
-    card.addView(ui.sectionTitle("Reproductor"))
+    card.addView(ui.sectionTitle("Música"))
     card.addView(ui.note("Muestra la canción que suena.", "Cuando suena música, el widget muestra la canción con los botones ⏮ ⏯ ⏭. Sin música se oculta."))
 
     val on = Player.enabled(this)

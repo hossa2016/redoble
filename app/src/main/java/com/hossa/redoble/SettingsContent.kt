@@ -136,7 +136,7 @@ internal fun MainActivity.setlistPlate(): View {
             else "Elige este grupo en un widget de Apps con «Cambiar», en Tus widgets."),
             LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(10) })
     }
-    card.addView(ui.bodyText("Mantén presionada una app para renombrarla.", Ui.MUTED, 13f).apply {
+    card.addView(ui.bodyText("Toca una app para cambiarla, renombrarla o quitarla.", Ui.MUTED, 13f).apply {
         setPadding(0, 0, 0, ui.dp(8))
     })
 
@@ -200,22 +200,30 @@ internal fun MainActivity.slotRow(i: Int, group: Int = 0): View {
         addView(ui.ellipsize(ui.text(if (empty) "Espacio libre" else Prefs.displayName(this@slotRow, i, group), ui.cond, 19f,
             if (empty) Ui.DIM else Ui.HEAD)),
             LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = ui.dp(14) })
-        // Lápiz visible para cambiar el nombre (antes era presión larga, difícil de descubrir)
-        if (!empty) addView(android.widget.ImageView(this@slotRow).apply {
-            setImageResource(R.drawable.ic_edit)
-            imageTintList = android.content.res.ColorStateList.valueOf(Ui.MUTED)
-            scaleType = android.widget.ImageView.ScaleType.CENTER
-            background = ui.rowBg()
-            contentDescription = "Cambiar el nombre"
-            setOnClickListener { renameSlot(i, group) }
-        }, LinearLayout.LayoutParams(ui.dp(44), ui.dp(44)).apply { marginEnd = ui.dp(4) })
-        addView(ui.text(if (empty) "Elegir app" else "Cambiar", ui.cond, 15f, if (empty) ui.accent else Ui.MUTED))
+        // Una sola acción por fila: vacía, elegir app; con app, una hoja con las opciones
+        if (empty) addView(ui.text("Elegir app", ui.cond, 15f, ui.accent))
         addView(ui.text("›", ui.condLight, 22f, Ui.DIM).apply { setPadding(ui.dp(8), 0, 0, ui.dp(2)) })
-        setOnClickListener {
+        val name = if (empty) "" else Prefs.displayName(this@slotRow, i, group)
+        contentDescription = if (empty) "Espacio ${i + 1} libre, elegir app" else "$name, espacio ${i + 1}, ver opciones"
+        val pick = {
             AppPicker(this@slotRow, ui, i, group) {
                 RockWidget.updateAll(this@slotRow)
                 build()
             }.show()
+        }
+        setOnClickListener {
+            if (empty) { pick(); return@setOnClickListener }
+            ui.sheet(name, items = listOf("Cambiar app", "Renombrar", "Quitar del widget"), onItem = { which ->
+                when (which) {
+                    0 -> pick()
+                    1 -> renameSlot(i, group)
+                    else -> {
+                        Prefs.setApp(this@slotRow, i, "", group)
+                        RockWidget.updateAll(this@slotRow); Widgets.updateKind(this@slotRow, Widgets.APPS); build()
+                        toast("$name quitada del widget")
+                    }
+                }
+            })
         }
     }
 }
@@ -230,9 +238,9 @@ internal fun MainActivity.designPlate(): View {
     })
     val pr = Prefs.perRow(this)
     val (short, longDesc) = when (preset) {
-        "completo" -> "Hora, clima, batería y ${pr * 2} apps." to "Hora, clima, batería y ${pr * 2} apps. Cuando suena música, el reproductor aparece compacto y queda una fila de $pr apps para que no se apriete."
-        "musica" -> "Reproductor grande y $pr apps." to "Reproductor grande siempre a la vista, cabecera compacta y $pr apps."
-        "minimal" -> "Día, hora, clima y $pr apps." to "Solo día, hora, clima y $pr apps. Se luce el fondo."
+        "completo" -> "Hora, clima, batería y hasta ${pr * 2} apps." to "Hora, clima, batería y hasta ${pr * 2} apps. Cuando suena música, el reproductor aparece compacto y queda una fila de $pr apps para que no se apriete."
+        "musica" -> "Reproductor grande y hasta $pr apps." to "Reproductor grande siempre a la vista, cabecera compacta y $pr apps."
+        "minimal" -> "Día, hora, clima y hasta $pr apps." to "Solo día, hora, clima y $pr apps. Se luce el fondo."
         else -> "Elementos elegidos por ti." to "Elementos elegidos por ti. Se respeta el número de apps aunque suene música."
     }
     card.addView(ui.note(short, longDesc), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
@@ -277,7 +285,7 @@ internal fun MainActivity.switchRow(label: String, on: Boolean, onChange: (Boole
         isChecked = on
         val states = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
         thumbTintList = android.content.res.ColorStateList(states, intArrayOf(Color.WHITE, if (Ui.light) Color.WHITE else Ui.MUTED))
-        trackTintList = android.content.res.ColorStateList(states, intArrayOf(ui.accent, if (Ui.light) Color.parseColor("#B9AFA3") else Color.parseColor("#3A322B")))
+        trackTintList = android.content.res.ColorStateList(states, intArrayOf(ui.accent, if (Ui.light) Color.parseColor("#857B71") else Color.parseColor("#6E655C")))
         setOnCheckedChangeListener { b, v -> b.tick(); onChange(v) }
     }
     row.addView(sw)

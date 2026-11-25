@@ -11,7 +11,7 @@ import android.widget.LinearLayout
 /** Widget Hora y clima: qué datos muestra. */
 internal fun MainActivity.clockWidgetPlate(): View {
     val card = ui.plateCard()
-    card.addView(ui.sectionTitle("Hora y clima"))
+    card.addView(ui.sectionTitle("Widget Hora y clima"))
     card.addView(ui.note("La hora siempre se ve. Si el widget es pequeño, se quitan datos solos.",
         "Bajito: solo la hora. Mediano: hora, fecha y clima. Alto: todo lo que elijas aquí."))
     listOf("dia" to "Día y fecha", "clima" to "Clima actual", "manana" to "Pronóstico de mañana", "bateria" to "Batería").forEach { (k, label) ->

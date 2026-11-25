@@ -20,7 +20,7 @@ object Prefs {
         Color.parseColor("#3FD0E0"), // Cian eléctrico
         Color.parseColor("#FF3D7F")  // Magenta punk
     )
-    val NAMES = arrayOf("Rojo", "Azul", "Plata", "Rojo rock", "Ámbar", "Verde vúmetro",
+    val NAMES = arrayOf("Carmín", "Azul", "Plata", "Rojo rock", "Ámbar", "Verde vúmetro",
         "Naranja fuego", "Lima neón", "Cian eléctrico", "Magenta punk")
 
     // Apps por defecto (solo se muestran si están instaladas)
@@ -133,6 +133,9 @@ object Prefs {
     fun openSections(ctx: Context): Set<String> =
         p(ctx).getStringSet("openSections", null) ?: setOf("tema")   // la primera vez, Tema abierto
     fun setOpenSections(ctx: Context, v: Set<String>) = p(ctx).edit().putStringSet("openSections", HashSet(v)).apply()
+    /** Pestaña de la configuración: 0 Estilo, 1 Contenido, 2 Widgets, 3 App. */
+    fun settingsTab(ctx: Context): Int = p(ctx).getInt("settingsTab", 0).coerceIn(0, 3)
+    fun setSettingsTab(ctx: Context, v: Int) = p(ctx).edit().putInt("settingsTab", v).apply()
     /** Apariencia de la configuración: "system", "dark" o "light". */
     fun uiMode(ctx: Context) = p(ctx).getString("uiMode", "dark") ?: "dark"
     fun setUiMode(ctx: Context, v: String) = p(ctx).edit().putString("uiMode", v).apply()

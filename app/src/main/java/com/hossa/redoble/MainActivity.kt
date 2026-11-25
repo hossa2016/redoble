@@ -170,44 +170,106 @@ class MainActivity : AppCompatActivity() {
         col.addView(topBar(), 0)
         if (!hasWidget) col.addView(widgetPlate(), 1)
 
-        col.addView(ui.groupHeader("Estilo"))
-        val ws = Prefs.wallStyle(this)
-        val wallName = when (ws) {
-            "fade" -> "Desvanecido"; "solid" -> "Fijo"; "photo" -> "Foto"
-            "anim" -> VideoScenes.find(Prefs.liveScene(this)).name; else -> "Del tema"
-        }
-        val widgetBgName = when (Prefs.widgetStyle(this)) { "fade" -> "Desvanecido"; "solid" -> "Fijo"; else -> "Sin fondo" }
-        col.addView(fold(themePlate(), "tema"))
-        col.addView(fold(wallpaperPlate(), "fondo", wallName))
-        col.addView(fold(widgetBgPlate(), "fondoWidget", widgetBgName))
-        if (th.usesUserAccent) col.addView(fold(accentPlate(), "acento",
-            Prefs.NAMES[Prefs.accentIndex(this).coerceIn(0, Prefs.NAMES.size - 1)]))
+        // Pestañas: la pantalla se parte en cuatro para no recorrer 15 secciones seguidas.
+        // Si hay una sección abierta (por ejemplo, desde la ventana de un widget), manda su pestaña.
+        var tab = Prefs.settingsTab(this)
+        openSections.firstOrNull()?.let { TAB_OF[it] }?.let { if (it != tab) { tab = it; Prefs.setSettingsTab(this, it) } }
+        val tabs = ui.segmented(listOf(0 to "Estilo", 1 to "Contenido", 2 to "Widgets", 3 to "App"), tab) { t ->
+            Prefs.setSettingsTab(this, t)
+            openSections.clear(); Prefs.setOpenSections(this, openSections)
+            build()
+            // Que las pestañas queden a la vista al cambiar
+            scroll?.let { sv -> sv.post { tabsView?.let { tv -> if (sv.scrollY > tv.top) sv.smoothScrollTo(0, (tv.top - ui.dp(8)).coerceAtLeast(0)) } } }
+        }.apply { contentDescription = "Secciones de ajustes" }
+        tabsView = tabs
+        col.addView(tabs, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+            setMargins(ui.dp(16), 0, ui.dp(16), ui.dp(14))
+        })
 
-        // Widgets: primero cuáles tienes, luego lo que muestran
         val clockW = Widgets.has(this, Widgets.CLOCK); val appsW = Widgets.has(this, Widgets.APPS)
         val playerW = Widgets.has(this, Widgets.PLAYER)
-        col.addView(ui.groupHeader("Widgets"))
-        col.addView(fold(packPlate(), "w_pack", "${intArrayOf(Widgets.FULL, Widgets.CLOCK, Widgets.APPS, Widgets.PLAYER).count { Widgets.has(this, it) }} de 4 en pantalla"))
-        // Diseño es del widget Completo: se muestra si está puesto (o si aún no hay ninguno)
-        if (Widgets.has(this, Widgets.FULL) || !hasWidget) col.addView(fold(designPlate(), "diseno"))
-        col.addView(fold(setlistPlate(), "apps"))
-        col.addView(fold(weatherPlate(), "clima", Prefs.city(this).substringBefore(",").ifBlank { "Agregar ciudad ›" }))
-        col.addView(fold(playerPlate(), "reproductor", if (Player.enabled(this)) "Activo" else "Falta dar permiso ›"))
-        // Piezas sueltas: cada sección aparece solo si ese widget está puesto
-        if (clockW) col.addView(fold(clockWidgetPlate(), "w_clock"))
-        if (appsW) col.addView(fold(appsWidgetsPlate(), "w_apps", Widgets.ids(this, Widgets.APPS).size.let { if (it == 1) "1 widget" else "$it widgets" }))
-        col.addView(fold(dreamPlate(), "dream", if (Prefs.dreamBg(this) == "black") "Fondo negro" else "Con tu fondo"))
-        if (playerW) col.addView(fold(playerWidgetPlate(), "w_player", if (Prefs.pwIdle(this) == "last") "Sin música: última canción" else "Sin música: nada sonando"))
-
-        col.addView(ui.groupHeader("App"))
-        col.addView(fold(appearancePlate(hasWidget), "apariencia",
-            when (Prefs.uiMode(this)) { "system" -> "Sistema"; "light" -> "Claro"; else -> "Oscuro" }))
+        when (tab) {
+            0 -> {
+                val ws = Prefs.wallStyle(this)
+                val wallName = when (ws) {
+                    "fade" -> "Desvanecido"; "solid" -> "Fijo"; "photo" -> "Foto"
+                    "anim" -> VideoScenes.find(Prefs.liveScene(this)).name; else -> "Del tema"
+                }
+                val widgetBgName = when (Prefs.widgetStyle(this)) { "fade" -> "Desvanecido"; "solid" -> "Fijo"; else -> "Sin fondo" }
+                col.addView(fold(themePlate(), "tema"))
+                col.addView(fold(wallpaperPlate(), "fondo", wallName))
+                col.addView(fold(widgetBgPlate(), "fondoWidget", widgetBgName))
+                if (th.usesUserAccent) col.addView(fold(accentPlate(), "acento",
+                    Prefs.NAMES[Prefs.accentIndex(this).coerceIn(0, Prefs.NAMES.size - 1)]))
+            }
+            1 -> {
+                // Lo que muestran los widgets (Diseño es del widget Completo)
+                if (Widgets.has(this, Widgets.FULL) || !hasWidget) col.addView(fold(designPlate(), "diseno"))
+                col.addView(fold(setlistPlate(), "apps"))
+                col.addView(fold(weatherPlate(), "clima", Prefs.city(this).substringBefore(",").ifBlank { "Agregar ciudad ›" }))
+                col.addView(fold(playerPlate(), "reproductor", if (Player.enabled(this)) "Activo" else "Falta dar permiso ›"))
+            }
+            2 -> {
+                // Cuáles tienes y las opciones propias de cada widget suelto
+                col.addView(fold(packPlate(), "w_pack", "${intArrayOf(Widgets.FULL, Widgets.CLOCK, Widgets.APPS, Widgets.PLAYER).count { Widgets.has(this, it) }} de 4 en pantalla"))
+                if (clockW) col.addView(fold(clockWidgetPlate(), "w_clock"))
+                if (appsW) col.addView(fold(appsWidgetsPlate(), "w_apps", Widgets.ids(this, Widgets.APPS).size.let { if (it == 1) "1 widget" else "$it widgets" }))
+                if (playerW) col.addView(fold(playerWidgetPlate(), "w_player", if (Prefs.pwIdle(this) == "last") "Sin música: última canción" else "Sin música: nada sonando"))
+                col.addView(fold(dreamPlate(), "dream", if (Prefs.dreamBg(this) == "black") "Fondo negro" else "Con tu fondo"))
+            }
+            else -> col.addView(fold(appearancePlate(hasWidget), "apariencia",
+                when (Prefs.uiMode(this)) { "system" -> "Sistema"; "light" -> "Claro"; else -> "Oscuro" }))
+        }
 
         col.addView(ui.text("Prisma Widgets " + BuildConfig.VERSION_NAME, ui.cond, 13f, Ui.DIM).apply { gravity = Gravity.CENTER },
             LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 topMargin = ui.dp(6)
             })
         setScreen(col, keepScroll = true)
+        previewPill()
+    }
+
+    /**
+     * Botón flotante «Vista previa»: aparece cuando la vista previa sale de la pantalla,
+     * para ver el resultado sin volver arriba.
+     */
+    internal fun previewPill() {
+        val host = findViewById<android.view.ViewGroup>(android.R.id.content) ?: return
+        val sv = scroll ?: return
+        var pill = host.findViewWithTag<TextView>("pvPill")
+        if (pill == null) {
+            pill = ui.text("Vista previa", ui.condSemi, 15f, Ui.HEAD).apply {
+                tag = "pvPill"
+                gravity = Gravity.CENTER
+                minHeight = ui.dp(44); minimumHeight = ui.dp(44)
+                background = ui.rect(Ui.PLATE_TOP, 22f, ui.accentLine, 1.5f)
+                setPadding(ui.dp(18), 0, ui.dp(18), 0)
+                elevation = ui.dp(6).toFloat()
+                contentDescription = "Ver la vista previa del widget"
+                visibility = View.GONE
+                setOnClickListener { visibility = View.GONE; openFullPreview() }
+            }
+            val top = ViewCompat.getRootWindowInsets(host)?.getInsets(WindowInsetsCompat.Type.systemBars())?.top ?: 0
+            host.addView(pill, android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.END).apply {
+                topMargin = top + ui.dp(10); marginEnd = ui.dp(16)
+            })
+        } else {
+            // Colores al día si cambió el modo claro/oscuro o el acento
+            pill.setTextColor(Ui.HEAD)
+            pill.background = ui.rect(Ui.PLATE_TOP, 22f, ui.accentLine, 1.5f)
+        }
+        val p = pill
+        fun update() {
+            val card = preview?.card
+            val hidden = card != null && card.parent != null && sv.scrollY > card.bottom - ui.dp(40)
+            val want = if (hidden && !fullPreviewOpen) View.VISIBLE else View.GONE
+            if (p.visibility != want) {
+                if (want == View.VISIBLE) { p.alpha = 0f; p.visibility = View.VISIBLE; p.animate().alpha(1f).setDuration(150).start() }
+                else p.visibility = View.GONE
+            }
+        }
+        sv.setOnScrollChangeListener { _, _, _, _, _ -> update() }
+        sv.post { update() }
     }
 
     /** Aplica el modo claro u oscuro de la configuración (y los íconos de la barra de estado). */
@@ -329,5 +391,15 @@ class MainActivity : AppCompatActivity() {
         }, 2500)
     }
     internal var fullPreviewOpen = false
+    internal var tabsView: View? = null
+
+    companion object {
+        /** En qué pestaña vive cada sección. */
+        val TAB_OF = mapOf(
+            "tema" to 0, "fondo" to 0, "fondoWidget" to 0, "acento" to 0,
+            "diseno" to 1, "apps" to 1, "clima" to 1, "reproductor" to 1,
+            "w_pack" to 2, "w_clock" to 2, "w_apps" to 2, "w_player" to 2, "dream" to 2,
+            "apariencia" to 3)
+    }
     internal var permCelebrated = false
 }
