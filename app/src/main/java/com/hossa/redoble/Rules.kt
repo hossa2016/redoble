@@ -41,8 +41,23 @@ object Rules {
         } catch (e: Exception) { false }
     }
 
+    /**
+     * Lo que elijas a mano manda: al elegir tema o fondo mientras una regla actúa,
+     * esa regla queda en pausa hasta su próximo cambio (por ejemplo, hasta que termine la noche).
+     */
+    fun rawSig(ctx: Context) = "${rawScene(ctx)}|${rawTheme(ctx)}"
+    private fun paused(ctx: Context): Boolean {
+        val sig = rawSig(ctx)
+        return sig != "null|null" && Prefs.rulePause(ctx) == sig
+    }
+    /** ¿Hay una regla en pausa porque elegiste algo a mano? */
+    fun isPaused(ctx: Context) = paused(ctx)
+
+    fun scene(ctx: Context): String? = if (paused(ctx)) null else rawScene(ctx)
+    fun theme(ctx: Context): Int? = if (paused(ctx)) null else rawTheme(ctx)
+
     /** Escena que pide una regla (o null). */
-    fun scene(ctx: Context): String? = when {
+    private fun rawScene(ctx: Context): String? = when {
         Encore.today(ctx) != null -> "concierto"
         Prefs.ruleRain(ctx) && isRain(ctx) -> "cafe"
         Prefs.ruleNight(ctx) && isNight() -> "fogata"
@@ -50,7 +65,7 @@ object Rules {
     }
 
     /** Tema que pide una regla (o null). */
-    fun theme(ctx: Context): Int? = if (Prefs.ruleNight(ctx) && isNight()) 2 else null
+    private fun rawTheme(ctx: Context): Int? = if (Prefs.ruleNight(ctx) && isNight()) 2 else null
 
     /** Audífonos: diseño Música grande sin tocar los ajustes guardados. */
     fun musicLayout(ctx: Context) = Prefs.ruleHeadphones(ctx) && headphones(ctx)
@@ -58,6 +73,7 @@ object Rules {
     /** Nombre del «acto» activo para mostrarlo en la app ("" si ninguna regla actúa). */
     fun act(ctx: Context): String {
         val parts = mutableListOf<String>()
+        if (paused(ctx)) return I18n.tr(ctx, "En pausa: manda lo que elegiste")
         Encore.today(ctx)?.let { parts += it }
         if (Prefs.ruleNight(ctx) && isNight()) parts += I18n.tr(ctx, "Noche")
         if (Prefs.ruleRain(ctx) && isRain(ctx)) parts += I18n.tr(ctx, "Lluvia")

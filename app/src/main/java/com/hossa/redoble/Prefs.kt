@@ -73,7 +73,9 @@ object Prefs {
 
     // ---- Tema y distribución ----
     fun theme(ctx: Context) = p(ctx).getInt("theme", 0)
-    fun setTheme(ctx: Context, v: Int) = p(ctx).edit().putInt("theme", v).apply()
+    fun setTheme(ctx: Context, v: Int) = p(ctx).edit().putInt("theme", v).putString("rulePause", Rules.rawSig(ctx)).apply()
+    /** Regla del Setlist del Día en pausa (firma de la regla que estaba activa al elegir a mano). */
+    fun rulePause(ctx: Context) = p(ctx).getString("rulePause", "") ?: ""
 
     /** completo | musica | minimal | custom */
     /** Apps por fila en el widget: 3 o 4. */
@@ -143,7 +145,7 @@ object Prefs {
     fun uiMode(ctx: Context) = p(ctx).getString("uiMode", "dark") ?: "dark"
     fun setUiMode(ctx: Context, v: String) = p(ctx).edit().putString("uiMode", v).apply()
     fun liveScene(ctx: Context) = p(ctx).getString("liveScene", "fogata") ?: "fogata"
-    fun setLiveScene(ctx: Context, id: String) = p(ctx).edit().putString("liveScene", id).apply()
+    fun setLiveScene(ctx: Context, id: String) = p(ctx).edit().putString("liveScene", id).putString("rulePause", Rules.rawSig(ctx)).apply()
 
     /** Ya vio la guía de inicio (quien ya tenía el widget puesto no la necesita). */
     fun onboarded(ctx: Context) = p(ctx).getBoolean("onboarded", RockWidget.hasWidgets(ctx))
