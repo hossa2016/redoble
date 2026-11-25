@@ -11,8 +11,8 @@ android {
         applicationId = "com.hossa.redoble"
         minSdk = 26
         targetSdk = 36
-        versionCode = 95
-        versionName = "14.8"
+        versionCode = 96
+        versionName = "15.0"
     }
 
     // Firma: si existen las variables (GitHub Secrets), se usan; si no, la clave
@@ -61,4 +61,5 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     // Reseña dentro de la app (solo funciona si se instaló desde Google Play)
     implementation("com.google.android.play:review-ktx:2.0.2")
+    testImplementation("junit:junit:4.13.2")
 }

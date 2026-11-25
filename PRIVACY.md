@@ -1,6 +1,6 @@
 # Política de privacidad de Prisma Widgets
 
-*Última actualización: 21 de noviembre de 2026*
+*Última actualización: 25 de noviembre de 2026*
 
 Prisma Widgets es un widget para la pantalla de inicio de Android que muestra la hora, el clima, la batería, la música que suena y accesos a tus apps. Esta política explica qué datos usa la app y para qué.
 
@@ -31,10 +31,29 @@ Si eliges una foto, la app la copia a su almacenamiento privado para crear el fo
 ### Batería
 La app lee el nivel de batería y si está cargando, solo para mostrarlo en el widget.
 
+### Agenda y alarma (opcional)
+- **Próxima alarma:** la app lee la hora de tu próxima alarma desde Android para mostrarla en el widget. No pide permisos.
+- **Próximo evento de la agenda:** solo si lo activas, la app pide permiso para leer tu calendario y muestra el título y la hora del próximo evento. Se lee en el teléfono y no se guarda ni se envía.
+
+### Bitácora de Gira (opcional)
+Si la activas, la app guarda **en tu teléfono** los títulos, artistas y minutos de lo que escuchas, para armar tu setlist semanal y el afiche del año. No sale del teléfono, salvo que tú compartas un afiche.
+
+### Video propio (opcional)
+Si eliges un video tuyo como fondo animado, se copia al almacenamiento privado de la app. No se sube a ningún lado.
+
+### Copias de ajustes y setups compartidos
+- **Copia de ajustes:** se guarda donde tú elijas, en un archivo. Incluye tus ajustes, tu ciudad y la foto del fondo.
+- **Compartir mi setup:** genera un código con el tema, colores y diseño, **sin** ciudad, fotos, nombres de apps ni historial.
+- Android también puede incluir los ajustes en su copia de seguridad del teléfono.
+
+### Informe de errores
+Si la app se cierra de forma inesperada, guarda **en tu teléfono** un registro técnico del error (modelo del teléfono, versión de Android y de la app). No se envía solo: tú decides si lo compartes desde *App → Enviar informe de errores*.
+
 ## Permisos
 - **Internet:** consultar el clima y descargar carátulas.
 - **Fondo de pantalla:** aplicar el fondo que elijas.
 - **Notificaciones y servicio en primer plano** (opcional, "Actualización en vivo"): mantener la batería y la hora del widget al día. Se puede apagar en los ajustes.
+- **Agenda** (opcional): mostrar el próximo evento si activas esa opción.
 - **Iniciar al encender:** volver a programar las actualizaciones del widget después de reiniciar el teléfono.
 
 ## Niños

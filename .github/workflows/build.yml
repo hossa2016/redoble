@@ -35,7 +35,7 @@ jobs:
         run: |
           if [ -z "$PRISMA_KEYSTORE_PASSWORD" ]; then unset PRISMA_KEYSTORE_PASSWORD PRISMA_KEY_ALIAS PRISMA_KEY_PASSWORD; fi
           set -o pipefail
-          gradle assembleRelease bundleRelease --no-daemon --stacktrace 2>&1 | tee build.log
+          gradle testReleaseUnitTest assembleRelease bundleRelease --no-daemon --stacktrace 2>&1 | tee build.log
       - run: |
           cp app/build/outputs/apk/release/app-release.apk Prisma.apk
           cp app/build/outputs/bundle/release/app-release.aab PrismaWidgets.aab
