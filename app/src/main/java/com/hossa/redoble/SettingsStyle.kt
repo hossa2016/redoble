@@ -463,15 +463,15 @@ internal fun MainActivity.themePlate(): View {
         build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
     card.addView(ui.note("Clima, batería, música y apps con la letra de cada tema."))
-    val live = Prefs.liveUpdates(this)
-    card.addView(switchRow("Hora y fecha con la letra del tema", Prefs.themeClock(this) && live) { on ->
+    val liveOn = Prefs.liveUpdates(this)
+    card.addView(switchRow("Hora y fecha con la letra del tema", Prefs.themeClock(this) && liveOn) { on ->
         Prefs.setThemeClock(this, on)
         if (on && !Prefs.themeFonts(this)) Prefs.setThemeFonts(this, true)
-        if (on && !live) { Prefs.setLiveUpdates(this, true); askNotifications(); LiveService.start(this) }
+        if (on && !liveOn) { Prefs.setLiveUpdates(this, true); askNotifications(); LiveService.start(this) }
         RockWidget.updateAll(this); build()
         if (on) showKeepAliveSteps()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
-    card.addView(ui.note(if (Prefs.themeClock(this) && live) "Se dibuja cada minuto." else "Apagado: tu pantalla de inicio usa la letra del sistema.",
+    card.addView(ui.note(if (Prefs.themeClock(this) && liveOn) "Se dibuja cada minuto." else "Apagado: tu pantalla de inicio usa la letra del sistema.",
         "Prisma Widgets dibuja la hora, el día y la fecha cada minuto con la letra del tema (enciende la actualización en vivo). " +
         "Si la actualización en vivo se detiene, el widget vuelve solo al reloj del sistema, que nunca se atrasa."))
     // Taller de Afiches: la letra de títulos y textos del widget
