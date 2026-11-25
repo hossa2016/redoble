@@ -462,20 +462,32 @@ internal fun MainActivity.themePlate(): View {
         RockWidget.updateAll(this)
         build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
-    card.addView(ui.note("Clima, batería, música y apps con la letra de cada tema.",
-        "La hora, el día y la fecha usan el reloj del sistema, que nunca se atrasa. " +
-        "Para que también lleven la letra del tema: Más › Rendimiento › «Hora con la letra del tema»."))
+    card.addView(ui.note("Clima, batería, música y apps con la letra de cada tema."))
+    val live = Prefs.liveUpdates(this)
+    card.addView(switchRow("Hora y fecha con la letra del tema", Prefs.themeClock(this) && live) { on ->
+        Prefs.setThemeClock(this, on)
+        if (on && !Prefs.themeFonts(this)) Prefs.setThemeFonts(this, true)
+        if (on && !live) { Prefs.setLiveUpdates(this, true); askNotifications(); LiveService.start(this) }
+        RockWidget.updateAll(this); build()
+        if (on) showKeepAliveSteps()
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+    card.addView(ui.note(if (Prefs.themeClock(this) && live) "Se dibuja cada minuto." else "Apagado: tu pantalla de inicio usa la letra del sistema.",
+        "Prisma Widgets dibuja la hora, el día y la fecha cada minuto con la letra del tema (enciende la actualización en vivo). " +
+        "Si la actualización en vivo se detiene, el widget vuelve solo al reloj del sistema, que nunca se atrasa."))
     // Taller de Afiches: la letra de títulos y textos del widget
     card.addView(ui.text("Letra del widget", ui.cond, 17f, Ui.HEAD), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(16) })
     card.addView(ui.caption("Taller de Afiches"), LinearLayout.LayoutParams(-2, -2).apply { bottomMargin = ui.dp(6) })
+    var chosen: View? = null
     card.addView(HorizontalScrollView(this).apply {
         isHorizontalScrollBarEnabled = false
+        post { chosen?.let { c -> smoothScrollTo((c.left - ui.dp(16)).coerceAtLeast(0), 0) } }
         addView(LinearLayout(this@themePlate).apply {
             orientation = LinearLayout.HORIZONTAL
             val cur = Prefs.workshopFont(this@themePlate)
             TextArt.WORKSHOP_FONTS.forEach { (name, id) ->
                 addView(ui.option(if (name == "tema") "Del tema" else name, name == cur).apply {
                     if (id != 0) typeface = ui.font(id)
+                    if (name == cur) chosen = this
                     setOnClickListener {
                         Prefs.setWorkshopFont(this@themePlate, name)
                         // Elegir una letra enciende «Letras del tema» (sin dependencias escondidas)

@@ -28,7 +28,8 @@ internal fun MainActivity.previewPlate(): View {
     preview?.let { (it.card.parent as? android.view.ViewGroup)?.removeView(it.card) }
 
     val card = ui.plateCard()
-    card.addView(ui.sectionTitle("Vista previa", "Toca para verla en grande"))
+    val rule = Rules.act(this).takeIf { it.isNotBlank() && Rules.scene(this) != null }
+    card.addView(ui.sectionTitle("Vista previa", if (rule != null) I18n.tr(this, "Ahora manda: {}").replace("{}", rule) else "Así se ve en tu pantalla"))
 
     val (sw, sh) = screenSize()
     val dens = resources.displayMetrics.density
@@ -83,9 +84,10 @@ internal fun MainActivity.previewPlate(): View {
 internal fun MainActivity.updatePreview() {
     val p = preview ?: return
     val (sw, _) = screenSize()
-    if (Prefs.wallStyle(this) == "anim") {
-        // Fondo animado: la escena viva detrás del widget; si es la misma, sigue corriendo
-        val id = Prefs.liveScene(this)
+    val ruleScene = Rules.scene(this)
+    if (Prefs.wallStyle(this) == "anim" || ruleScene != null) {
+        // Fondo animado: la escena viva detrás del widget (la de la regla activa, si hay); si es la misma, sigue corriendo
+        val id = ruleScene ?: Prefs.liveScene(this)
         if (p.video?.scene?.id != id) {
             p.video?.let { p.frame.removeView(it) }
             val v = VideoPreview(this).apply { scene = VideoScenes.find(id) }
@@ -151,6 +153,7 @@ internal fun MainActivity.updatePreview() {
                     // vistas normales de Android, como en la pantalla de inicio. Las de AppCompat
                     // rechazan setImageBitmap desde RemoteViews y el widget no se dibujaba.
                     val fresh = it.apply(applicationContext, p.holder)
+                    systemFonts(fresh)
                     p.holder.removeAllViews()
                     p.holder.addView(fresh, FrameLayout.LayoutParams(wPx, childH))
                     fresh.post {
@@ -183,4 +186,17 @@ internal fun MainActivity.showPreviewError(p: PreviewParts, msg: String?) {
             setOnClickListener { showPreviewError(p, null); updatePreview() }
         }, android.widget.LinearLayout.LayoutParams(-2, ui.dp(44)))
     }, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
+}
+
+/**
+ * La pantalla de inicio (HyperOS/MIUI) dibuja la hora y la fecha del sistema con su propia
+ * letra, no con la del diseño. La vista previa hace lo mismo para no prometer otra cosa;
+ * lo dibujado con la letra del tema (imágenes) no cambia.
+ */
+internal fun systemFonts(v: android.view.View) {
+    if (v is android.widget.TextView) {
+        val bold = v.typeface?.isBold == true
+        v.typeface = android.graphics.Typeface.create("sans-serif", if (bold) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+    }
+    if (v is android.view.ViewGroup) for (i in 0 until v.childCount) systemFonts(v.getChildAt(i))
 }

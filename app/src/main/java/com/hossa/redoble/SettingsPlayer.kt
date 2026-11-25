@@ -72,7 +72,7 @@ internal fun MainActivity.playerPlate(): View {
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
 
     // Dónde va en el widget
-    card.addView(ui.actionRow("Lugar y tamaño en el widget", R.drawable.ic_edit, "Se ajusta en el editor visual").apply {
+    card.addView(ui.actionRow("Lugar y tamaño", R.drawable.ic_edit, "Se ajusta en el editor visual").apply {
         setOnClickListener { openEditor() }
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
 
@@ -216,7 +216,7 @@ internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
     fun link(label: String, icon: Int = R.drawable.ic_open, action: () -> Unit) = card.addView(ui.actionRow(label, icon).apply {
         setOnClickListener { action() }
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(4) })
-    link("Guardar una copia de mis ajustes", R.drawable.ic_download) {
+    link("Guardar copia de ajustes", R.drawable.ic_download) {
         exportDoc.launch("prisma-ajustes-" + java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date()) + ".json")
     }
     link("Restaurar una copia", R.drawable.ic_upload) { importDoc.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
@@ -362,16 +362,8 @@ internal fun MainActivity.performancePlate(): View {
     card.addView(ui.note("Batería al instante (con una notificación fija).",
         "Mantiene la batería al día y permite la hora con la letra del tema. Android exige mostrar una " +
         "notificación fija mientras está activa; al encenderla te pedirá el permiso de notificaciones."))
-    card.addView(switchRow("Hora con la letra del tema", Prefs.themeClock(this) && live) { on ->
-        Prefs.setThemeClock(this, on)
-        if (on && !Prefs.themeFonts(this)) Prefs.setThemeFonts(this, true)
-        if (on && !live) { Prefs.setLiveUpdates(this, true); askNotifications(); LiveService.start(this) }
-        RockWidget.updateAll(this); build()
-        if (on) showKeepAliveSteps()
-    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
-    card.addView(ui.note("Se dibuja cada minuto con la actualización en vivo.",
-        "Con esto Prisma Widgets dibuja la hora, el día y la fecha cada minuto, y para eso enciende la " +
-        "actualización en vivo. Si la actualización en vivo se detiene, el widget vuelve solo al reloj del sistema, que nunca se atrasa."))
+    card.addView(ui.note("La hora y la fecha con la letra del tema se encienden en Estilo › Tema.", sp = 14f),
+        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
     return card
 }
 

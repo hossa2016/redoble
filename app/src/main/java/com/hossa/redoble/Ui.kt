@@ -197,6 +197,8 @@ class Ui(val ctx: Context, val accent: Int) {
         setPadding(dp(16), 0, dp(16), 0)
         stateListAnimator = null
         gravity = Gravity.CENTER
+        // Nunca se parte una palabra («Personalizad / o»): una línea que se achica si hace falta
+        fitText(this, 17, 12)
     }
 
     fun primary(label: String) = baseButton(label).apply {
@@ -281,6 +283,7 @@ class Ui(val ctx: Context, val accent: Int) {
      * (nunca texto gris suelto, que parece un párrafo).
      */
     fun actionRow(label: String, icon: Int, sub: String? = null): LinearLayout = LinearLayout(ctx).apply {
+        // (el título va en una línea: si no cabe, se achica un poco antes que partirse)
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
         background = rowBg()
@@ -334,7 +337,8 @@ class Ui(val ctx: Context, val accent: Int) {
     fun <T> segmented(options: List<Pair<T, String>>, selected: T, onPick: (T) -> Unit): LinearLayout {
         // Con 5 o más opciones van en dos filas (cada una ocupa todo el ancho) para que ningún texto se corte,
         // aunque el teléfono tenga la letra grande.
-        val perRow = if (options.size >= 5) (options.size + 1) / 2 else options.size
+        val longLabels = options.size >= 4 && options.sumOf { I18n.tr(ctx, it.second).length } > 28
+        val perRow = if (options.size >= 5 || longLabels) (options.size + 1) / 2 else options.size
         val well = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             background = rect(WELL, 12f, veil(0x12), 1f)
@@ -357,7 +361,7 @@ class Ui(val ctx: Context, val accent: Int) {
                 fitText(this, 15)
                 includeFontPadding = false
                 gravity = Gravity.CENTER
-                setPadding(dp(2), 0, dp(2), 0)
+                setPadding(dp(8), 0, dp(8), 0)
                 minHeight = dp(48); minimumHeight = dp(48)
                 contentDescription = if (on) "$label, seleccionado" else label
                 if (on) current = this

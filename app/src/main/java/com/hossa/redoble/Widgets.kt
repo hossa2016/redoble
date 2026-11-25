@@ -229,7 +229,7 @@ object Widgets {
         val labelSp = TextArt.commonSize(ctx, apps.map { Prefs.displayName(ctx, it.first, group) }, S.label,
             if (g.cols >= 4) S.lsize * 0.86f else S.lsize, S.lls, th.family == "neon" || th.family == "lujo", S.shadow, maxWidthPx = labelMax)
         // Caja del ícono: más pequeña si la fila es bajita
-        val hs = minOf(holderDp(th.family), (g.rowH - if (g.names) 24 else 6).coerceAtLeast(28))
+        val hs = minOf(holderDp(th.family), (g.rowH - if (g.names) 24 else 6).coerceAtLeast(28), (cellW - 8).coerceAtLeast(28))
 
         for (r in 0 until 4) v.setViewVisibility(ROWS[r], if (r < usedRows) View.VISIBLE else View.GONE)
         for (r in 0 until 4) for (c in 0 until 5) {

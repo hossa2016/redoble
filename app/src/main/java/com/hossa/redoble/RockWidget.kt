@@ -409,7 +409,13 @@ class RockWidget : AppWidgetProvider() {
             if (!bigDay) v.setTextColor(R.id.day_txt, dayColor)
             if (sc("dia") != 1f) v.setTextViewTextSize(R.id.day_txt, TypedValue.COMPLEX_UNIT_SP, 13f * sc("dia"))
             val now = java.util.Date()
-            val dayFmt = if (narrow) when (th.family) {
+            val longDay = when (th.family) {
+                "cristal" -> "EEEE, d 'de' MMMM"; "neon" -> "EEEE '//' dd.MM"; "lujo" -> "EEEE · d 'de' MMMM"; else -> "EEEE"
+            }
+            val dayFits = TextArt.commonSize(ctx, listOf(java.text.SimpleDateFormat(I18n.dateFormat(ctx, longDay), I18n.locale(ctx))
+                .format(java.util.Date()).replace(".", "").uppercase()), S.title, 13f * sc("dia"), S.tls, true, S.shadow,
+                maxWidthPx = colW - (8 * dens).toInt()) >= 13f * sc("dia") * 0.97f
+            val dayFmt = if (narrow || !dayFits) when (th.family) {
                 "cristal" -> "EEE d MMM"; "neon" -> "EEE '//' dd.MM"; "lujo" -> "EEE · d MMM"; else -> "EEEE"
             } else when (th.family) {
                 "cristal" -> "EEEE, d 'de' MMMM"; "neon" -> "EEEE '//' dd.MM"; "lujo" -> "EEEE · d 'de' MMMM"; else -> "EEEE"
@@ -465,6 +471,10 @@ class RockWidget : AppWidgetProvider() {
             val tomorrow = listOf(if (if (solo) Prefs.cw(ctx, "manana") else Prefs.el(ctx, "manana")) Prefs.weatherTomorrow(ctx) else "", extra)
                 .filter { it.isNotBlank() }.joinToString(" · ")
             v.setTextViewText(R.id.wx_tomorrow, tomorrow)
+            // «Mañana…» se leía muy poco sobre fondos claros o sin fondo: más cerca del color principal
+            val bare = Prefs.widgetStyle(ctx) != "fade" && Prefs.widgetStyle(ctx) != "solid"
+            val tomInk = ColorUtils.blendARGB(th.dim, th.head, if (bare) 0.85f else 0.45f)
+            v.setTextColor(R.id.wx_tomorrow, tomInk)
             val nowFull = now0(ctx)
             val ws = sp("clima"); val wk = sc("clima"); val wInk = colr("clima", th.head)
             val fitsFull = TextArt.commonSize(ctx, listOf(nowFull), if (th.family == "lujo") ws.body else ws.med, S.wsize * wk,
@@ -487,8 +497,8 @@ class RockWidget : AppWidgetProvider() {
                     caps = th.family == "neon", shadow = S.shadow, maxWidthPx = colW)
             }
             twin(v, R.id.wx_tomorrow, R.id.wx_tomorrow_bmp, manana && tomorrow.isNotBlank() && !tomInline, fonts || custom("clima")) {
-                TextArt.render(ctx, tomorrow, if (th.family == "lujo") ws.med else ws.body, S.tomsize * wk, th.dim,
-                    S.lls, caps = th.family == "neon" || th.family == "lujo", shadow = S.shadow, maxWidthPx = colW)
+                TextArt.render(ctx, tomorrow, if (th.family == "lujo") ws.med else ws.body, S.tomsize * wk, tomInk,
+                    S.lls, caps = th.family == "neon" || th.family == "lujo", shadow = S.shadow || bare, maxWidthPx = colW)
             }
             v.setViewVisibility(R.id.batt_row, vis(bateria))
             v.setViewVisibility(R.id.status_row, vis(clima))

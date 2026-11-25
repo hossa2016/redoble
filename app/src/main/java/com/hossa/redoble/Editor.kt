@@ -116,6 +116,7 @@ internal fun MainActivity.openEditor() {
         orientation = LinearLayout.VERTICAL
         setPadding(ui.dp(20), ui.dp(16), ui.dp(20), ui.dp(20))
         background = ui.rect(Ui.PLATE_TOP, 22f, Ui.headA(0x22), 1f)
+        clipToPadding = false
     }
     panelScroll.addView(panel, FrameLayout.LayoutParams(-1, -2))
     root.addView(panelScroll, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = ui.dp(12) })
@@ -161,21 +162,21 @@ internal fun MainActivity.openEditor() {
                 a.bottom = cut; c.top = cut
             }
         }
-        // Después de repartir, cada uno vuelve a medir al menos 48 dp (los chicos quedan encima)
-        for (b in boxes.values) {
-            if (b.height() < minH) { val c = b.centerY(); b.top = c - minH / 2; b.bottom = c + minH / 2 }
-        }
-        // Siempre dentro del widget
+        // Siempre dentro del widget. El borde se dibuja con lo repartido (ya no se cruzan);
+        // solo el área que se toca crece hasta 48 dp, y las chicas quedan encima.
         boxes.values.forEach { it.intersect(0, 0, wPx, hPx) }
         shown = boxes.keys.toList()
         for ((p, b) in boxes.entries.sortedByDescending { it.value.width().toLong() * it.value.height() }.map { it.key to it.value }) {
             val on = sel == p
+            val real = Rect(b)
+            if (b.height() < minH) { val c = b.centerY(); b.top = (c - minH / 2).coerceAtLeast(0); b.bottom = (c + minH / 2).coerceAtMost(hPx) }
+            val face = if (on) ui.rect(ColorUtils.setAlphaComponent(ui.accent, 0x22), 12f / scale, ui.accent, 3f / scale)
+                else android.graphics.drawable.GradientDrawable().apply {
+                    cornerRadius = ui.dp(12f / scale).toFloat()
+                    setStroke(ui.dp(1.5f / scale), Color.argb(0x88, 255, 255, 255), ui.dp(6f / scale).toFloat(), ui.dp(5f / scale).toFloat())
+                }
             overlay.addView(View(this).apply {
-                background = if (on) ui.rect(ColorUtils.setAlphaComponent(ui.accent, 0x22), 12f / scale, ui.accent, 3f / scale)
-                    else android.graphics.drawable.GradientDrawable().apply {
-                        cornerRadius = ui.dp(12f / scale).toFloat()
-                        setStroke(ui.dp(1.5f / scale), Color.argb(0x88, 255, 255, 255), ui.dp(6f / scale).toFloat(), ui.dp(5f / scale).toFloat())
-                    }
+                background = android.graphics.drawable.InsetDrawable(face, real.left - b.left, real.top - b.top, b.right - real.right, b.bottom - real.bottom)
                 contentDescription = I18n.tr(this@openEditor, "Editar") + " " + I18n.tr(this@openEditor, names.getValue(p))
                 setOnClickListener { sel = p; drawOverlay(); fillPanel() }
             }, FrameLayout.LayoutParams(b.width(), b.height()).apply { leftMargin = b.left; topMargin = b.top })
@@ -185,8 +186,8 @@ internal fun MainActivity.openEditor() {
                 setPadding(ui.dp(8f / scale), ui.dp(2f / scale), ui.dp(8f / scale), ui.dp(2f / scale))
                 importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             }, FrameLayout.LayoutParams(-2, -2).apply {
-                leftMargin = b.left + ui.dp(6f / scale)
-                topMargin = (b.top - ui.dp(22f / scale)).coerceAtLeast(0)
+                leftMargin = real.left + ui.dp(6f / scale)
+                topMargin = (real.top - ui.dp(22f / scale)).coerceAtLeast(0)
             })
         }
     }
@@ -203,6 +204,7 @@ internal fun MainActivity.openEditor() {
                 try {
                     rv?.let {
                         val v = it.apply(app, holder)
+                        systemFonts(v)
                         holder.removeAllViews(); holder.addView(v, FrameLayout.LayoutParams(wPx, hPx))
                         widgetRoot = v as? ViewGroup
                         v.post { drawOverlay(); if (sel == null) fillPanel() }
@@ -293,18 +295,23 @@ internal fun MainActivity.openEditor() {
                         setOnClickListener { act() }
                     }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = ui.dp(8) })
                 }
-                return HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(chips) }
+                return HorizontalScrollView(this).apply {
+                    isHorizontalScrollBarEnabled = false; clipToPadding = false
+                    setPadding(ui.dp(20), 0, ui.dp(20), 0); addView(chips)
+                }
             }
             // Partes: otra forma de elegir (y la que usa TalkBack sin tener que buscar en el dibujo)
             if (shown.isNotEmpty()) {
                 panel.addView(ui.label("PARTES"), rowLp(18))
-                panel.addView(chipRow(shown.map { k -> I18n.tr(this, names.getValue(k)) to { sel = k; drawOverlay(); fillPanel() } }, false), rowLp(8))
+                panel.addView(chipRow(shown.map { k -> I18n.tr(this, names.getValue(k)) to { sel = k; drawOverlay(); fillPanel() } }, false),
+                    rowLp(8).apply { marginStart = -ui.dp(20); marginEnd = -ui.dp(20) })
             }
             val hidden = names.keys.filter { it != "apps" && exists(it) && !Prefs.elRaw(this, it) }
             if (hidden.isNotEmpty()) {
                 panel.addView(ui.label("OCULTAS · TOCA PARA VOLVER A PONERLAS"), rowLp(18))
                 panel.addView(chipRow(hidden.map { h -> ("+ " + I18n.tr(this, names.getValue(h))) to {
-                    Prefs.setEl(this@openEditor, h, true); fillPanel(); changed() } }, true), rowLp(8))
+                    Prefs.setEl(this@openEditor, h, true); fillPanel(); changed() } }, true),
+                    rowLp(8).apply { marginStart = -ui.dp(20); marginEnd = -ui.dp(20) })
             }
             // Por qué falta algo que está encendido
             val why = mutableListOf<String>()
@@ -338,6 +345,8 @@ internal fun MainActivity.openEditor() {
                 setOnClickListener { Prefs.setEl(this@openEditor, p, false); sel = null; fillPanel(); changed() }
             })
             panel.addView(title)
+            if (p == "player" && !Prefs.lastPlaying(this))
+                panel.addView(ui.note("Sin música suena nada: lo de arriba es un ejemplo de cómo se verá.", sp = 13f), rowLp(2))
 
             // Orden: flechas apagadas en los extremos y un mapa de los tres bloques
             fun arrow(up: Boolean) = ui.secondary((if (up) "↑ " else "↓ ") + I18n.tr(this, if (up) "Subir" else "Bajar")).apply {
@@ -418,7 +427,7 @@ internal fun MainActivity.openEditor() {
                 panel.addView(label("Letra"), rowLp())
                 panel.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(strip) }, rowLp(6))
                 if (p == "hora" && cur != "tema" && !(Prefs.themeClock(this) && Prefs.liveUpdates(this)))
-                    panel.addView(ui.note("La hora se ve con esta letra cuando están encendidas «Hora con la letra del tema» y «Actualización en vivo» (en Más › Rendimiento).", sp = 14f), rowLp(6))
+                    panel.addView(ui.note("La hora se ve con esta letra cuando está encendida «Hora y fecha con la letra del tema» (en Estilo › Tema).", sp = 14f), rowLp(6))
             }
 
             // Color

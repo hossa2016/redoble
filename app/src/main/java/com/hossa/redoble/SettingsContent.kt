@@ -25,8 +25,8 @@ internal fun MainActivity.weatherPlate(): View {
         hint = "Ciudad, por ejemplo Medellín"
         setHintTextColor(Ui.DIM)
         setTextColor(Ui.HEAD)
-        typeface = ui.body
-        textSize = 16f
+        typeface = ui.cond
+        textSize = 17f
         background = ui.field()
         setSingleLine()
         imeOptions = EditorInfo.IME_ACTION_DONE
@@ -279,11 +279,15 @@ internal fun MainActivity.designPlate(): View {
     val card = ui.plateCard()
     val preset = Prefs.preset(this)
     val names = mapOf("completo" to "Todo", "musica" to "Música grande", "minimal" to "Mínimo")
-    card.addView(ui.sectionTitle("Diseño del Completo", names[preset] ?: "Personalizado"))
+    val touched = Prefs.editorTouched(this)
+    card.addView(ui.sectionTitle("Diseño del Completo", (names[preset] ?: "Personalizado").let { if (touched) I18n.tr(this, it) + " + " + I18n.tr(this, "tus ajustes") else it }))
     card.addView(ui.segmented(names.entries.map { it.key to it.value }, preset) { k ->
-        val touched = Prefs.editorTouched(this)
-        Prefs.applyPreset(this, k); RockWidget.updateAll(this); build()
-        if (touched) toast("Plantilla aplicada: se quitaron los cambios del editor")
+        fun go() { Prefs.applyPreset(this, k); RockWidget.updateAll(this); build() }
+        if (!touched) go()
+        else android.app.AlertDialog.Builder(this)
+            .setMessage(I18n.tr(this, "La plantilla quita lo que cambiaste en el editor (orden, tamaños, letras y colores). ¿Seguir?"))
+            .setPositiveButton(I18n.tr(this, "Usar plantilla")) { _, _ -> go() }
+            .setNegativeButton(I18n.tr(this, "Cancelar")) { _, _ -> build() }.show()
     })
     val pr = Prefs.perRow(this)
     val (short, longDesc) = when (preset) {

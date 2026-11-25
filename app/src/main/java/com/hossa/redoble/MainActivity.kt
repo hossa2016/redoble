@@ -349,7 +349,10 @@ class MainActivity : AppCompatActivity() {
         if (fr.width <= 0) return
         try {
             val bmp = android.graphics.Bitmap.createBitmap(fr.width, fr.height, android.graphics.Bitmap.Config.ARGB_8888)
-            fr.draw(android.graphics.Canvas(bmp)); t.setImageBitmap(bmp)
+            val c = android.graphics.Canvas(bmp)
+            // El video no se copia con draw(): se pinta su cuadro actual primero
+            preview?.video?.frame()?.let { c.drawBitmap(it, null, android.graphics.Rect(0, 0, fr.width, fr.height), null) }
+            fr.draw(c); t.setImageBitmap(bmp)
         } catch (e: Exception) { }
     }
 
@@ -394,7 +397,7 @@ class MainActivity : AppCompatActivity() {
             if (bar.visibility != want) {
                 if (want == View.VISIBLE) {
                     // Foto del momento de la vista previa para la miniatura
-                    snapThumb(thumb)
+                    snapThumb(thumb); bar.postDelayed({ snapThumb(thumb) }, 400)
                     bar.alpha = 0f; bar.visibility = View.VISIBLE; bar.animate().alpha(1f).setDuration(150).start()
                 } else bar.visibility = View.GONE
             }
@@ -405,10 +408,11 @@ class MainActivity : AppCompatActivity() {
             override fun run() {
                 if (!bar.isAttachedToWindow) return
                 if (bar.visibility == View.VISIBLE) snapThumb(thumb)
-                bar.postDelayed(this, 15_000)
+                // Justo al cambiar el minuto (la hora de la miniatura no se queda atrás)
+                bar.postDelayed(this, 60_500L - System.currentTimeMillis() % 60_000L)
             }
         }
-        bar.postDelayed(tick, 15_000)
+        bar.postDelayed(tick, 60_500L - System.currentTimeMillis() % 60_000L)
         sv.setOnScrollChangeListener { _, _, _, _, _ -> update() }
         sv.post { update() }
     }

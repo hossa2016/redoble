@@ -81,6 +81,7 @@ internal fun MainActivity.openFullPreview(animIndex: Int? = null) {
                 try {
                     rv?.let {
                         val v = it.apply(app, holder)
+                        systemFonts(v)
                         holder.removeAllViews(); holder.addView(v, FrameLayout.LayoutParams(wPx, hPx))
                     }
                 } catch (e: Throwable) { }

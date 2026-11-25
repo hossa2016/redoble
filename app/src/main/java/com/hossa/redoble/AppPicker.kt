@@ -103,8 +103,8 @@ class AppPicker(
             hint = "Buscar app"
             setHintTextColor(Ui.DIM)
             setTextColor(Ui.HEAD)
-            typeface = ui.body
-            textSize = 16f
+            typeface = ui.cond
+            textSize = 17f
             background = ui.field()
             setSingleLine()
             setPadding(ui.dp(16), 0, ui.dp(14), 0)

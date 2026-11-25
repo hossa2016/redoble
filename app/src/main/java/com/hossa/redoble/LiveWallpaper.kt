@@ -355,6 +355,8 @@ class PrismaWallpaper : WallpaperService() {
  */
 class VideoPreview(ctx: Context) : FrameLayout(ctx), TextureView.SurfaceTextureListener {
     private val tv = TextureView(ctx)
+    /** Foto del cuadro actual del video (para la miniatura de la barra fija). */
+    fun frame(): android.graphics.Bitmap? = try { tv.bitmap } catch (e: Exception) { null }
     private val light = View(ctx)
     private var mp: MediaPlayer? = null
     private val tilt = Tilt(ctx)

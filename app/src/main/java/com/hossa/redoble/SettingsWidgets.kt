@@ -107,7 +107,8 @@ internal fun MainActivity.packPlate(): View {
                 addView(ui.text(nd.first, ui.condSemi, 17f, Ui.HEAD))
                 addView(ui.text(nd.second, ui.cond, 14f, Ui.DIM))
             }, LinearLayout.LayoutParams(0, -2, 1f))
-            addView(ui.text(if (on) "En pantalla" else "No agregado", ui.cond, 14f, if (on) Ui.OK else Ui.DIM))
+            addView(ui.text(if (on) "En pantalla" else "No agregado", ui.cond, 14f, if (on) Ui.OK else Ui.DIM),
+                LinearLayout.LayoutParams(-2, -2).apply { marginStart = ui.dp(12) })
         }, LinearLayout.LayoutParams(-1, -2))
     }
     if (placed < list.size) card.addView(ui.secondary("Cómo agregar un widget").apply {
