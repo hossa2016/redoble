@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"><LinearLayout android:id="@+id/clock" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="2dp">
+ <TextClock android:id="@+id/hh" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/orbitron_medium" android:format12Hour="hh" android:format24Hour="HH" android:includeFontPadding="false" android:maxLines="1" android:letterSpacing="0" android:shadowColor="#FF3DF2FF" android:shadowRadius="18" android:textColor="#FFEFFFFF" android:textSize="54sp" />
+ <TextView android:id="@+id/colon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/orbitron_medium" android:includeFontPadding="false" android:maxLines="1" android:text=":" android:shadowColor="#FF3DF2FF" android:shadowRadius="18" android:textColor="#FFEFFFFF" android:textSize="54sp" />
+ <TextClock android:id="@+id/mm" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/orbitron_medium" android:format12Hour="mm" android:format24Hour="mm" android:includeFontPadding="false" android:maxLines="1" android:letterSpacing="0" android:shadowColor="#FF3DF2FF" android:shadowRadius="18" android:textColor="#FFEFFFFF" android:textSize="54sp" />
+</LinearLayout>
+<ImageView android:id="@+id/clock_bmp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:adjustViewBounds="true" android:contentDescription="@null" android:visibility="gone" />
+ </LinearLayout>

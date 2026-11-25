@@ -142,16 +142,19 @@ class RockWidget : AppWidgetProvider() {
             return if (dp > 0) minOf((dp * dm.density).toInt(), screen) else screen
         }
 
-        private fun clockBitmap(ctx: Context, th: Theme, playing: Boolean, size: Float = 0f): android.graphics.Bitmap {
-            val s = TextArt.spec(th.family)
+        private fun clockBitmap(ctx: Context, th: Theme, playing: Boolean, size: Float = 0f, full: Boolean = false): android.graphics.Bitmap {
+            val font = if (full) Prefs.partFont(ctx, "hora") else "tema"
+            val s = if (font == "tema") TextArt.spec(th.family) else TextArt.specFor(th.family, font)
+            val k = if (full) Prefs.partScale(ctx, "hora") else 1f
+            val ink = (if (full) Prefs.partColor(ctx, "hora") else 0).takeIf { it != 0 } ?: th.head
             val is24 = android.text.format.DateFormat.is24HourFormat(ctx)
             val hp = if (th.family == "neon") (if (is24) "HH" else "hh") else (if (is24) "H" else "h")
             val now = java.util.Date()
             val hh = java.text.SimpleDateFormat(hp, ES).format(now)
             val mm = java.text.SimpleDateFormat("mm", ES).format(now)
             val colon = when (th.family) { "claro" -> th.head; "neon" -> th.accent2; else -> th.accent(ctx) }
-            val sz = if (size > 0f) size else timeSize(th.family) * (if (playing) 0.875f else 1f)
-            return TextArt.clock(ctx, hh, mm, s, sz, th.head, colon)
+            val sz = (if (size > 0f) size else timeSize(th.family) * (if (playing) 0.875f else 1f)) * k
+            return TextArt.clock(ctx, hh, mm, s, sz, ink, colon)
         }
 
         /**
@@ -191,7 +194,7 @@ class RockWidget : AppWidgetProvider() {
             for (id in mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))) {
                 try {
                     val v = RemoteViews(ctx.packageName, th.layout)
-                    v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, playing))
+                    v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, playing, full = true))
                     mgr.partiallyUpdateAppWidget(id, v)
                 } catch (e: Exception) { }
             }
@@ -244,6 +247,7 @@ class RockWidget : AppWidgetProvider() {
             // El widget Reproductor suelto usa la variante con el reproductor arriba
             val th = Themes.widget(ctx).let { if (kind == Widgets.PLAYER) Themes.up(it) else it }
             val v = RemoteViews(ctx.packageName, th.layout)
+            compose(ctx, v, th, kind)
             applyBackground(ctx, v, th)
             val fonts = Prefs.themeFonts(ctx)
 
@@ -283,6 +287,29 @@ class RockWidget : AppWidgetProvider() {
         }
 
         /**
+         * Arma el widget con sus piezas en el orden elegido en el editor visual
+         * (solo el Completo; los sueltos van en el orden de siempre).
+         */
+        private fun compose(ctx: Context, v: RemoteViews, th: Theme, kind: Int) {
+            val fam = th.family; val pkg = ctx.packageName
+            val full = kind == Widgets.FULL
+            val blocks = if (full) Prefs.blockOrder(ctx) else Prefs.BLOCKS
+            val heads = if (full) Prefs.headOrder(ctx) else Prefs.HEAD_PARTS
+            val top = kind == Widgets.PLAYER || Themes.isUp(th) || (full && blocks.first() == "player")
+            v.removeAllViews(R.id.stack)
+            for (b in blocks) {
+                val piece = when (b) {
+                    "head" -> RemoteViews(pkg, WidgetPieces.of(fam, "header")).also { h ->
+                        for (p in heads) WidgetPieces.of(fam, p).takeIf { it != 0 }?.let { h.addView(R.id.col, RemoteViews(pkg, it)) }
+                    }
+                    "player" -> RemoteViews(pkg, WidgetPieces.of(fam, if (top) "middle_top" else "middle"))
+                    else -> RemoteViews(pkg, WidgetPieces.of(fam, "setlist"))
+                }
+                v.addView(R.id.stack, piece)
+            }
+        }
+
+        /**
          * Cambió algo del reproductor. Si el estado (sonando o no) es el mismo,
          * solo se redibuja la tarjeta del reproductor; si cambió, todo (la hora y
          * las apps se acomodan según haya música).
@@ -313,6 +340,14 @@ class RockWidget : AppWidgetProvider() {
             val dens = ctx.resources.displayMetrics.density
             // En el widget Hora y clima: lo elegido para él, y menos datos si es pequeño
             val solo = kind == Widgets.CLOCK
+            // Editor visual: tamaño, color y letra de cada parte (solo en el Completo)
+            val ed = kind == Widgets.FULL
+            fun sc(p: String) = if (ed) Prefs.partScale(ctx, p) else 1f
+            fun colr(p: String, def: Int) = (if (ed) Prefs.partColor(ctx, p) else 0).takeIf { it != 0 } ?: def
+            fun own(p: String) = if (ed) Prefs.partColor(ctx, p) else 0
+            fun fnt(p: String) = if (ed) Prefs.partFont(ctx, p) else "tema"
+            fun sp(p: String) = if (fnt(p) == "tema") S else TextArt.specFor(th.family, fnt(p))
+            fun custom(p: String) = fnt(p) != "tema"
             // Rock angosto: sin el día vertical (ocupaba media pantalla); el día va en texto
             val bigDay = rock && !(solo && W / dens < 230)
             val colW = W - ((if (bigDay) 96 else 24) * dens).toInt()
@@ -364,13 +399,14 @@ class RockWidget : AppWidgetProvider() {
             val day = I18n.tr(ctx, DAYS[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1])
             if (bigDay && dia) {
                 // En el widget Hora y clima, el día de Rock no pasa del alto del widget
-                val h = if (solo) (hDp - 28).coerceIn(80, 176) else if (playing) 150 else 176
-                v.setImageViewBitmap(R.id.day_img, Graphics.dayBitmap(ctx, day, accent, h))
+                val h = ((if (solo) (hDp - 28).coerceIn(80, 176) else if (playing) 150 else 176) * sc("dia")).toInt().coerceIn(60, 240)
+                v.setImageViewBitmap(R.id.day_img, Graphics.dayBitmap(ctx, day, colr("dia", accent), h))
                 if (Build.VERSION.SDK_INT >= 31) v.setViewLayoutHeight(R.id.day_img, h.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
             }
             v.setViewVisibility(R.id.day_img, vis(bigDay && dia))
-            val dayColor = when (th.family) { "claro", "cristal" -> th.head; "neon" -> th.accent2; else -> accent }
+            val dayColor = colr("dia", when (th.family) { "claro", "cristal" -> th.head; "neon" -> th.accent2; else -> accent })
             if (!bigDay) v.setTextColor(R.id.day_txt, dayColor)
+            if (sc("dia") != 1f) v.setTextViewTextSize(R.id.day_txt, TypedValue.COMPLEX_UNIT_SP, 13f * sc("dia"))
             val now = java.util.Date()
             val dayFmt = if (narrow) when (th.family) {
                 "cristal" -> "EEE d MMM"; "neon" -> "EEE '//' dd.MM"; "lujo" -> "EEE · d MMM"; else -> "EEEE"
@@ -386,19 +422,24 @@ class RockWidget : AppWidgetProvider() {
             // Cartel de Gira: la fecha se dibuja como afiche (necesita la imagen, no el reloj del sistema)
             val otherLang = I18n.lang(ctx) != (java.util.Locale.getDefault().language.takeIf { it == "en" || it == "pt" } ?: "es")
             val dateFonts = (fonts && bitmapDate(ctx)) || poster || otherLang
-            twin(v, R.id.day_txt, R.id.day_txt_bmp, !bigDay && dia, dateFonts) {
-                TextArt.render(ctx, fmt(dayFmt), S.title, 13f, dayColor,
+            twin(v, R.id.day_txt, R.id.day_txt_bmp, !bigDay && dia, dateFonts || custom("dia")) {
+                TextArt.render(ctx, fmt(dayFmt), sp("dia").title, 13f * sc("dia"), dayColor,
                     S.tls, caps = true, glow = if (th.family == "neon") th.accent2 else 0, maxWidthPx = colW)
             }
             v.setContentDescription(R.id.day_txt_bmp, fmt(dayFmt))
             v.setContentDescription(R.id.date_bmp, if (poster) Extras.posterLine(ctx) else fmt(dateFmt))
             // Cristal, Neón y Lujo llevan la fecha en la misma línea del día.
             val dateInDay = dateInDay0 && !poster
-            twin(v, R.id.date, R.id.date_bmp, dia && !dateInDay, dateFonts) {
-                if (poster) TextArt.render(ctx, Extras.posterLine(ctx), S.title, S.dsize, accent,
+            val fecha = !ed || Prefs.el(ctx, "fecha")
+            val fs2 = sp("fecha")
+            if (own("fecha") != 0) v.setTextColor(R.id.date, own("fecha"))
+            if (sc("fecha") != 1f) v.setTextViewTextSize(R.id.date, TypedValue.COMPLEX_UNIT_SP, S.dsize * sc("fecha"))
+            twin(v, R.id.date, R.id.date_bmp, dia && fecha && !dateInDay, dateFonts || custom("fecha")) {
+                if (poster) TextArt.render(ctx, Extras.posterLine(ctx), fs2.title, S.dsize * sc("fecha"), colr("fecha", accent),
                     0.12f, caps = true, shadow = S.shadow, maxWidthPx = colW, translate = false)
                 else TextArt.render(ctx, fmt(dateFmt),
-                    if (th.family == "lujo") S.med else S.body, S.dsize, if (th.family == "lujo") th.dim else th.head,
+                    if (th.family == "lujo") fs2.med else fs2.body, S.dsize * sc("fecha"),
+                    colr("fecha", if (th.family == "lujo") th.dim else th.head),
                     S.lls, caps = S.caps, shadow = S.shadow, maxWidthPx = colW)
             }
 
@@ -409,10 +450,11 @@ class RockWidget : AppWidgetProvider() {
             v.setViewVisibility(R.id.clock, vis(hora && !bmpClock))
             v.setViewVisibility(R.id.clock_bmp, vis(hora && bmpClock))
             if (hora && bmpClock) {
-                v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, playing, soloTs))
+                v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, playing, soloTs, full = ed))
                 if (!preview) armClockCheck(ctx)
             }
-            val ts = if (solo) soloTs else timeSize(th.family) * (if (playing) 0.875f else 1f)
+            val ts = (if (solo) soloTs else timeSize(th.family) * (if (playing) 0.875f else 1f)) * sc("hora")
+            if (own("hora") != 0) for (id in intArrayOf(R.id.hh, R.id.mm)) v.setTextColor(id, own("hora"))
             // Fecha más pequeña si el widget suelto es angosto
             if (solo && wDp < 200) v.setTextViewTextSize(R.id.date, TypedValue.COMPLEX_UNIT_SP, S.dsize * 0.9f)
             for (id in intArrayOf(R.id.hh, R.id.colon, R.id.mm)) v.setTextViewTextSize(id, TypedValue.COMPLEX_UNIT_SP, ts)
@@ -423,27 +465,36 @@ class RockWidget : AppWidgetProvider() {
                 .filter { it.isNotBlank() }.joinToString(" · ")
             v.setTextViewText(R.id.wx_tomorrow, tomorrow)
             val nowFull = now0(ctx)
-            val fitsFull = TextArt.commonSize(ctx, listOf(nowFull), if (th.family == "lujo") S.body else S.med, S.wsize,
-                caps = th.family == "neon", shadow = S.shadow, maxWidthPx = colW) >= S.wsize * 0.85f
+            val ws = sp("clima"); val wk = sc("clima"); val wInk = colr("clima", th.head)
+            val fitsFull = TextArt.commonSize(ctx, listOf(nowFull), if (th.family == "lujo") ws.body else ws.med, S.wsize * wk,
+                caps = th.family == "neon", shadow = S.shadow, maxWidthPx = colW) >= S.wsize * wk * 0.85f
+            if (own("clima") != 0) v.setTextColor(R.id.wx_now, own("clima"))
+            if (wk != 1f) {
+                v.setTextViewTextSize(R.id.wx_now, TypedValue.COMPLEX_UNIT_SP, S.wsize * wk)
+                v.setTextViewTextSize(R.id.wx_tomorrow, TypedValue.COMPLEX_UNIT_SP, S.tomsize * wk)
+            }
             // Si no cabe completo: solo la temperatura (nunca "Nie…")
             val nowTxt = if (fitsFull || Prefs.weatherNow(ctx).isBlank()) nowFull else "${Prefs.weatherTemp(ctx)}°"
             v.setTextViewText(R.id.wx_now, nowTxt)
             v.setContentDescription(R.id.wx_now_bmp, nowFull)
             val wxIcon = fonts && clima && Prefs.weatherCode(ctx) >= 0 && (th.family == "cristal" || th.family == "claro")
             val tomInline = wxIcon && manana && tomorrow.isNotBlank()
-            twin(v, R.id.wx_now, R.id.wx_now_bmp, clima, fonts) {
-                if (wxIcon) TextArt.weather(ctx, Prefs.weatherCode(ctx), Prefs.weatherTemp(ctx), Prefs.weatherDesc(ctx),
-                    if (tomInline) tomorrow else "", S, th.family == "cristal", th.head, th.dim, accent, colW)
-                else TextArt.render(ctx, nowTxt, if (th.family == "lujo") S.body else S.med, S.wsize, th.head,
+            twin(v, R.id.wx_now, R.id.wx_now_bmp, clima, fonts || custom("clima")) {
+                if (wxIcon) TextArt.scaled(TextArt.weather(ctx, Prefs.weatherCode(ctx), Prefs.weatherTemp(ctx), Prefs.weatherDesc(ctx),
+                    if (tomInline) tomorrow else "", ws, th.family == "cristal", wInk, th.dim, accent, (colW / wk).toInt()), wk)
+                else TextArt.render(ctx, nowTxt, if (th.family == "lujo") ws.body else ws.med, S.wsize * wk, wInk,
                     caps = th.family == "neon", shadow = S.shadow, maxWidthPx = colW)
             }
-            twin(v, R.id.wx_tomorrow, R.id.wx_tomorrow_bmp, manana && tomorrow.isNotBlank() && !tomInline, fonts) {
-                TextArt.render(ctx, tomorrow, if (th.family == "lujo") S.med else S.body, S.tomsize, th.dim,
+            twin(v, R.id.wx_tomorrow, R.id.wx_tomorrow_bmp, manana && tomorrow.isNotBlank() && !tomInline, fonts || custom("clima")) {
+                TextArt.render(ctx, tomorrow, if (th.family == "lujo") ws.med else ws.body, S.tomsize * wk, th.dim,
                     S.lls, caps = th.family == "neon" || th.family == "lujo", shadow = S.shadow, maxWidthPx = colW)
             }
             v.setViewVisibility(R.id.batt_row, vis(bateria))
             v.setViewVisibility(R.id.status_row, vis(clima))
-            v.setViewVisibility(R.id.hairline, vis((dia || hora) && (clima || bateria || manana)))
+            // La rayita va entre la hora y el clima: si el clima quedó arriba, sobra
+            val heads = if (ed) Prefs.headOrder(ctx) else Prefs.HEAD_PARTS
+            v.setViewVisibility(R.id.hairline, vis((dia || hora) && (clima || bateria || manana) &&
+                heads.indexOf("clima") > heads.indexOf("hora")))
             v.setViewVisibility(R.id.header, vis(dia || hora || clima || manana || bateria))
             if (bateria) applyBattery(ctx, v, fonts)
             if (!preview) {
@@ -478,7 +529,11 @@ class RockWidget : AppWidgetProvider() {
             val pm = ctx.packageManager
             val showNums = false  // los números 01/02/03 se leían poco y no aportaban
             val numColor = ColorUtils.setAlphaComponent(if (rock) accent else th.accent2, if (rock) 0x99 else 0xCC)
-            val iconColor = when (th.family) { "neon" -> accent; "lujo" -> th.head; else -> th.head }
+            val ak = Prefs.partScale(ctx, "apps")
+            val aInk = Prefs.partColor(ctx, "apps")
+            val aFont = Prefs.partFont(ctx, "apps")
+            val aS = if (aFont == "tema") S else TextArt.specFor(th.family, aFont)
+            val iconColor = aInk.takeIf { it != 0 } ?: when (th.family) { "neon" -> accent; "lujo" -> th.head; else -> th.head }
             // Una sola consulta por app (antes se hacían dos)
             val launches = HashMap<Int, Intent>()
             for (s in 0 until Prefs.usedSlots(ctx)) {
@@ -491,8 +546,8 @@ class RockWidget : AppWidgetProvider() {
             // Todos los nombres del mismo tamaño: si uno largo tiene que achicarse, los demás también
             val labelMax = W / perRow - (10 * dens).toInt()
             val labelCaps = th.family == "neon" || th.family == "lujo"
-            val labelSp = TextArt.commonSize(ctx, filled.map { Prefs.displayName(ctx, it) }, S.label,
-                if (perRow == 4) S.lsize * 0.86f else S.lsize, S.lls, labelCaps, S.shadow, maxWidthPx = labelMax)
+            val labelSp = TextArt.commonSize(ctx, filled.map { Prefs.displayName(ctx, it) }, aS.label,
+                (if (perRow == 4) S.lsize * 0.86f else S.lsize) * ak, S.lls, labelCaps, S.shadow, maxWidthPx = labelMax)
             for (pos in order.indices) {
                 val i = order[pos]
                 val slot = filled.getOrNull(pos)
@@ -507,16 +562,18 @@ class RockWidget : AppWidgetProvider() {
                 v.setViewVisibility(NUMS[i], vis(showNums))
                 val name = Prefs.displayName(ctx, slot)
                 v.setTextViewText(LABELS[i], name)
-                twin(v, LABELS[i], LABEL_BMPS[i], true, fonts, name) {
+                if (aInk != 0) v.setTextColor(LABELS[i], aInk)
+                if (ak != 1f) v.setTextViewTextSize(LABELS[i], TypedValue.COMPLEX_UNIT_SP, labelSp)
+                twin(v, LABELS[i], LABEL_BMPS[i], true, fonts || aFont != "tema", name) {
                     // Con 4 por fila, letra un poco menor para todas (así se ven parejas)
-                    TextArt.render(ctx, name, S.label, labelSp, th.head, S.lls,
+                    TextArt.render(ctx, name, aS.label, labelSp, aInk.takeIf { it != 0 } ?: th.head, S.lls,
                         caps = labelCaps, shadow = S.shadow, maxWidthPx = labelMax, translate = false)
                 }
                 Graphics.appIcon(ctx, pkg, mono = iconColor)?.let { v.setImageViewBitmap(ICONS[i], it) }
                 if (Build.VERSION.SDK_INT >= 31) {
                     val big = th.family == "claro" || th.family == "lujo" || th.family == "cristal"
                     val s0 = if (Prefs.originalIcons(ctx)) (if (big) 34f else 30f) else (if (big) 22f else 18f)
-                    val s = if (perRow == 4) s0 * 0.88f else s0
+                    val s = (if (perRow == 4) s0 * 0.88f else s0) * ak
                     v.setViewLayoutWidth(ICONS[i], s, TypedValue.COMPLEX_UNIT_DIP)
                     v.setViewLayoutHeight(ICONS[i], s, TypedValue.COMPLEX_UNIT_DIP)
                 }

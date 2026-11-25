@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/batt_row" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center_vertical" android:orientation="horizontal">
+  <ImageView android:id="@+id/leds_img" android:layout_width="84dp" android:layout_height="14dp" android:contentDescription="@null" android:scaleType="fitXY" />
+  <ImageView android:id="@+id/batt_bolt" android:layout_width="9dp" android:layout_height="14dp" android:layout_marginStart="6dp" android:contentDescription="Cargando" android:scaleType="fitCenter" android:visibility="gone" />
+  <TextView android:id="@+id/batt_txt" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/inter_medium" android:textSize="13sp" android:textColor="#FF1C1A17" android:maxLines="1" android:includeFontPadding="false" android:layout_marginStart="6dp" /><ImageView android:id="@+id/batt_txt_bmp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:adjustViewBounds="true" android:scaleType="fitStart" android:contentDescription="@null" android:visibility="gone" />
+ </LinearLayout>
+

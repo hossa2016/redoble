@@ -96,6 +96,7 @@ object Themes {
 
     /** Variante con el reproductor arriba (la usa el widget Reproductor suelto). */
     fun up(t: Theme): Theme = t.withLayout(UP[t.layout] ?: t.layout)
+    fun isUp(t: Theme) = t.layout in UP.values
 
     private fun textTheme(ctx: Context): Theme {
         val t = current(ctx)

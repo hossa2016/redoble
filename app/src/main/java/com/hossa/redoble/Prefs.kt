@@ -86,7 +86,34 @@ object Prefs {
     /** Lugares que se usan con la forma elegida (6 con 3 por fila, 8 con 4). */
     fun usedSlots(ctx: Context) = perRow(ctx) * 2
     fun preset(ctx: Context) = p(ctx).getString("preset", "completo") ?: "completo"
-    val ELEMENTS = listOf("dia", "hora", "clima", "manana", "bateria", "player")
+    val ELEMENTS = listOf("dia", "hora", "clima", "manana", "bateria", "player", "fecha")
+
+    // ---- Editor visual (16.0): orden, tamaño, color y letra de cada parte del widget Completo ----
+    val BLOCKS = listOf("head", "player", "apps")
+    val HEAD_PARTS = listOf("dia", "hora", "fecha", "clima", "bateria")
+    private fun order(ctx: Context, key: String, def: List<String>): List<String> {
+        val got = (p(ctx).getString(key, null) ?: "").split(",").filter { it in def }.distinct()
+        return got + def.filter { it !in got }
+    }
+    fun blockOrder(ctx: Context) = order(ctx, "ordenBloques", BLOCKS)
+    fun headOrder(ctx: Context) = order(ctx, "ordenCabecera", HEAD_PARTS)
+    fun setBlockOrder(ctx: Context, l: List<String>) = p(ctx).edit().putString("ordenBloques", l.joinToString(",")).apply()
+    fun setHeadOrder(ctx: Context, l: List<String>) = p(ctx).edit().putString("ordenCabecera", l.joinToString(",")).apply()
+    /** Tamaño de una parte: 0,7 a 1,5 (1 = el del tema). */
+    fun partScale(ctx: Context, part: String) = p(ctx).getFloat("es_$part", 1f).coerceIn(0.7f, 1.5f)
+    fun setPartScale(ctx: Context, part: String, v: Float) = p(ctx).edit().putFloat("es_$part", v).apply()
+    /** Color de una parte (0 = el del tema). */
+    fun partColor(ctx: Context, part: String) = p(ctx).getInt("ec_$part", 0)
+    fun setPartColor(ctx: Context, part: String, v: Int) = p(ctx).edit().putInt("ec_$part", v).apply()
+    /** Letra de una parte: nombre del Taller de Afiches ("tema" = la del widget). */
+    fun partFont(ctx: Context, part: String) = p(ctx).getString("ef_$part", "tema") ?: "tema"
+    fun setPartFont(ctx: Context, part: String, v: String) = p(ctx).edit().putString("ef_$part", v).apply()
+    val EDIT_PARTS = listOf("dia", "hora", "fecha", "clima", "bateria", "player", "apps")
+    fun resetEditor(ctx: Context) {
+        val e = p(ctx).edit().remove("ordenBloques").remove("ordenCabecera")
+        EDIT_PARTS.forEach { e.remove("es_$it").remove("ec_$it").remove("ef_$it") }
+        e.apply()
+    }
     fun el(ctx: Context, key: String) =
         if ((key == "manana" || key == "bateria") && Rules.musicLayout(ctx)) false else p(ctx).getBoolean("el_$key", true)
     fun setEl(ctx: Context, key: String, v: Boolean) =

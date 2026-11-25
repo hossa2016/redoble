@@ -55,6 +55,19 @@ object TextArt {
             b.tls, b.lls, b.tspace, b.caps, b.shadow, b.glow)
     }
 
+    /** Letra elegida para una parte en el editor visual ("tema" = la normal, con el Taller si hay). */
+    fun specFor(family: String, fontName: String): Spec {
+        val f = WORKSHOP_FONTS.firstOrNull { it.first == fontName }?.second ?: 0
+        if (f == 0) return spec(family)
+        val b = SPECS[family] ?: SPECS.getValue("rock")
+        return Spec(f, f, f, f, f, f, f, b.tsize, b.dsize, b.wsize, b.tomsize, b.lsize,
+            b.tls, b.lls, b.tspace, b.caps, b.shadow, b.glow)
+    }
+
+    /** Agranda o achica una imagen ya dibujada (para el clima con ícono). */
+    fun scaled(b: Bitmap, k: Float): Bitmap = if (k == 1f) b else
+        Bitmap.createScaledBitmap(b, (b.width * k).toInt().coerceAtLeast(1), (b.height * k).toInt().coerceAtLeast(1), true)
+
     /** Letras disponibles en el Taller de Afiches. */
     val WORKSHOP_FONTS = listOf("tema" to 0, "Anton" to R.font.anton_regular, "Orbitron" to R.font.orbitron_medium,
         "Rajdhani" to R.font.rajdhani_semibold, "Jakarta" to R.font.jakarta_semibold, "Cormorant" to R.font.cormorant_medium,

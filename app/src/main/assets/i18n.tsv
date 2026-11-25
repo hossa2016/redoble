@@ -474,8 +474,6 @@ cerrado, toca para abrir	closed, tap to open	fechado, toque para abrir
 ¿Quitar {}?	Remove {}?	Remover {}?
 Ámbar	Amber	Âmbar
 Última canción	Last song	Última música
-Elige tu ciudad.	Choose your city.	Escolha sua cidade.
-Música grande	Big music	Música grande
 app	app	app
 apps	apps	apps
 Setlist del Día	Setlist of the Day	Setlist do Dia
@@ -516,13 +514,8 @@ Descubrir bandas en RockPlay IA	Discover bands in RockPlay IA	Descobrir bandas n
 Taller de Afiches · letra del widget	Poster Workshop · widget font	Oficina de Pôsteres · fonte do widget
 Funciona con «Letras del tema» activado. La hora conserva la letra del tema.	Works with “Theme fonts” on. The time keeps the theme's font.	Funciona com “Fontes do tema” ativado. A hora mantém a fonte do tema.
 Hora y clima con voz rock	Time and weather in rock voice	Hora e clima com voz rock
-Idioma	Language	Idioma
-Guardar una copia de mis ajustes	Save a backup of my settings	Salvar uma cópia das configurações
-Mientras suena, la hora, el clima y los detalles toman el color del disco.	While music plays, the time, weather and details take the record's color.	Enquanto toca, a hora, o clima e os detalhes ganham a cor do disco.
 {} MINUTOS EN ESCENA	{} MINUTES ON STAGE	{} MINUTOS NO PALCO
 Primero da el acceso a notificaciones (arriba, en esta sección)	First grant notification access (above, in this section)	Primeiro dê o acesso a notificações (acima, nesta seção)
-Preparando tu video…	Preparing your video…	Preparando seu vídeo…
-Fecha normal	Normal date	Data normal
 Es un protector de pantalla: aparece cuando el teléfono está cargando y se apaga la pantalla (o al ponerlo en su base). Muestra tu widget Hora y clima y, si suena música, el reproductor con sus botones. Usa poco brillo y se mueve un poco cada minuto para no marcar la pantalla. La pantalla siempre activa de HyperOS no permite widgets de otras apps; esto es lo más parecido.	It's a screen saver: it appears when the phone is charging and the screen turns off (or when docked). It shows your Time & weather widget and, if music is playing, the player with its buttons. It uses low brightness and shifts a little every minute so the screen doesn't burn in. HyperOS always-on display doesn't allow other apps' widgets; this is the closest thing.	É um protetor de tela: aparece quando o telefone está carregando e a tela apaga (ou na base). Mostra seu widget Hora e clima e, se tocar música, o player com seus botões. Usa pouco brilho e se move um pouco a cada minuto para não marcar a tela. A tela sempre ativa do HyperOS não permite widgets de outros apps; isto é o mais parecido.
 1. Mantén presionado un espacio vacío de la pantalla de inicio.\n2. Toca Widgets.\n3. Busca Prisma Widgets.\n4. Arrástralo a la pantalla y estíralo a lo ancho.	1. Long-press an empty spot on the home screen.\n2. Tap Widgets.\n3. Find Prisma Widgets.\n4. Drag it to the screen and stretch it to full width.	1. Mantenha pressionado um espaço vazio da tela inicial.\n2. Toque em Widgets.\n3. Procure Prisma Widgets.\n4. Arraste para a tela e estique na largura.
 Tu teléfono no abrió el ajuste directamente. Búscalo así:\n\n1. Abre Ajustes y busca «Protector de pantalla» (o «Salvapantallas»).\n2. Elige Prisma Widgets.\n3. En «Cuándo empezar», elige «Mientras se carga».\n\nSi tu versión de HyperOS no tiene esa opción, el teléfono no admite protectores de pantalla.	Your phone didn't open the setting directly. Find it like this:\n\n1. Open Settings and search for “Screen saver”.\n2. Choose Prisma Widgets.\n3. In “When to start”, choose “While charging”.\n\nIf your HyperOS version doesn't have that option, the phone doesn't support screen savers.	Seu telefone não abriu o ajuste direto. Procure assim:\n\n1. Abra Configurações e procure “Protetor de tela”.\n2. Escolha Prisma Widgets.\n3. Em “Quando iniciar”, escolha “Enquanto carrega”.\n\nSe sua versão do HyperOS não tiver essa opção, o telefone não aceita protetores de tela.
@@ -533,9 +526,7 @@ Cartel · Agenda	Poster · Calendar	Pôster · Agenda
 Volver a ajustes	Back to settings	Voltar às configurações
 Secciones de ajustes	Settings sections	Seções de configurações
 Crear una entrada de concierto con la canción que suena y compartirla	Create a concert ticket with the song that's playing and share it	Criar um ingresso de show com a música que está tocando e compartilhar
-Ver la vista previa del widget	See the widget preview	Ver a prévia do widget
 En pausa: manda lo que elegiste	Paused: your choice wins	Em pausa: vale o que você escolheu
-Widget	Widget	Widget
 Más	More	Mais
 Extras de música	Music extras	Extras de música
 Fondo que sigue la música	Wallpaper that follows the music	Fundo que segue a música
@@ -588,3 +579,27 @@ Entrada, afiches y setup	Ticket, posters and setup	Ingresso, pôsteres e setup
 Normal	Normal	Normal
 Voz rock	Rock voice	Voz rock
 Hasta el 11	Up to 11	Até o 11
+Editar widget	Edit widget	Editar widget
+Restablecer	Reset	Redefinir
+Fecha	Date	Data
+Editar	Edit	Editar
+Toca una parte del widget	Tap a part of the widget	Toque em uma parte do widget
+Cambia su orden, tamaño, letra y color, u ocúltala. Lo ves al instante arriba.	Change its order, size, font and color, or hide it. You see it right away above.	Mude ordem, tamanho, fonte e cor, ou oculte. Você vê na hora acima.
+OCULTAS · TOCA PARA VOLVER A PONERLAS	HIDDEN · TAP TO BRING THEM BACK	OCULTAS · TOQUE PARA VOLTAR
+Ocultar	Hide	Ocultar
+Orden	Order	Ordem
+Subir	Move up	Subir
+Bajar	Move down	Descer
+Compacto	Compact	Compacto
+Grande	Large	Grande
+Más pequeño	Smaller	Menor
+Más grande	Bigger	Maior
+Letra	Font	Fonte
+Color	Color	Cor
+Hueso	Bone	Osso
+Ya está arriba del todo	It's already at the top	Já está no topo
+Ya está abajo del todo	It's already at the bottom	Já está embaixo
+Widget como venía	Widget back to default	Widget como veio
+La hora se ve con esta letra cuando están encendidas «Hora con la letra del tema» y «Actualización en vivo» (en Más › Rendimiento).	The time shows this font when “Time in the theme's font” and “Live updates” are on (in More › Performance).	A hora aparece com esta fonte quando “Hora com a fonte do tema” e “Atualização ao vivo” estão ligadas (em Mais › Desempenho).
+Editar el widget a mano	Edit the widget by hand	Editar o widget à mão
+Toca cada parte: orden, tamaño, letra y color	Tap each part: order, size, font and color	Toque em cada parte: ordem, tamanho, fonte e cor

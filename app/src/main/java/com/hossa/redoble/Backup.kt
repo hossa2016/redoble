@@ -67,7 +67,9 @@ object Backup {
         "themeFonts" to "b", "themeClock" to "b", "coverColor" to "b", "playerLarge" to "b", "playerSkin" to "s",
         "workshopFont" to "s", "liveStage" to "b", "stageScene" to "s", "coverAll" to "b", "poster" to "b",
         "rockVoice" to "b", "amp11" to "b", "ruleRain" to "b", "ruleNight" to "b", "ruleHeadphones" to "b", "tempF" to "b",
-    ) + Prefs.ELEMENTS.associate { "el_$it" to "b" }
+        "ordenBloques" to "s", "ordenCabecera" to "s",
+    ) + Prefs.ELEMENTS.associate { "el_$it" to "b" } +
+        Prefs.EDIT_PARTS.flatMap { listOf("es_$it" to "f", "ec_$it" to "i", "ef_$it" to "s") }
     private val SHAREABLE = SHARE_TYPES.keys
 
     fun toJson(ctx: Context, share: Boolean = false): JSONObject {

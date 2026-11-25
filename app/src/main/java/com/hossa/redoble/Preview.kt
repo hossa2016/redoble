@@ -67,6 +67,11 @@ internal fun MainActivity.previewPlate(): View {
         setOnClickListener { openFullPreview() }
     }, FrameLayout.LayoutParams(-1, -1))
     card.addView(frame, LinearLayout.LayoutParams(boxW, boxH).apply { gravity = Gravity.CENTER_HORIZONTAL })
+    // Editor visual: solo para el widget Completo (o si aún no hay ninguno)
+    if (Widgets.has(this, Widgets.FULL) || !RockWidget.hasWidgets(this))
+        card.addView(ui.actionRow("Editar el widget a mano", R.drawable.ic_edit, "Toca cada parte: orden, tamaño, letra y color").apply {
+            setOnClickListener { openEditor() }
+        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
 
     preview = PreviewParts(card, frame, bg, holder, wPx, hPx, scale, boxH, key)
     updatePreview()
