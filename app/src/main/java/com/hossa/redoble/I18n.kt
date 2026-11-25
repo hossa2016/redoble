@@ -75,6 +75,13 @@ object I18n {
 
     fun tr(ctx: Context, s: CharSequence): CharSequence = if (s is String) tr(ctx, s) else s
 
+    /** Traduce las descripciones para TalkBack de una pantalla entera. */
+    fun translateTree(ctx: Context, v: android.view.View) {
+        if (lang(ctx) == "es") return
+        v.contentDescription?.let { d -> if (d is String) v.contentDescription = tr(ctx, d) }
+        if (v is android.view.ViewGroup) for (i in 0 until v.childCount) translateTree(ctx, v.getChildAt(i))
+    }
+
     /** Fecha larga con el formato del idioma ("d 'de' MMMM" → "MMMM d" en inglés). */
     fun dateFormat(ctx: Context, es: String): String = when (lang(ctx)) {
         "en" -> when (es) { "d 'de' MMMM" -> "MMMM d"; "EEEE, d 'de' MMMM" -> "EEEE, MMMM d"; "EEEE · d 'de' MMMM" -> "EEEE · MMMM d"; else -> es }

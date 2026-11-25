@@ -384,7 +384,8 @@ class RockWidget : AppWidgetProvider() {
             v.setCharSequence(R.id.date, "setFormat12Hour", dateFmt)
             v.setCharSequence(R.id.date, "setFormat24Hour", dateFmt)
             // Cartel de Gira: la fecha se dibuja como afiche (necesita la imagen, no el reloj del sistema)
-            val dateFonts = (fonts && bitmapDate(ctx)) || poster
+            val otherLang = I18n.lang(ctx) != (java.util.Locale.getDefault().language.takeIf { it == "en" || it == "pt" } ?: "es")
+            val dateFonts = (fonts && bitmapDate(ctx)) || poster || otherLang
             twin(v, R.id.day_txt, R.id.day_txt_bmp, !bigDay && dia, dateFonts) {
                 TextArt.render(ctx, fmt(dayFmt), S.title, 13f, dayColor,
                     S.tls, caps = true, glow = if (th.family == "neon") th.accent2 else 0, maxWidthPx = colW)
@@ -633,6 +634,8 @@ class RockWidget : AppWidgetProvider() {
             )
             am.setWindow(AlarmManager.RTC, cal.timeInMillis, 60_000L, pi)
             // Setlist del Día: redibujo a las 8 p. m. y a las 5 a. m. (empieza y termina la noche)
+            if (!Prefs.ruleNight(ctx)) for (code in 1..2) am.cancel(PendingIntent.getBroadcast(ctx, 600 + code,
+                internal(ctx, ACTION_REFRESH), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
             if (Prefs.ruleNight(ctx)) for ((code, hour) in listOf(1 to 20, 2 to 5)) {
                 val t = Calendar.getInstance().apply {
                     set(Calendar.HOUR_OF_DAY, hour); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 5); set(Calendar.MILLISECOND, 0)

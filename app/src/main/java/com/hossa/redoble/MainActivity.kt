@@ -394,6 +394,7 @@ class MainActivity : AppCompatActivity() {
 
     /** Pone la pantalla dentro de un scroll que respeta barras del sistema y teclado. */
     internal fun setScreen(content: View, keepScroll: Boolean) {
+        I18n.translateTree(this, content)
         val y = if (keepScroll) scroll?.scrollY ?: 0 else 0
         // Si ya hay pantalla, solo se cambia su contenido (sin reemplazar la ventana
         // ni saltar el scroll): así tocar un botón no produce destellos.

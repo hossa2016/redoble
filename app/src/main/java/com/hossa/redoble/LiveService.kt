@@ -138,5 +138,8 @@ class BootReceiver : BroadcastReceiver() {
         LiveService.start(ctx)
         RockWidget.updateAll(ctx)
         BatteryMonitor.check(ctx)
+        // «Bajar el Telón» sobrevive a un reinicio (las alarmas del sistema se borran al apagar)
+        val left = Prefs.sleepAt(ctx) - System.currentTimeMillis()
+        if (left > 60_000L) SleepTimer.start(ctx, (left / 60_000L).toInt()) else if (Prefs.sleepAt(ctx) > 0) Prefs.setSleepAt(ctx, 0L)
     }
 }

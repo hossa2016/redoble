@@ -87,6 +87,7 @@ fun Ui.sheet(
         setWindowAnimations(android.R.style.Animation_InputMethod)
         setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
     }
+    I18n.translateTree(ctx, col)
     d.show()
     return d
 }
