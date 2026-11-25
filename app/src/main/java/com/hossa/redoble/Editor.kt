@@ -20,7 +20,11 @@ import androidx.core.view.WindowInsetsCompat
  * Editor visual (16.0): tocas una parte del widget Completo y abajo salen solo sus
  * opciones (orden, tamaño, letra, color, ocultar). Cada cambio se guarda y se ve al instante.
  */
+private var editorOpen = false
+
 internal fun MainActivity.openEditor() {
+    if (editorOpen) return
+    editorOpen = true
     val (sw, sh) = screenSize()
     val d = Dialog(this, android.R.style.Theme_DeviceDefault_NoActionBar)
     val app = applicationContext
@@ -48,6 +52,7 @@ internal fun MainActivity.openEditor() {
         setImageResource(R.drawable.ic_back); imageTintList = android.content.res.ColorStateList.valueOf(Ui.HEAD)
         scaleType = ImageView.ScaleType.CENTER; contentDescription = I18n.tr(this@openEditor, "Cerrar")
         background = ui.rect(Color.TRANSPARENT, 24f)
+        isClickable = true; isFocusable = true
         setOnClickListener { d.dismiss() }
     }
     bar.addView(back, LinearLayout.LayoutParams(ui.dp(48), ui.dp(48)))
@@ -215,6 +220,9 @@ internal fun MainActivity.openEditor() {
                 }
                 panel.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(chips) }, rowLp(8))
             }
+            // Salida clara, además de la flecha y el gesto de volver
+            panel.addView(ui.primary("Listo").apply { setOnClickListener { d.dismiss() } },
+                LinearLayout.LayoutParams(-1, ui.dp(52)).apply { topMargin = ui.dp(24) })
         } else {
             val title = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
             title.addView(ui.text(names.getValue(p), ui.condSemi, 22f), LinearLayout.LayoutParams(0, -2, 1f))
@@ -316,7 +324,17 @@ internal fun MainActivity.openEditor() {
         @Suppress("DEPRECATION")
         w.navigationBarColor = Ui.INK
     }
-    d.setOnDismissListener { build() }
+    // Volver siempre cierra (también con el gesto de Android 13+ y en MIUI)
+    d.setCancelable(true)
+    d.setOnKeyListener { _, code, e ->
+        if (code == android.view.KeyEvent.KEYCODE_BACK) { if (e.action == android.view.KeyEvent.ACTION_UP) d.dismiss(); true } else false
+    }
+    if (android.os.Build.VERSION.SDK_INT >= 33) d.onBackInvokedDispatcher.registerOnBackInvokedCallback(
+        android.window.OnBackInvokedDispatcher.PRIORITY_OVERLAY) { d.dismiss() }
+    d.setOnDismissListener {
+        editorOpen = false
+        try { build() } catch (e: Throwable) { ErrorLog.write(this, e, "editor") }
+    }
     fillPanel()
     refresh()
     d.show()
