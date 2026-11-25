@@ -82,5 +82,7 @@ class EditorTest {
             val c2 = androidx.core.graphics.ColorUtils.calculateContrast(ui.onAccent, ui.accentDark)
             assertTrue("contraste del botón con ${Integer.toHexString(a)}: $c / $c2", minOf(c, c2) >= 4.5)
         }
+        // El carmín de la marca conserva su letra blanca (no se vuelve pastel)
+        assertEquals(Color.WHITE, Ui(ctx, Prefs.ACCENTS[0]).onAccent)
     }
 }

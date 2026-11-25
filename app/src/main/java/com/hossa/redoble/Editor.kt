@@ -124,15 +124,6 @@ internal fun MainActivity.openEditor() {
     lateinit var fillPanel: () -> Unit
     var widgetRoot: ViewGroup? = null
 
-    fun visibleParts(): List<String> {
-        val fam = Themes.widget(this).family
-        return names.keys.filter { p ->
-            val els = p == "apps" || Prefs.el(this, p)
-            val piece = p !in Prefs.HEAD_PARTS || WidgetPieces.of(fam, p) != 0
-            els && piece
-        }
-    }
-
     // Partes que de verdad se ven ahora en el widget (para el panel)
     var shown = listOf<String>()
 
@@ -141,7 +132,7 @@ internal fun MainActivity.openEditor() {
         val wr = widgetRoot ?: return
         val minH = (ui.dp(48) / scale).toInt()
         val minW = (ui.dp(48) / scale).toInt()
-        val pad = (5 / scale).toInt()
+        val pad = (ui.dp(5) / scale).toInt()
         val fam = Themes.widget(this).family
         val boxes = LinkedHashMap<String, Rect>()
         for ((p, ids) in viewsOf) {
@@ -170,10 +161,14 @@ internal fun MainActivity.openEditor() {
                 a.bottom = cut; c.top = cut
             }
         }
+        // Después de repartir, cada uno vuelve a medir al menos 48 dp (los chicos quedan encima)
+        for (b in boxes.values) {
+            if (b.height() < minH) { val c = b.centerY(); b.top = c - minH / 2; b.bottom = c + minH / 2 }
+        }
         // Siempre dentro del widget
         boxes.values.forEach { it.intersect(0, 0, wPx, hPx) }
         shown = boxes.keys.toList()
-        for ((p, b) in boxes) {
+        for ((p, b) in boxes.entries.sortedByDescending { it.value.width().toLong() * it.value.height() }.map { it.key to it.value }) {
             val on = sel == p
             overlay.addView(View(this).apply {
                 background = if (on) ui.rect(ColorUtils.setAlphaComponent(ui.accent, 0x22), 12f / scale, ui.accent, 3f / scale)
@@ -226,7 +221,7 @@ internal fun MainActivity.openEditor() {
     fun blockOf(p: String) = when (p) { "player" -> "player"; "apps" -> "apps"; else -> "head" }
     fun headVisible(): List<String> {
         val fam = Themes.widget(this).family
-        return Prefs.headOrder(this).filter { WidgetPieces.of(fam, it) != 0 && Prefs.el(this, it) }
+        return Prefs.headOrder(this).filter { WidgetPieces.of(fam, it) != 0 && Prefs.el(this, it) && (shown.isEmpty() || it in shown) }
     }
     /** Hacia dónde puede ir: null = no se mueve; "parte" = entre las de la cabecera; "bloque" = el bloque entero. */
     fun moveKind(p: String, up: Boolean): String? {
@@ -239,6 +234,7 @@ internal fun MainActivity.openEditor() {
         return if (j in bl.indices) "bloque" else null
     }
 
+    var focusArrow: Boolean? = null
     fun move(p: String, up: Boolean) {
         when (moveKind(p, up)) {
             null -> { say(if (up) "Ya está arriba del todo" else "Ya está abajo del todo"); return }
@@ -248,6 +244,9 @@ internal fun MainActivity.openEditor() {
                 val a = all.indexOf(p); val b = all.indexOf(other)
                 all[a] = other; all[b] = p
                 Prefs.setHeadOrder(this, all)
+                val pos = headVisible().indexOf(p)
+                say(I18n.tr(this, names.getValue(p)) + ": " + I18n.tr(this, "puesto {} de {}")
+                    .replaceFirst("{}", "${pos + 1}").replaceFirst("{}", "${headVisible().size}"))
             }
             else -> {
                 val block = blockOf(p)
@@ -258,9 +257,13 @@ internal fun MainActivity.openEditor() {
                 val a = full.indexOf(block); val b = full.indexOf(target)
                 full[a] = target; full[b] = block
                 Prefs.setBlockOrder(this, full)
-                if (block == "head") say("Se movió toda la cabecera: día, hora, clima y batería van juntos")
+                val bv = Prefs.blockOrder(this).filter { blockVisible(it) }
+                if (block == "head") say("Se movió toda la cabecera: día, fecha, hora, clima y batería van juntos")
+                else say(I18n.tr(this, names.getValue(p)) + ": " + I18n.tr(this, "bloque {} de {}")
+                    .replaceFirst("{}", "${bv.indexOf(block) + 1}").replaceFirst("{}", "${bv.size}"))
             }
         }
+        focusArrow = up
         changed(); fillPanel()
     }
 
@@ -283,7 +286,10 @@ internal fun MainActivity.openEditor() {
                 val chips = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
                 items.forEach { (t, act) ->
                     chips.addView(ui.secondary(t).apply {
-                        if (dashed) background = ui.dashedHolder()
+                        if (dashed) background = android.graphics.drawable.GradientDrawable().apply {
+                            cornerRadius = ui.dp(12).toFloat()
+                            setStroke(ui.dp(1.5f), Ui.headA(0x88), ui.dp(6).toFloat(), ui.dp(4).toFloat())
+                        }
                         setOnClickListener { act() }
                     }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = ui.dp(8) })
                 }
@@ -341,6 +347,11 @@ internal fun MainActivity.openEditor() {
                     (if (k == "bloque" && p in Prefs.HEAD_PARTS) ", " + I18n.tr(this@openEditor, "mueve toda la cabecera") else "") +
                     (if (k == null) ", " + I18n.tr(this@openEditor, "no disponible") else "")
                 setOnClickListener { move(p, up) }
+                // TalkBack sigue en la misma flecha después de rehacer el panel
+                if (focusArrow == up) {
+                    focusArrow = null
+                    post { performAccessibilityAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null) }
+                }
             }
             panel.addView(row(label("Orden"), arrow(true),
                 View(this).apply { layoutParams = LinearLayout.LayoutParams(ui.dp(8), 1) }, arrow(false)), rowLp())
@@ -354,7 +365,7 @@ internal fun MainActivity.openEditor() {
                     setPadding(ui.dp(8), ui.dp(4), ui.dp(8), ui.dp(4))
                 })
             }
-            panel.addView(row(label("Bloques"), map), rowLp(8))
+            panel.addView(row(label("Bloques"), HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(map) }), rowLp(8))
             if (p in Prefs.HEAD_PARTS) panel.addView(ui.note("Día, hora, fecha, clima y batería se ordenan entre ellos. Al pasar el borde, se mueve toda la cabecera.", sp = 13f), rowLp(6))
 
             // Tamaño

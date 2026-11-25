@@ -73,7 +73,9 @@ class Ui(val ctx: Context, val accent: Int) {
     private val btnBase: Int
     init {
         val dark = Color.parseColor("#14110E")
-        val text = if (ColorUtils.calculateContrast(Color.WHITE, accent) >= ColorUtils.calculateContrast(dark, accent)) Color.WHITE else dark
+        // Colores medios (carmín, azul, magenta, rojo): letra blanca y relleno algo más oscuro,
+        // así no pierden su tono. Solo los claros (plata, ámbar, verde, lima, cian, naranja) van con letra oscura.
+        val text = if (ColorUtils.calculateContrast(Color.WHITE, accent) >= 3.0) Color.WHITE else dark
         var base = accent
         var k = 0
         // Se mide contra la parte más clara (arriba) del degradado del botón

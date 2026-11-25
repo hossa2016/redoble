@@ -619,3 +619,6 @@ La batería no se ve mientras tienes audífonos (regla «Con audífonos» en Est
 El clima no se ve porque falta tu ciudad (Widget › Clima).	The weather isn't shown because your city is missing (Widget › Weather).	O clima não aparece porque falta sua cidade (Widget › Clima).
 El clima no se ve porque el dato es viejo. Se actualiza solo en unos minutos.	The weather isn't shown because the data is old. It updates itself in a few minutes.	O clima não aparece porque o dado é antigo. Ele se atualiza sozinho em alguns minutos.
 Las apps no se ven porque elegiste 0 apps (Widget › Apps).	Apps aren't shown because you chose 0 apps (Widget › Apps).	Os apps não aparecem porque você escolheu 0 apps (Widget › Apps).
+puesto {} de {}	position {} of {}	posição {} de {}
+bloque {} de {}	block {} of {}	bloco {} de {}
+Se movió toda la cabecera: día, fecha, hora, clima y batería van juntos	The whole header moved: day, date, time, weather and battery go together	O cabeçalho inteiro se moveu: dia, data, hora, clima e bateria vão juntos
