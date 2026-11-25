@@ -117,8 +117,9 @@ class Ui(val ctx: Context, val accent: Int) {
         includeFontPadding = true
     }
 
+    /** Texto corrido: la misma familia condensada que el resto de los ajustes. */
     fun bodyText(s: CharSequence, color: Int = MUTED, sp: Float = 14f) =
-        text(s, body, sp, color).apply { setLineSpacing(0f, 1.2f) }
+        text(s, cond, sp + 1f, color).apply { setLineSpacing(0f, 1.12f) }
 
     // ---------------- Formas ----------------
     fun rect(color: Int, radiusDp: Float, strokeColor: Int = 0, strokeDp: Float = 0f) = GradientDrawable().apply {

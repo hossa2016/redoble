@@ -281,7 +281,9 @@ internal fun MainActivity.designPlate(): View {
     val names = mapOf("completo" to "Todo", "musica" to "Música grande", "minimal" to "Mínimo")
     card.addView(ui.sectionTitle("Diseño del Completo", names[preset] ?: "Personalizado"))
     card.addView(ui.segmented(names.entries.map { it.key to it.value }, preset) { k ->
+        val touched = Prefs.editorTouched(this)
         Prefs.applyPreset(this, k); RockWidget.updateAll(this); build()
+        if (touched) toast("Plantilla aplicada: se quitaron los cambios del editor")
     })
     val pr = Prefs.perRow(this)
     val (short, longDesc) = when (preset) {
@@ -292,32 +294,10 @@ internal fun MainActivity.designPlate(): View {
     }
     card.addView(ui.note(short, longDesc), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
 
-    val more = ui.expander("Personalizar elementos", customOpen) { customOpen = !customOpen; build() }
-    card.addView(more, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
-
-    if (customOpen) {
-        val box = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            background = ui.rect(Ui.WELL, 12f, Ui.veil(0x12), 1f)
-            setPadding(ui.dp(14), ui.dp(4), ui.dp(10), ui.dp(8))
-        }
-        val labels = listOf("dia" to "Día y fecha", "hora" to "Hora", "clima" to "Clima actual",
-            "manana" to "Pronóstico de mañana", "bateria" to "Batería", "player" to "Reproductor (cuando suena música)")
-        labels.forEach { (k, label) ->
-            box.addView(switchRow(label, Prefs.el(this, k)) { on ->
-                Prefs.setEl(this, k, on); RockWidget.updateAll(this); build()
-            })
-        }
-        box.addView(switchRow("Reproductor grande", Prefs.playerLarge(this)) { on ->
-            Prefs.setPlayerLarge(this, on); RockWidget.updateAll(this); build()
-        })
-        // Apps: 0 / 3 / 6
-        box.addView(ui.text("Apps", ui.cond, 16f, Ui.HEAD), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(8); bottomMargin = ui.dp(6) })
-        box.addView(ui.segmented(listOf(0 to "Ninguna", 3 to "1 fila", 6 to "2 filas"), Prefs.appRows(this) * 3) { v ->
-            Prefs.setAppsCount(this, v); RockWidget.updateAll(this); build()
-        }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(4) })
-        card.addView(box, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(4) })
-    }
+    // Un solo lugar para ajustar cada parte: el editor visual
+    card.addView(ui.actionRow("Ajustar cada parte", R.drawable.ic_edit, "Mostrar, ordenar, tamaño, letra y color").apply {
+        setOnClickListener { openEditor() }
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
     return card
 }
 
@@ -337,6 +317,20 @@ internal fun MainActivity.switchRow(label: String, on: Boolean, onChange: (Boole
     }
     row.addView(sw)
     row.setOnClickListener { sw.toggle() }
+    // TalkBack: la fila entera es un interruptor con su nombre y su estado (una sola parada)
+    sw.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+    row.isFocusable = true
+    androidx.core.view.ViewCompat.setAccessibilityDelegate(row, object : androidx.core.view.AccessibilityDelegateCompat() {
+        override fun onInitializeAccessibilityNodeInfo(host: View, info: androidx.core.view.accessibility.AccessibilityNodeInfoCompat) {
+            super.onInitializeAccessibilityNodeInfo(host, info)
+            info.className = android.widget.Switch::class.java.name
+            info.isCheckable = true
+            info.isChecked = sw.isChecked
+            info.text = I18n.tr(this@switchRow, label)
+        }
+    })
+    sw.setOnCheckedChangeListener(null)
+    sw.setOnCheckedChangeListener { b, v -> b.tick(); onChange(v); row.sendAccessibilityEvent(android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED) }
     return row
 }
 

@@ -72,10 +72,9 @@ internal fun MainActivity.playerPlate(): View {
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
 
     // Dónde va en el widget
-    card.addView(ui.text("Posición en el widget", ui.cond, 15f, Ui.MUTED), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
-    card.addView(ui.segmented(listOf(false to "Abajo", true to "Debajo del clima"), Prefs.playerTop(this)) { top ->
-        Prefs.setPlayerTop(this, top); RockWidget.updateAll(this); build()
-    })
+    card.addView(ui.actionRow("Lugar y tamaño en el widget", R.drawable.ic_edit, "Se ajusta en el editor visual").apply {
+        setOnClickListener { openEditor() }
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
 
     // Qué música mostrar (con su etiqueta, igual que Posición)
     card.addView(ui.text("Qué música muestra", ui.cond, 15f, Ui.MUTED), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
@@ -217,16 +216,16 @@ internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
     fun link(label: String, icon: Int = R.drawable.ic_open, action: () -> Unit) = card.addView(ui.actionRow(label, icon).apply {
         setOnClickListener { action() }
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(4) })
-    link("Guardar una copia de mis ajustes") {
+    link("Guardar una copia de mis ajustes", R.drawable.ic_download) {
         exportDoc.launch("prisma-ajustes-" + java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date()) + ".json")
     }
-    link("Restaurar una copia") { importDoc.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
-    link("Usar un setup compartido") { askSetupCode() }
-    if (ErrorLog.has(this)) link("Enviar informe de errores") {
+    link("Restaurar una copia", R.drawable.ic_upload) { importDoc.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
+    link("Usar un setup compartido", R.drawable.ic_key) { askSetupCode() }
+    if (ErrorLog.has(this)) link("Enviar informe de errores", R.drawable.ic_info) {
         ui.sheet("Informe de errores", "Prisma guardó en tu teléfono el detalle de algunos cierres. No incluye datos personales. ¿Quieres compartirlo?",
             actions = listOf("Compartir" to { ErrorLog.share(this) }, "Borrar el informe" to { ErrorLog.clear(this); build() }))
     }
-    link("Ver la guía de inicio") { restartOnboarding() }
+    link("Ver la guía de inicio", R.drawable.ic_help) { restartOnboarding() }
     link("Política de privacidad") {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/hossa2016/redoble/blob/main/PRIVACY.md")))

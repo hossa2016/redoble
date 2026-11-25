@@ -342,6 +342,17 @@ class MainActivity : AppCompatActivity() {
      * Barra fija arriba al bajar: miniatura del widget (tócala para verlo en grande)
      * y las pestañas. Reemplaza al botón flotante, que tapaba los títulos.
      */
+    /** Foto actual de la vista previa para la miniatura de la barra fija. */
+    internal fun snapThumb(thumb: android.widget.ImageView? = null) {
+        val t = thumb ?: findViewById<android.view.ViewGroup>(android.R.id.content)?.findViewWithTag<android.widget.ImageView>("pvThumb") ?: return
+        val fr = preview?.frame ?: return
+        if (fr.width <= 0) return
+        try {
+            val bmp = android.graphics.Bitmap.createBitmap(fr.width, fr.height, android.graphics.Bitmap.Config.ARGB_8888)
+            fr.draw(android.graphics.Canvas(bmp)); t.setImageBitmap(bmp)
+        } catch (e: Exception) { }
+    }
+
     internal fun previewPill() {
         val host = findViewById<android.view.ViewGroup>(android.R.id.content) ?: return
         val sv = scroll ?: return
@@ -366,7 +377,7 @@ class MainActivity : AppCompatActivity() {
             elevation = ui.dp(4).toFloat()
             setPadding(ui.dp(12), ui.dp(6), ui.dp(12), ui.dp(6))
             visibility = View.GONE
-            addView(thumb, LinearLayout.LayoutParams(ui.dp(40), ui.dp(56)).apply { marginEnd = ui.dp(10) })
+            addView(thumb, LinearLayout.LayoutParams(ui.dp(48), ui.dp(68)).apply { marginEnd = ui.dp(10) })
             addView(ui.segmented(TAB_NAMES, Prefs.settingsTab(this@MainActivity)) { t -> selectTab(t) },
                 LinearLayout.LayoutParams(0, -2, 1f))
         }
@@ -379,18 +390,25 @@ class MainActivity : AppCompatActivity() {
         fun update() {
             val tv = tabsView
             val onMain = Prefs.onboarded(this) && sv.getChildAt(0) === mainCol
-            val want = if (onMain && !fullPreviewOpen && tv != null && tv.parent != null && sv.scrollY > tv.bottom) View.VISIBLE else View.GONE
+            val want = if (onMain && !fullPreviewOpen && tv != null && tv.parent != null && sv.scrollY > tv.top) View.VISIBLE else View.GONE
             if (bar.visibility != want) {
                 if (want == View.VISIBLE) {
                     // Foto del momento de la vista previa para la miniatura
-                    preview?.frame?.let { fr -> if (fr.width > 0) try {
-                        val bmp = android.graphics.Bitmap.createBitmap(fr.width, fr.height, android.graphics.Bitmap.Config.ARGB_8888)
-                        fr.draw(android.graphics.Canvas(bmp)); thumb.setImageBitmap(bmp)
-                    } catch (e: Exception) { } }
+                    snapThumb(thumb)
                     bar.alpha = 0f; bar.visibility = View.VISIBLE; bar.animate().alpha(1f).setDuration(150).start()
                 } else bar.visibility = View.GONE
             }
         }
+        thumb.tag = "pvThumb"
+        // Mientras se ve, la miniatura se renueva (la hora no se queda atrás)
+        val tick = object : Runnable {
+            override fun run() {
+                if (!bar.isAttachedToWindow) return
+                if (bar.visibility == View.VISIBLE) snapThumb(thumb)
+                bar.postDelayed(this, 15_000)
+            }
+        }
+        bar.postDelayed(tick, 15_000)
         sv.setOnScrollChangeListener { _, _, _, _, _ -> update() }
         sv.post { update() }
     }

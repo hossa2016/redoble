@@ -388,6 +388,18 @@ internal fun MainActivity.openEditor() {
                 }
             }
 
+            // Opciones propias de cada parte (antes repartidas en otras secciones)
+            when (p) {
+                "clima" -> panel.addView(switchRow("Pronóstico de mañana", Prefs.el(this, "manana")) { on ->
+                    Prefs.setEl(this, "manana", on); changed() }, rowLp())
+                "apps" -> panel.addView(row(label("Cantidad"), ui.segmented(listOf(0 to "Ninguna", 3 to "1 fila", 6 to "2 filas"),
+                    Prefs.appRows(this) * 3) { v -> Prefs.setAppsCount(this, v); changed(); if (v == 0) { sel = null; fillPanel() } }.apply {
+                        layoutParams = LinearLayout.LayoutParams(0, -2, 1f) }), rowLp())
+                "player" -> panel.addView(row(label("Pegado a"), ui.segmented(listOf(true to "Cabecera", false to "Apps"),
+                    Prefs.playerTop(this)) { top -> Prefs.setPlayerTop(this, top); changed() }.apply {
+                        layoutParams = LinearLayout.LayoutParams(0, -2, 1f) }), rowLp())
+            }
+
             // Letra
             if (p != "player" && p != "bateria") {
                 val cur = Prefs.partFont(this, p)

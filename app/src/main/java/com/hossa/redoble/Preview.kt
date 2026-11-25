@@ -35,7 +35,8 @@ internal fun MainActivity.previewPlate(): View {
     // Tamaño real aproximado del widget: ancho de pantalla y 4/5 del alto útil
     val wPx = sw - (16 * dens).toInt()
     val hPx = (sh * 0.78f).toInt()
-    val boxW = (sw * 0.52f).toInt()
+    // Unos 35 % del alto: las pestañas quedan a la vista al abrir (en grande: tocándola)
+    val boxW = (sw * 0.36f).toInt()
     val scale = boxW.toFloat() / sw
     val boxH = (sh * scale).toInt()
 
@@ -153,6 +154,7 @@ internal fun MainActivity.updatePreview() {
                     p.holder.removeAllViews()
                     p.holder.addView(fresh, FrameLayout.LayoutParams(wPx, childH))
                     fresh.post {
+                        snapThumb()
                         // Diagnóstico: si el widget quedó sin tamaño, se avisa en la vista previa
                         if (fresh.width == 0 || fresh.height == 0) showPreviewError(p, "Widget sin tamaño (${fresh.width}x${fresh.height})")
                         else showPreviewError(p, null)

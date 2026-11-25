@@ -109,6 +109,12 @@ object Prefs {
     fun partFont(ctx: Context, part: String) = p(ctx).getString("ef_$part", "tema") ?: "tema"
     fun setPartFont(ctx: Context, part: String, v: String) = p(ctx).edit().putString("ef_$part", v).apply()
     val EDIT_PARTS = listOf("dia", "hora", "fecha", "clima", "bateria", "player", "apps")
+    /** ¿Hay algo cambiado en el editor visual? */
+    fun editorTouched(ctx: Context): Boolean {
+        val all = p(ctx).all
+        return all.containsKey("ordenBloques") || all.containsKey("ordenCabecera") ||
+            EDIT_PARTS.any { all.containsKey("es_$it") || all.containsKey("ec_$it") || all.containsKey("ef_$it") }
+    }
     fun resetEditor(ctx: Context) {
         val e = p(ctx).edit().remove("ordenBloques").remove("ordenCabecera")
         EDIT_PARTS.forEach { e.remove("es_$it").remove("ec_$it").remove("ef_$it") }
@@ -214,6 +220,9 @@ object Prefs {
         ELEMENTS.forEach { e.putBoolean("el_$it", it !in off) }
         e.putInt("appsCount", if (name == "completo") 6 else 3)
         e.putBoolean("playerLarge", name == "musica")
+        // Una plantilla parte de cero: también quita lo hecho en el editor
+        e.remove("ordenBloques").remove("ordenCabecera").putBoolean("playerTop", false)
+        EDIT_PARTS.forEach { e.remove("es_$it").remove("ec_$it").remove("ef_$it") }
         e.apply()
     }
 
