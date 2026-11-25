@@ -268,7 +268,7 @@ object Player {
             v.setTextViewText(R.id.player_title, title)
             v.setTextViewText(R.id.player_artist, artist)
             v.setViewVisibility(R.id.player_artist, if (artist.isBlank()) View.GONE else View.VISIBLE)
-            val tw = (W - (230 * d).toInt()).coerceAtLeast((60 * d).toInt())
+            val tw = (W - (140 * d).toInt()).coerceAtLeast((60 * d).toInt())  // los botones van en otra fila: el nombre usa casi todo el ancho
             txt(R.id.player_src, R.id.player_src_bmp, src, S.title, 11f, accent, W / 2, sp2 = 0.12f)
             txt(R.id.player_state, R.id.player_state_bmp, if (playing) " · Sonando" else " · En pausa", S.body, 11f, th.dim, W / 3)
             txt(R.id.player_title, R.id.player_title_bmp, title, S.semi, 15f, th.head, tw, caps = th.family == "neon")
@@ -502,7 +502,7 @@ object Player {
             v.setTextViewText(R.id.player_title, title)
             v.setTextViewText(R.id.player_artist, artist)
             v.setViewVisibility(R.id.player_artist, View.VISIBLE)
-            val tw = (W - (230 * d).toInt()).coerceAtLeast((60 * d).toInt())
+            val tw = (W - (140 * d).toInt()).coerceAtLeast((60 * d).toInt())  // los botones van en otra fila: el nombre usa casi todo el ancho
             txt(R.id.player_src, R.id.player_src_bmp, src, S.title, 11f, accent, W / 2, sp2 = 0.12f)
             txt(R.id.player_state, R.id.player_state_bmp, if (useLast) " · Última canción" else "", S.body, 11f, th.dim, W / 3)
             txt(R.id.player_title, R.id.player_title_bmp, title, S.semi, 15f, th.head, tw, caps = th.family == "neon")
