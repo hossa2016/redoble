@@ -414,11 +414,15 @@ class RockWidget : AppWidgetProvider() {
             }
             val dayFits = TextArt.commonSize(ctx, listOf(java.text.SimpleDateFormat(I18n.dateFormat(ctx, longDay), I18n.locale(ctx))
                 .format(java.util.Date()).replace(".", "").uppercase()), S.title, 13f * sc("dia"), S.tls, true, S.shadow,
-                maxWidthPx = colW - (8 * dens).toInt()) >= 13f * sc("dia") * 0.97f
+                maxWidthPx = ((colW - 8 * dens) / fs).toInt()) >= 13f * sc("dia") * 0.97f
             val dayFmt = if (narrow || !dayFits) when (th.family) {
                 "cristal" -> "EEE d MMM"; "neon" -> "EEE '//' dd.MM"; "lujo" -> "EEE · d MMM"; else -> "EEEE"
             } else when (th.family) {
                 "cristal" -> "EEEE, d 'de' MMMM"; "neon" -> "EEEE '//' dd.MM"; "lujo" -> "EEEE · d 'de' MMMM"; else -> "EEEE"
+            }
+            // El día del sistema (TextClock) usa el mismo formato: antes quedaba «MIÉRCOLES //» cortado
+            I18n.dateFormat(ctx, dayFmt).let { df ->
+                v.setCharSequence(R.id.day_txt, "setFormat12Hour", df); v.setCharSequence(R.id.day_txt, "setFormat24Hour", df)
             }
             // Fecha corta ("22 nov") cuando el widget es angosto: nunca "22 de novie…"
             val dateFmt = I18n.dateFormat(ctx, if (narrow) "d MMM" else "d 'de' MMMM")

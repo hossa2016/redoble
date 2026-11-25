@@ -240,7 +240,8 @@ object Widgets {
             val (slot, pkg, launch) = a
             v.setViewVisibility(PADS[i], View.VISIBLE)
             if (Build.VERSION.SDK_INT >= 31) {
-                v.setViewLayoutHeight(PADS[i], g.rowH.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
+                // La tarjeta no se estira a lo alto si la columna es angosta
+                v.setViewLayoutHeight(PADS[i], minOf(g.rowH, cellW + (if (g.names) 22 else 4)).toFloat(), TypedValue.COMPLEX_UNIT_DIP)
                 v.setViewLayoutWidth(HOLDERS[i], hs.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
                 v.setViewLayoutHeight(HOLDERS[i], hs.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
                 val big = th.family == "claro" || th.family == "lujo" || th.family == "cristal"
