@@ -19,7 +19,7 @@ import java.io.IOException
 
 internal fun MainActivity.weatherPlate(): View {
     val card = ui.plateCard()
-    card.addView(ui.sectionTitle("Clima"))
+    card.addView(ui.sectionTitle("Ubicación del clima"))
     val field = EditText(this).apply {
         setText(Prefs.city(this@weatherPlate))
         hint = "Ciudad, por ejemplo Medellín"
@@ -127,7 +127,7 @@ internal fun MainActivity.setlistPlate(): View {
     val showAll = moreSlots || extraFilled
     val used = if (appsWidget) (if (showAll) Prefs.GROUP_SLOTS else 8) else Prefs.usedSlots(this)
     val filled = (0 until used).count { Prefs.app(this, it, group).isNotBlank() }
-    card.addView(ui.sectionTitle("Apps", if (appsWidget) "${Prefs.GROUP_NAMES[group]} · $filled apps"
+    card.addView(ui.sectionTitle("Apps", if (appsWidget) "${Prefs.GROUP_NAMES[group]} · $filled de $used"
         else "$filled de $used · ${Prefs.perRow(this)} por fila"))
     if (appsWidget) {
         card.addView(ui.segmented(Prefs.GROUP_NAMES.indices.map { it to Prefs.GROUP_NAMES[it] }, group) { appsGroup = it; build() },
@@ -217,11 +217,21 @@ internal fun MainActivity.slotRow(i: Int, group: Int = 0): View {
                 when (which) {
                     0 -> pick()
                     1 -> renameSlot(i, group)
-                    else -> {
-                        Prefs.setApp(this@slotRow, i, "", group)
-                        RockWidget.updateAll(this@slotRow); Widgets.updateKind(this@slotRow, Widgets.APPS); build()
-                        toast("$name quitada del widget")
-                    }
+                    else -> ui.sheet("¿Quitar $name?", "Las apps que siguen suben un lugar para no dejar huecos.",
+                        actions = listOf("Quitar" to {
+                            // Se corre todo un lugar hacia arriba (con sus nombres propios)
+                            val last = Prefs.GROUP_SLOTS - 1
+                            for (k in i until last) {
+                                val nextPkg = Prefs.app(this@slotRow, k + 1, group)
+                                val nextLabel = Prefs.label(this@slotRow, k + 1, group)
+                                Prefs.setApp(this@slotRow, k, nextPkg, group)
+                                Prefs.setLabel(this@slotRow, k, nextLabel, group)
+                            }
+                            Prefs.setApp(this@slotRow, last, "", group)
+                            RockWidget.updateAll(this@slotRow)  // también redibuja los widgets de Apps
+                            build()
+                            toast("$name quitada del widget")
+                        }))
                 }
             })
         }
@@ -231,8 +241,8 @@ internal fun MainActivity.slotRow(i: Int, group: Int = 0): View {
 internal fun MainActivity.designPlate(): View {
     val card = ui.plateCard()
     val preset = Prefs.preset(this)
-    val names = mapOf("completo" to "Completo", "musica" to "Música", "minimal" to "Minimal")
-    card.addView(ui.sectionTitle("Diseño", names[preset] ?: "Personalizado"))
+    val names = mapOf("completo" to "Todo", "musica" to "Música grande", "minimal" to "Mínimo")
+    card.addView(ui.sectionTitle("Diseño del Completo", names[preset] ?: "Personalizado"))
     card.addView(ui.segmented(names.entries.map { it.key to it.value }, preset) { k ->
         Prefs.applyPreset(this, k); RockWidget.updateAll(this); build()
     })

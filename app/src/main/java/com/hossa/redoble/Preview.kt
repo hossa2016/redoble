@@ -109,9 +109,29 @@ internal fun MainActivity.updatePreview() {
     }
     // El widget se arma fuera del hilo principal; mientras tanto se ve el anterior
     val appCtx = applicationContext
+    // Se muestra el widget que de verdad está puesto: el Completo si está (o si aún no hay
+    // ninguno); si no, Hora y clima, Reproductor o Apps, en ese orden.
+    val dens = resources.displayMetrics.density
+    val kind = when {
+        Widgets.has(this, Widgets.FULL) || !RockWidget.hasWidgets(this) -> Widgets.FULL
+        Widgets.has(this, Widgets.CLOCK) -> Widgets.CLOCK
+        Widgets.has(this, Widgets.PLAYER) -> Widgets.PLAYER
+        else -> Widgets.APPS
+    }
+    val hDp = when (kind) { Widgets.CLOCK -> 230; Widgets.PLAYER -> 200; Widgets.APPS -> 300; else -> 0 }
+    val childH = if (kind == Widgets.FULL) p.hPx else (hDp * dens).toInt()
+    val appsId = if (kind == Widgets.APPS) Widgets.ids(this, Widgets.APPS).firstOrNull() else null
     io.execute {
         var err: Throwable? = null
-        val rv = try { RockWidget.buildViews(appCtx, p.wPx, preview = true) } catch (e: Throwable) { err = e; null }
+        val rv = try {
+            when {
+                kind == Widgets.APPS && appsId != null ->
+                    Widgets.appsViews(appCtx, appsId, (p.wPx / dens).toInt(), hDp)
+                kind == Widgets.APPS -> RockWidget.buildViews(appCtx, p.wPx, preview = true)
+                kind == Widgets.FULL -> RockWidget.buildViews(appCtx, p.wPx, preview = true)
+                else -> RockWidget.buildViews(appCtx, p.wPx, preview = true, kind = kind, hDp = hDp)
+            }
+        } catch (e: Throwable) { err = e; null }
         onUi {
             try {
                 rv?.let {
@@ -120,7 +140,7 @@ internal fun MainActivity.updatePreview() {
                     // rechazan setImageBitmap desde RemoteViews y el widget no se dibujaba.
                     val fresh = it.apply(applicationContext, p.holder)
                     p.holder.removeAllViews()
-                    p.holder.addView(fresh, FrameLayout.LayoutParams(p.wPx, p.hPx))
+                    p.holder.addView(fresh, FrameLayout.LayoutParams(p.wPx, childH))
                     fresh.post {
                         // Diagnóstico: si el widget quedó sin tamaño, se avisa en la vista previa
                         if (fresh.width == 0 || fresh.height == 0) showPreviewError(p, "Widget sin tamaño (${fresh.width}x${fresh.height})")

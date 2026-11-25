@@ -156,7 +156,10 @@ class MainActivity : AppCompatActivity() {
         val accent = if (Ui.light && androidx.core.graphics.ColorUtils.calculateLuminance(base) > 0.4)
             androidx.core.graphics.ColorUtils.blendARGB(base, Color.BLACK, 0.35f) else base
         ui = Ui(this, accent)
-        if (!Prefs.onboarded(this)) { setScreen(onboardingView(), keepScroll = false); return }
+        if (!Prefs.onboarded(this)) {
+            findViewById<android.view.ViewGroup>(android.R.id.content)?.findViewWithTag<View>("pvPill")?.visibility = View.GONE
+            setScreen(onboardingView(), keepScroll = false); return
+        }
 
         // La columna y la vista previa se conservan; se rehace solo lo demás
         val col = mainCol ?: LinearLayout(this).apply {
@@ -180,7 +183,20 @@ class MainActivity : AppCompatActivity() {
             build()
             // Que las pestañas queden a la vista al cambiar
             scroll?.let { sv -> sv.post { tabsView?.let { tv -> if (sv.scrollY > tv.top) sv.smoothScrollTo(0, (tv.top - ui.dp(8)).coerceAtLeast(0)) } } }
-        }.apply { contentDescription = "Secciones de ajustes" }
+        }
+        // TalkBack: cada opción se anuncia como «pestaña» (sin parada extra en el contenedor)
+        val tabNames = listOf("Estilo", "Contenido", "Widgets", "App")
+        fun markTabs(v: View) {
+            if (v is android.widget.TextView && v.text.toString() in tabNames) {
+                ViewCompat.setAccessibilityDelegate(v, object : androidx.core.view.AccessibilityDelegateCompat() {
+                    override fun onInitializeAccessibilityNodeInfo(host: View, info: androidx.core.view.accessibility.AccessibilityNodeInfoCompat) {
+                        super.onInitializeAccessibilityNodeInfo(host, info)
+                        info.roleDescription = "pestaña"
+                    }
+                })
+            } else if (v is android.view.ViewGroup) for (k in 0 until v.childCount) markTabs(v.getChildAt(k))
+        }
+        markTabs(tabs)
         tabsView = tabs
         col.addView(tabs, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
             setMargins(ui.dp(16), 0, ui.dp(16), ui.dp(14))
@@ -241,7 +257,7 @@ class MainActivity : AppCompatActivity() {
             pill = ui.text("Vista previa", ui.condSemi, 15f, Ui.HEAD).apply {
                 tag = "pvPill"
                 gravity = Gravity.CENTER
-                minHeight = ui.dp(44); minimumHeight = ui.dp(44)
+                minHeight = ui.dp(48); minimumHeight = ui.dp(48)
                 background = ui.rect(Ui.PLATE_TOP, 22f, ui.accentLine, 1.5f)
                 setPadding(ui.dp(18), 0, ui.dp(18), 0)
                 elevation = ui.dp(6).toFloat()
@@ -249,10 +265,19 @@ class MainActivity : AppCompatActivity() {
                 visibility = View.GONE
                 setOnClickListener { visibility = View.GONE; openFullPreview() }
             }
-            val top = ViewCompat.getRootWindowInsets(host)?.getInsets(WindowInsetsCompat.Type.systemBars())?.top ?: 0
-            host.addView(pill, android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.END).apply {
-                topMargin = top + ui.dp(10); marginEnd = ui.dp(16)
+            // Centrado arriba, bajo la barra de estado y el recorte de la cámara (los márgenes
+            // se toman cuando la ventana ya los conoce, no al crear el botón)
+            host.addView(pill, android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
+                topMargin = ui.dp(10)
             })
+            ViewCompat.setOnApplyWindowInsetsListener(pill) { v, ins ->
+                val b = ins.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+                (v.layoutParams as? android.widget.FrameLayout.LayoutParams)?.let { lp ->
+                    lp.topMargin = b.top + ui.dp(10); v.layoutParams = lp
+                }
+                ins
+            }
+            ViewCompat.requestApplyInsets(pill)
         } else {
             // Colores al día si cambió el modo claro/oscuro o el acento
             pill.setTextColor(Ui.HEAD)
@@ -261,7 +286,9 @@ class MainActivity : AppCompatActivity() {
         val p = pill
         fun update() {
             val card = preview?.card
-            val hidden = card != null && card.parent != null && sv.scrollY > card.bottom - ui.dp(40)
+            // Solo en la pantalla de ajustes (nunca durante la guía de inicio)
+            val onMain = Prefs.onboarded(this) && sv.getChildAt(0) === mainCol
+            val hidden = onMain && card != null && card.parent === mainCol && sv.scrollY > card.bottom - ui.dp(40)
             val want = if (hidden && !fullPreviewOpen) View.VISIBLE else View.GONE
             if (p.visibility != want) {
                 if (want == View.VISIBLE) { p.alpha = 0f; p.visibility = View.VISIBLE; p.animate().alpha(1f).setDuration(150).start() }
@@ -349,23 +376,24 @@ class MainActivity : AppCompatActivity() {
                 addView(brand)
                 addView(ui.text("WIDGETS", ui.condSemi, 14f, Ui.MUTED, 0.2f).apply { setPadding(ui.dp(8), 0, 0, ui.dp(7)) })
             })
-            addView(ui.text("Ajustes del widget", ui.cond, 15f, Ui.MUTED).apply { setPadding(0, ui.dp(4), 0, 0) })
-        }
-        val active = RockWidget.hasWidgets(this)
-        val status = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            addView(ui.dot(if (active) Ui.OK else Ui.DIM), LinearLayout.LayoutParams(ui.dp(7), ui.dp(7)))
-            addView(ui.text(if (active) "Widget activo" else "Widget sin agregar", ui.cond, 14f, Ui.MUTED).apply {
-                setPadding(ui.dp(8), 0, 0, 0)
-            })
+            // Estado en un chip pequeño bajo el logo (secundario, no compite con la marca)
+            val active = RockWidget.hasWidgets(this@MainActivity)
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                background = ui.rect(Ui.veil(0x0C), 12f, Ui.veil(0x1A), 1f)
+                setPadding(ui.dp(10), ui.dp(3), ui.dp(12), ui.dp(3))
+                addView(ui.dot(if (active) Ui.OK else Ui.DIM), LinearLayout.LayoutParams(ui.dp(7), ui.dp(7)))
+                addView(ui.text(if (active) "Widget activo" else "Widget sin agregar", ui.cond, 14f, Ui.MUTED).apply {
+                    setPadding(ui.dp(6), 0, 0, 0)
+                })
+            }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(6) })
         }
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(ui.dp(20), ui.dp(14), ui.dp(20), ui.dp(18))
             addView(left, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(status)
         }
     }
 

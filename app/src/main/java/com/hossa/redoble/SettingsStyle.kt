@@ -441,6 +441,8 @@ internal fun MainActivity.themePlate(): View {
     card.addView(HorizontalScrollView(this).apply {
         isHorizontalScrollBarEnabled = false
         addView(strip)
+        val idx = Themes.ALL.indexOfFirst { it.id == cur.id }
+        post { strip.getChildAt(idx)?.let { c -> scrollTo((c.left - (width - c.width) / 2).coerceAtLeast(0), 0) } }
     })
     // Letras: primero el interruptor general y, justo debajo, la hora (que depende de él)
     val fonts = Prefs.themeFonts(this)
@@ -466,7 +468,7 @@ internal fun MainActivity.themePlate(): View {
         card.addView(ui.note("Se dibuja cada minuto con la actualización en vivo.",
             "Con esto Prisma Widgets dibuja la hora, el día y la fecha cada minuto, y para eso enciende la " +
             "actualización en vivo. Si HyperOS cierra la app para ahorrar batería, la hora se congela. " +
-            "Apagado, se usa el reloj del sistema, que nunca se atrasa. Si alguna vez la ves quieta, apágalo."))
+            "Si la actualización en vivo se detiene, el widget vuelve solo al reloj del sistema, que nunca se atrasa."))
     }
     card.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0F)) },
         LinearLayout.LayoutParams(-1, ui.dp(1)).apply { topMargin = ui.dp(10); bottomMargin = ui.dp(4) })
@@ -492,7 +494,7 @@ internal fun MainActivity.showKeepAliveSteps() {
         "1. Activa Inicio automático.\n" +
         "2. En Batería (Ahorro de batería) elige Sin restricciones.\n" +
         "3. En Recientes, baja la tarjeta de Prisma Widgets para bloquearla (candado).\n\n" +
-        "Si aun así se queda quieta, apaga «Hora con la letra del tema»."
+        "Si HyperOS la cierra igual, el widget usa el reloj del sistema hasta que vuelvas a abrir la app."
     ui.sheet("Mantener la hora al día", msg, actions = listOf(
         "Inicio automático" to { openAutostart() },
         "Batería" to { openAppInfo() }), dismissLabel = "Luego")

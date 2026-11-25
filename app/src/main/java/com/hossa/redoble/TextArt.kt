@@ -35,7 +35,7 @@ object TextArt {
             76f, 15f, 15f, 13f, 12f, 0.04f, 0f, -0.03f, caps = false, shadow = true),
         "claro" to Spec(R.font.intertight_extralight, R.font.intertight_extralight, R.font.inter_regular, R.font.inter_medium,
             R.font.inter_semibold, R.font.inter_semibold, R.font.inter_medium,
-            76f, 14f, 15f, 13f, 12f, 0.2f, 0f, -0.04f, caps = false, shadow = false),
+            76f, 14f, 15f, 13f, 12f, 0.2f, 0f, -0.04f, caps = false, shadow = true),
         "neon" to Spec(R.font.orbitron_medium, R.font.orbitron_medium, R.font.rajdhani_medium, R.font.rajdhani_semibold,
             R.font.rajdhani_semibold, R.font.orbitron_bold, R.font.rajdhani_semibold,
             54f, 15f, 16f, 14f, 12f, 0.25f, 0.1f, 0f, caps = true, shadow = false, glow = Color.parseColor("#3DF2FF")),

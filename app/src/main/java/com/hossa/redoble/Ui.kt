@@ -261,7 +261,7 @@ class Ui(val ctx: Context, val accent: Int) {
                 imageTintList = ColorStateList.valueOf(MUTED)
                 scaleType = ImageView.ScaleType.CENTER
                 background = rowBg()
-                contentDescription = "Más información"
+                contentDescription = "Más información: $short"
                 setOnClickListener {
                     sheet(null, more, dismissLabel = "Entendido")
                 }

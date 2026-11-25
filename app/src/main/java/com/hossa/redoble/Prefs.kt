@@ -260,6 +260,11 @@ object Prefs {
 
     /** Cada copia del widget de Apps: grupo, nombres y tamaño (automático o a mano). */
     fun awGroup(ctx: Context, id: Int) = p(ctx).getInt("aw_${id}_group", 0).coerceIn(0, 2)
+    /** Nombre propio de cada widget de Apps (para distinguir una copia de otra). */
+    fun awName(ctx: Context, id: Int): String? = p(ctx).getString("aw_${id}_name", null)?.takeIf { it.isNotBlank() }
+    fun setAwName(ctx: Context, id: Int, name: String?) = p(ctx).edit().apply {
+        if (name.isNullOrBlank()) remove("aw_${id}_name") else putString("aw_${id}_name", name.trim())
+    }.apply()
     fun awNames(ctx: Context, id: Int) = p(ctx).getString("aw_${id}_names", "auto") ?: "auto"
     fun awAuto(ctx: Context, id: Int) = p(ctx).getBoolean("aw_${id}_auto", true)
     fun awCols(ctx: Context, id: Int) = p(ctx).getInt("aw_${id}_cols", 4).coerceIn(1, 5)

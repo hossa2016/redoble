@@ -37,8 +37,10 @@ internal fun MainActivity.appsWidgetsPlate(): View {
             setPadding(ui.dp(6), 0, ui.dp(6), 0)
             addView(LinearLayout(this@appsWidgetsPlate).apply {
                 orientation = LinearLayout.VERTICAL
-                addView(ui.text(if (ids.size == 1) "Tu widget de Apps" else "Widget ${n + 1}", ui.cond, 18f, Ui.HEAD))
-                addView(ui.ellipsize(ui.text(Widgets.appsSummary(this@appsWidgetsPlate, id), ui.cond, 14f, Ui.DIM)))
+                addView(ui.text(Prefs.awName(this@appsWidgetsPlate, id)
+                    ?: if (ids.size == 1) "Tu widget de Apps" else "Widget ${n + 1}", ui.cond, 18f, Ui.HEAD))
+                // Hasta dos líneas: el resumen ya no se corta con «…»
+                addView(ui.text(Widgets.appsSummary(this@appsWidgetsPlate, id), ui.cond, 14f, Ui.DIM).apply { maxLines = 2 })
                 // Sus primeras apps, para distinguir una copia de otra
                 val g = Prefs.awGroup(this@appsWidgetsPlate, id)
                 val pkgs = (0 until Prefs.GROUP_SLOTS).map { Prefs.app(this@appsWidgetsPlate, it, g) }.filter { it.isNotBlank() }.take(5)
@@ -51,12 +53,15 @@ internal fun MainActivity.appsWidgetsPlate(): View {
                     }
                 }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(6) })
             }, LinearLayout.LayoutParams(0, -2, 1f))
-            addView(ui.text("Cambiar", ui.cond, 15f, ui.accent))
             addView(ui.text("›", ui.condLight, 22f, Ui.DIM).apply { setPadding(ui.dp(8), 0, 0, ui.dp(2)) })
-            contentDescription = "Cambiar widget ${n + 1}"
+            val title = Prefs.awName(this@appsWidgetsPlate, id) ?: "Widget ${n + 1}"
+            contentDescription = "$title, ver opciones"
             setOnClickListener {
-                startActivity(Intent(this@appsWidgetsPlate, AppsWidgetConfig::class.java)
-                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
+                ui.sheet(title, items = listOf("Cambiar grupo o tamaño", "Ponerle nombre"), onItem = { which ->
+                    if (which == 0) startActivity(Intent(this@appsWidgetsPlate, AppsWidgetConfig::class.java)
+                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
+                    else renameAppsWidget(id, title)
+                })
             }
         }.apply { minimumHeight = ui.dp(64); setPadding(ui.dp(6), ui.dp(10), ui.dp(6), ui.dp(10)) }, LinearLayout.LayoutParams(-1, -2))
     }
@@ -102,7 +107,7 @@ internal fun MainActivity.packPlate(): View {
                 addView(ui.text(nd.first, ui.condSemi, 17f, Ui.HEAD))
                 addView(ui.text(nd.second, ui.cond, 14f, Ui.DIM))
             }, LinearLayout.LayoutParams(0, -2, 1f))
-            addView(ui.text(if (on) "En pantalla" else "", ui.cond, 14f, Ui.OK))
+            addView(ui.text(if (on) "En pantalla" else "No agregado", ui.cond, 14f, if (on) Ui.OK else Ui.DIM))
         }, LinearLayout.LayoutParams(-1, -2))
     }
     if (placed < list.size) card.addView(ui.secondary("Cómo agregar un widget").apply {
@@ -140,4 +145,21 @@ internal fun MainActivity.dreamPlate(): View {
     }
     card.addView(open, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(14) })
     return card
+}
+
+
+/** Nombre propio para un widget de Apps (solo se ve en estos ajustes). */
+internal fun MainActivity.renameAppsWidget(id: Int, current: String) {
+    val field = android.widget.EditText(this).apply {
+        setText(Prefs.awName(this@renameAppsWidget, id) ?: "")
+        hint = "Por ejemplo: Inicio, Trabajo, Música"
+        setSingleLine()
+        filters = arrayOf(android.text.InputFilter.LengthFilter(20))
+        setTextColor(if (Ui.light) 0xFF1C1A17.toInt() else 0xFFF2ECE4.toInt())
+        setHintTextColor(Ui.DIM)
+    }
+    ui.sheet("Nombre de $current", content = field, actions = listOf(
+        "Guardar" to { Prefs.setAwName(this, id, field.text.toString()); build() },
+        "Quitar el nombre" to { Prefs.setAwName(this, id, null); build() }))
+    field.requestFocus()
 }
