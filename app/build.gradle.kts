@@ -4,6 +4,7 @@ plugins {
 }
 
 android {
+    testOptions { unitTests.isIncludeAndroidResources = true }
     namespace = "com.hossa.redoble"
     compileSdk = 36
 
@@ -62,4 +63,6 @@ dependencies {
     // Reseña dentro de la app (solo funciona si se instaló desde Google Play)
     implementation("com.google.android.play:review-ktx:2.0.2")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.13")
+    testImplementation("androidx.test:core:1.6.1")
 }
