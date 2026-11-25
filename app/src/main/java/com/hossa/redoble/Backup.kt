@@ -60,10 +60,15 @@ object ErrorLog {
 object Backup {
     private const val PREFS = "redoble"
     /** Lo único que viaja en un setup compartido: aspecto y diseño (nada personal, ni apps, ni historial). */
-    private val SHAREABLE = setOf("theme", "accent", "systemAccent", "iconMode", "dim", "wpMode", "wpPos", "wpZoom", "perRow",
-        "preset", "appsCount", "wallStyle", "wallColor", "widgetStyle", "widgetColor", "playerTop", "liveScene", "themeFonts",
-        "themeClock", "coverColor", "playerLarge", "playerSkin", "workshopFont", "liveStage", "stageScene", "coverAll", "poster",
-        "rockVoice", "amp11", "ruleRain", "ruleNight", "ruleHeadphones", "tempF") + Prefs.ELEMENTS.map { "el_$it" }
+    private val SHARE_TYPES: Map<String, String> = mapOf(
+        "theme" to "i", "accent" to "i", "systemAccent" to "b", "iconMode" to "i", "dim" to "i", "wpMode" to "i",
+        "wpPos" to "i", "wpZoom" to "i", "perRow" to "i", "preset" to "s", "appsCount" to "i", "wallStyle" to "s",
+        "wallColor" to "i", "widgetStyle" to "s", "widgetColor" to "i", "playerTop" to "b", "liveScene" to "s",
+        "themeFonts" to "b", "themeClock" to "b", "coverColor" to "b", "playerLarge" to "b", "playerSkin" to "s",
+        "workshopFont" to "s", "liveStage" to "b", "stageScene" to "s", "coverAll" to "b", "poster" to "b",
+        "rockVoice" to "b", "amp11" to "b", "ruleRain" to "b", "ruleNight" to "b", "ruleHeadphones" to "b", "tempF" to "b",
+    ) + Prefs.ELEMENTS.associate { "el_$it" to "b" }
+    private val SHAREABLE = SHARE_TYPES.keys
 
     fun toJson(ctx: Context, share: Boolean = false): JSONObject {
         val all = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).all
@@ -111,7 +116,10 @@ object Backup {
             // Un valor con otro tipo que el guardado cerraría la app al leerlo: se ignora
             val cur = current[k]
             val t = o.optString("t")
+            // Setups compartidos: cada clave solo con su tipo conocido
+            if (only != null && SHARE_TYPES[k] != t) continue
             if (cur != null && t != "set" && typeOf[t] != null && cur::class != typeOf[t]) continue
+            if (t == "set" && cur != null && cur !is Set<*>) continue
             if (cur is Set<*> && t != "set") continue
             when (t) {
                 "b" -> ed.putBoolean(k, o.getBoolean("v"))

@@ -159,9 +159,9 @@ object ShareArt {
         p.color = accent; c.drawRect(90f, 200f, 110f, 560f, p)
         val t = Paint(Paint.ANTI_ALIAS_FLAG); t.color = Color.rgb(243, 237, 231)
         t.typeface = font(ctx, R.font.anton_regular)
-        fit(t, head, w - 260f, 150f); c.drawText(head, 150f, 340f, t)
+        val head = I18n.tr(ctx, head); fit(t, head, w - 260f, 150f); c.drawText(head, 150f, 340f, t)
         t.typeface = font(ctx, R.font.barlow_condensed_medium); t.color = accent; t.textSize = 60f
-        c.drawText(sub, 150f, 430f, t)
+        c.drawText(I18n.tr(ctx, sub), 150f, 430f, t)
         t.color = Color.rgb(200, 190, 182); t.textSize = 54f
         c.drawText(I18n.tr(ctx, "{} MINUTOS EN ESCENA").replace("{}", s.minutes.toString()), 150f, 530f, t)
         t.typeface = font(ctx, R.font.barlow_condensed_semibold); t.color = Color.rgb(160, 150, 142); t.textSize = 44f
