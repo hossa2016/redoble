@@ -2,7 +2,7 @@ name: Compilar APK
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   workflow_dispatch:
 
 permissions:
@@ -34,11 +34,31 @@ jobs:
           PRISMA_KEY_PASSWORD: ${{ secrets.PRISMA_KEY_PASSWORD }}
         run: |
           if [ -z "$PRISMA_KEYSTORE_PASSWORD" ]; then unset PRISMA_KEYSTORE_PASSWORD PRISMA_KEY_ALIAS PRISMA_KEY_PASSWORD; fi
-          gradle assembleRelease bundleRelease --no-daemon --stacktrace
+          set -o pipefail
+          gradle assembleRelease bundleRelease --no-daemon --stacktrace 2>&1 | tee build.log
       - run: |
           cp app/build/outputs/apk/release/app-release.apk Prisma.apk
           cp app/build/outputs/bundle/release/app-release.aab PrismaWidgets.aab
+      # Si falla, el registro queda en una versión de prueba para poder leer el error desde el celular
+      - name: Publicar registro del error
+        if: failure()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: log-${{ github.run_number }}
+          name: Error de compilación ${{ github.run_number }}
+          prerelease: true
+          files: build.log
+      # Rama dev: APK de prueba (no reemplaza la versión principal)
+      - name: Publicar APK de prueba
+        if: github.ref == 'refs/heads/dev'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: dev-${{ github.run_number }}
+          name: Prueba ${{ github.run_number }}
+          prerelease: true
+          files: Prisma.apk
       - name: Publicar APK
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
