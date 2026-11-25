@@ -81,7 +81,12 @@ object Themes {
     )
 
     fun widget(ctx: Context): Theme {
-        val t = textTheme(ctx)
+        var t = textTheme(ctx)
+        // Mientras suena música: el color de la carátula en todo el widget (si se eligió)
+        if (Prefs.coverAll(ctx) && Stage.playing) Stage.accent?.let { a ->
+            val c = if (t.light) androidx.core.graphics.ColorUtils.blendARGB(a, android.graphics.Color.BLACK, 0.25f) else a
+            t = t.withAccent(c)
+        }
         return if (Prefs.playerTop(ctx)) t.withLayout(UP[t.layout] ?: t.layout) else t
     }
 

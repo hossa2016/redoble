@@ -367,6 +367,12 @@ internal fun MainActivity.accentPlate(): View {
     }, LinearLayout.LayoutParams(-1, -2))
     // Llevar el color elegido a la vista
     scroller.post { scroller.scrollTo((ui.dp(88) * sel - scroller.width / 2 + ui.dp(44)).coerceAtLeast(0), 0) }
+    if (android.os.Build.VERSION.SDK_INT >= 31) {
+        card.addView(switchRow("Color del sistema (Material You)", Prefs.systemAccent(this)) { on ->
+            Prefs.setSystemAccent(this, on); RockWidget.updateAll(this); build()
+        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+        card.addView(ui.note("Usa el color que Android saca de tu fondo de pantalla."))
+    }
     return card
 }
 

@@ -85,6 +85,65 @@ internal fun MainActivity.playerPlate(): View {
     card.addView(ui.segmented(listOf(true to "Según la carátula", false to "El del tema"), Prefs.coverColor(this)) { on ->
         Prefs.setCoverColor(this, on); Player.updateAll(this); Widgets.updateKind(this, Widgets.PLAYER); build()
     }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(4) })
+    card.addView(switchRow("Color de la carátula en todo el widget", Prefs.coverAll(this)) { on ->
+        Prefs.setCoverAll(this, on); Stage.changed(this); RockWidget.updateAll(this)
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
+    card.addView(ui.note("Mientras suena, la hora, el clima y los detalles toman el color del disco."))
+
+    // Escenario Vivo
+    card.addView(switchRow("Escenario Vivo", Prefs.liveStage(this)) { on ->
+        Prefs.setLiveStage(this, on); Stage.changed(this)
+        if (on && !Prefs.wallStyle(this).let { it == "anim" }) toast("Funciona con el fondo «Animado»")
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
+    card.addView(ui.note("Con música, el fondo animado pasa a una escena de concierto teñida con el color de la carátula. Al pausar, vuelve a tu escena."))
+    if (Prefs.liveStage(this)) card.addView(ui.segmented(listOf("escenario" to "Escenario", "concierto" to "Concierto", "bateria" to "Batería"),
+        Prefs.stageScene(this)) { s -> Prefs.setStageScene(this, s); Stage.changed(this); build() },
+        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+
+    // Entrada de concierto
+    card.addView(ui.textButton("Compartir entrada de concierto").apply {
+        contentDescription = "Crear una entrada de concierto con la canción que suena y compartirla"
+        setOnClickListener {
+            val tr = Player.nowTrack(this@playerPlate)
+            if (tr == null) { toast("Pon a sonar una canción primero"); return@setOnClickListener }
+            io.execute {
+                val bmp = ShareArt.ticket(this@playerPlate, tr.first, tr.second, Player.nowArt(this@playerPlate),
+                    Stage.accent ?: ui.accent)
+                onUi { ShareArt.share(this@playerPlate, bmp, "entrada", "Compartir entrada") }
+            }
+        }
+    }, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(12) })
+
+    // Bajar el Telón
+    card.addView(ui.text("Bajar el Telón", ui.cond, 15f, Ui.MUTED), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(2) })
+    val left = SleepTimer.left(this)
+    card.addView(ui.note(if (left > 0) "La música se pausa en unos $left min." else "Pausa la música después de un rato, para dormir."))
+    card.addView(ui.segmented(listOf(15 to "15 min", 30 to "30 min", 45 to "45 min", 0 to "Apagado"), if (left > 0) -1 else 0) { m ->
+        if (m == 0) { SleepTimer.cancel(this); toast("Temporizador apagado") }
+        else { SleepTimer.start(this, m); toast("La música se pausa en $m min") }
+        build()
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
+
+    // Bitácora de Gira
+    card.addView(switchRow("Bitácora de Gira", Prefs.tourLog(this)) { on ->
+        Prefs.setTourLog(this, on); if (on) TourLog.changed(this); build()
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
+    card.addView(ui.note("Guarda en tu teléfono qué escuchas, para armar tu setlist de la semana y el afiche del año. Nada sale del teléfono."))
+    if (Prefs.tourLog(this)) {
+        val wk = TourLog.week(this)
+        card.addView(ui.bodyText(if (wk.minutes > 0) "Semana ${TourLog.weekNumber()} · ${wk.minutes} min" +
+            (if (wk.topArtist.isNotBlank()) " · Más tocada: ${wk.topArtist}" else "") else "Aún no hay escucha esta semana.", Ui.HEAD, 15f),
+            LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+        fun posterBtn(label: String, make: () -> android.graphics.Bitmap) = card.addView(ui.textButton(label).apply {
+            setOnClickListener { io.execute { val b = make(); onUi { ShareArt.share(this@playerPlate, b, "afiche", label) } } }
+        }, LinearLayout.LayoutParams(-1, ui.dp(48)))
+        posterBtn("Afiche de la semana") {
+            ShareArt.poster(this, "SEMANA ${TourLog.weekNumber()}", "SETLIST DE LA SEMANA", TourLog.week(this), ui.accent)
+        }
+        posterBtn("Afiche de la Gira ${TourLog.yearNumber()}") {
+            ShareArt.poster(this, "GIRA ${TourLog.yearNumber()}", "TU AÑO EN ESCENA", TourLog.year(this), ui.accent)
+        }
+    }
 
     return card
 }

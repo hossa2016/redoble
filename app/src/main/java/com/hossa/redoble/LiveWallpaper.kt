@@ -130,10 +130,11 @@ private class VideoRenderer(private val ctx: Context, private val scene: VideoSc
     private val vs = "attribute vec2 a;varying vec2 v;void main(){v=a*.5+.5;gl_Position=vec4(a,0.,1.);}"
     private val fs = """#extension GL_OES_EGL_image_external : require
         precision mediump float;varying vec2 v;uniform samplerExternalOES tex;uniform mat4 st;
-        uniform vec2 sc;uniform vec2 off;uniform float rot;uniform float vig;uniform vec4 glow;
+        uniform vec2 sc;uniform vec2 off;uniform float rot;uniform float vig;uniform vec4 glow;uniform vec4 tint;
         void main(){vec2 p=v-.5;float c=cos(rot),s=sin(rot);p=vec2(c*p.x-s*p.y,s*p.x+c*p.y);
          p=p*sc+.5+off;vec2 tc=(st*vec4(p,0.,1.)).xy;vec3 col=texture2D(tex,tc).rgb;
          if(glow.w>0.){float d=length((v-glow.xy)*vec2(1.,.6));col+=vec3(1.,.47,.16)*glow.z*smoothstep(.75,0.,d);}
+         if(tint.w>0.){float l=dot(col,vec3(.299,.587,.114));col=mix(col,tint.rgb*l*1.8,tint.w);}
          if(vig>0.){float d=length((v-vec2(.5,.45))*vec2(1.,.8));col*=mix(1.,smoothstep(1.05,.35,d),vig);}
          gl_FragColor=vec4(col,1.);}"""
 
@@ -175,6 +176,14 @@ private class VideoRenderer(private val ctx: Context, private val scene: VideoSc
     }
 
     fun size(width: Int, height: Int) { w = width; h = height; fresh = true }
+    /** Tinte del color de la carátula (Escenario Vivo); 0 = sin tinte. */
+    private var tint = floatArrayOf(1f, 1f, 1f, 0f)
+    fun setTint(color: Int?, strength: Float) {
+        tint = if (color == null || strength <= 0f) floatArrayOf(1f, 1f, 1f, 0f)
+        else floatArrayOf(android.graphics.Color.red(color) / 255f, android.graphics.Color.green(color) / 255f,
+            android.graphics.Color.blue(color) / 255f, strength)
+        fresh = true
+    }
 
     /** Hay un cuadro nuevo del video (si no, y el teléfono no se movió, no se redibuja). */
     @Volatile var fresh = true
@@ -211,6 +220,7 @@ private class VideoRenderer(private val ctx: Context, private val scene: VideoSc
             GLES20.glUniform2f(GLES20.glGetUniformLocation(prog, "off"), ox, oy)
             GLES20.glUniform1f(GLES20.glGetUniformLocation(prog, "rot"), if (i == 0) tx * .01f else 0f)
             GLES20.glUniform1f(GLES20.glGetUniformLocation(prog, "vig"), if (i == 0) .9f else 0f)
+            GLES20.glUniform4f(GLES20.glGetUniformLocation(prog, "tint"), tint[0], tint[1], tint[2], if (i == 0) tint[3] else 0f)
             val flick = .55f + .18f * sin(t * 9.3f) + .12f * sin(t * 15.7f + 1) + .08f * sin(t * 23.1f + 2)
             GLES20.glUniform4f(GLES20.glGetUniformLocation(prog, "glow"), .5f - tx * .08f, .08f, .22f * flick, if (scene.fire && i == 0) 1f else 0f)
             if (i == 0) GLES20.glDisable(GLES20.GL_BLEND)
@@ -253,11 +263,32 @@ class PrismaWallpaper : WallpaperService() {
             try { renderer?.draw(tilt.tx, tilt.ty, (SystemClock.uptimeMillis() - t0) / 1000f) } catch (e: Exception) { }
             if (visible) gl.postDelayed(this, 33) } }
 
+        /** Escena que toca ahora: la elegida o, con Escenario Vivo y música sonando, la de concierto. */
+        private fun wanted(): String {
+            val c = this@PrismaWallpaper
+            return if (Prefs.liveStage(c) && Stage.playing) Prefs.stageScene(c) else Prefs.liveScene(c)
+        }
+        private fun applyTint() {
+            val c = this@PrismaWallpaper
+            renderer?.setTint(if (Prefs.liveStage(c) && Stage.playing) Stage.accent else null, 0.35f)
+        }
+        private val onStage: () -> Unit = {
+            gl.post {
+                if (wanted() != sceneId && surfaceHolder.surface.isValid) {
+                    build(surfaceHolder)
+                    if (android.os.Build.VERSION.SDK_INT >= 27) notifyColorsChanged()
+                } else applyTint()
+                if (visible) try { renderer?.draw(tilt.tx, tilt.ty, 0f, force = true) } catch (e: Exception) { }
+            }
+        }
+
+        override fun onCreate(surfaceHolder: SurfaceHolder) { super.onCreate(surfaceHolder); Stage.listen(onStage) }
+
         private fun build(holder: SurfaceHolder) {
             renderer?.release(); renderer = null
-            sceneId = Prefs.liveScene(this@PrismaWallpaper)
+            sceneId = wanted()
             val r = VideoRenderer(this@PrismaWallpaper, VideoScenes.find(sceneId))
-            try { r.init(holder.surface); r.size(w, h); renderer = r; if (visible) r.play() } catch (e: Exception) { r.release() }
+            try { r.init(holder.surface); r.size(w, h); renderer = r; applyTint(); if (visible) r.play() } catch (e: Exception) { r.release() }
         }
 
         override fun onSurfaceCreated(holder: SurfaceHolder) { super.onSurfaceCreated(holder); gl.post { build(holder) } }
@@ -273,7 +304,7 @@ class PrismaWallpaper : WallpaperService() {
         @androidx.annotation.RequiresApi(27)
         override fun onComputeColors(): android.app.WallpaperColors? {
             // Colores de la escena para que HyperOS adapte íconos y barra de estado
-            val res = VideoScenes.thumb(Prefs.liveScene(this@PrismaWallpaper)) ?: return null
+            val res = VideoScenes.thumb(sceneId.ifBlank { Prefs.liveScene(this@PrismaWallpaper) }) ?: return null
             return try {
                 val bmp = android.graphics.BitmapFactory.decodeResource(resources, res) ?: return null
                 android.app.WallpaperColors.fromBitmap(bmp)
@@ -287,7 +318,7 @@ class PrismaWallpaper : WallpaperService() {
                 if (!still) tilt.start()
                 gl.post {
                     // Si se eligió otra escena en los ajustes, cambiarla al volver
-                    if (Prefs.liveScene(this@PrismaWallpaper) != sceneId && surfaceHolder.surface.isValid) {
+                    if (wanted() != sceneId && surfaceHolder.surface.isValid) {
                         build(surfaceHolder)
                         if (android.os.Build.VERSION.SDK_INT >= 27) notifyColorsChanged()
                     }
@@ -310,7 +341,7 @@ class PrismaWallpaper : WallpaperService() {
             try { latch.await(1, java.util.concurrent.TimeUnit.SECONDS) } catch (e: Exception) { }
             super.onSurfaceDestroyed(holder)
         }
-        override fun onDestroy() { gl.post { renderer?.release(); renderer = null; thread.quitSafely() }; super.onDestroy() }
+        override fun onDestroy() { Stage.unlisten(onStage); gl.post { renderer?.release(); renderer = null; thread.quitSafely() }; super.onDestroy() }
     }
 }
 

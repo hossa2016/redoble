@@ -143,6 +143,10 @@
         </service>
 
         <receiver
+            android:name=".SleepReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".AlarmChangeReceiver"
             android:exported="false">
             <intent-filter>

@@ -40,7 +40,9 @@ object Prefs {
 
     fun accentIndex(ctx: Context) = p(ctx).getInt("accent", 0)
     fun setAccentIndex(ctx: Context, i: Int) = p(ctx).edit().putInt("accent", i).apply()
-    fun accent(ctx: Context) = ACCENTS[accentIndex(ctx).coerceIn(0, ACCENTS.size - 1)]
+    fun accent(ctx: Context): Int =
+        if (systemAccent(ctx)) ctx.getColor(android.R.color.system_accent1_300)
+        else ACCENTS[accentIndex(ctx).coerceIn(0, ACCENTS.size - 1)]
 
     /** 0 = silueta (como ahora, en un solo tono), 1 = color original de cada app */
     fun iconMode(ctx: Context) = p(ctx).getInt("iconMode", 0)
@@ -201,6 +203,23 @@ object Prefs {
     fun setWeatherExtra(ctx: Context, code: Int, temp: Int, desc: String) = p(ctx).edit()
         .putInt("wxCode", code).putInt("wxTemp", temp).putString("wxDesc", desc).apply()
     fun weatherAt(ctx: Context) = p(ctx).getLong("wxAt", 0L)
+    /** Bitácora de Gira: historial de escucha solo en el teléfono. */
+    fun tourLog(ctx: Context) = p(ctx).getBoolean("tourLogOn", false)
+    fun setTourLog(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("tourLogOn", v).apply()
+    /** Hora en que «Bajar el Telón» pausa la música (0 = sin temporizador). */
+    fun sleepAt(ctx: Context) = p(ctx).getLong("sleepAt", 0L)
+    fun setSleepAt(ctx: Context, v: Long) = p(ctx).edit().putLong("sleepAt", v).apply()
+    /** Escenario Vivo: con música, el fondo animado pasa a una escena de concierto. */
+    fun liveStage(ctx: Context) = p(ctx).getBoolean("liveStage", false)
+    fun setLiveStage(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("liveStage", v).apply()
+    fun stageScene(ctx: Context) = p(ctx).getString("stageScene", "escenario") ?: "escenario"
+    fun setStageScene(ctx: Context, v: String) = p(ctx).edit().putString("stageScene", v).apply()
+    /** El color de la carátula pinta todo el widget mientras suena música. */
+    fun coverAll(ctx: Context) = p(ctx).getBoolean("coverAll", false)
+    fun setCoverAll(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("coverAll", v).apply()
+    /** Color de acento del sistema (Material You, Android 12+). */
+    fun systemAccent(ctx: Context) = p(ctx).getBoolean("systemAccent", false) && android.os.Build.VERSION.SDK_INT >= 31
+    fun setSystemAccent(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("systemAccent", v).apply()
     /** Cabecera: fecha estilo cartel, próxima alarma y próximo evento. */
     fun poster(ctx: Context) = p(ctx).getBoolean("poster", false)
     fun setPoster(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("poster", v).apply()

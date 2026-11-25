@@ -79,6 +79,36 @@ object Player {
             ?: pool.firstOrNull()
     }
 
+    /** ¿Suena algo y de qué color es su carátula? (para Escenario Vivo y el color en todo el widget) */
+    fun nowState(ctx: Context): Pair<Boolean, Int?> {
+        val c = controller(ctx) ?: return false to null
+        val playing = isPlaying(c)
+        val md = c.metadata ?: return playing to null
+        val art = artFor(ctx, md, download = false)
+        return playing to art?.let { coverAccent(it, false) }
+    }
+
+    /** Título y artista de lo que suena ahora (o lo último que sonó). */
+    fun nowTrack(ctx: Context): Pair<String, String>? {
+        val c = try { controller(ctx) } catch (e: Exception) { null } ?: return null
+        val md = c.metadata ?: return null
+        val title = clean(md.getString(MediaMetadata.METADATA_KEY_TITLE) ?: md.description?.title?.toString() ?: "")
+        val artist = clean(md.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
+            ?: md.description?.subtitle?.toString() ?: "")
+        return if (title.isBlank()) null else title to artist
+    }
+
+    /** Carátula de lo que suena (sin descargar). */
+    fun nowArt(ctx: Context): Bitmap? {
+        val c = try { controller(ctx) } catch (e: Exception) { null } ?: return null
+        return c.metadata?.let { artFor(ctx, it, download = false) }
+    }
+
+    /** Pausa la música (temporizador «Bajar el Telón»). */
+    fun pause(ctx: Context) {
+        try { controller(ctx)?.transportControls?.pause() } catch (e: Exception) { }
+    }
+
     /** Títulos de YouTube vienen con códigos HTML (I&#39;m → I'm). */
     private fun clean(s: String): String =
         if (s.contains('&')) android.text.Html.fromHtml(s, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim() else s.trim()
@@ -676,5 +706,9 @@ class MediaListener : NotificationListenerService() {
     }
 
     /** Agrupa cambios seguidos y no redibuja con la pantalla apagada. */
-    private fun schedule() = RockWidget.requestUpdate(this, 600, playerOnly = true)
+    private fun schedule() {
+        RockWidget.requestUpdate(this, 600, playerOnly = true)
+        Stage.changed(this)
+        TourLog.changed(this)
+    }
 }
