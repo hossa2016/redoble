@@ -12,8 +12,8 @@ android {
         applicationId = "com.hossa.redoble"
         minSdk = 26
         targetSdk = 36
-        versionCode = 119
-        versionName = "17.4"
+        versionCode = 120
+        versionName = "17.5"
         // Clave opcional de Ticketmaster (secreto TICKETMASTER_KEY): fechas reales en «Conciertos cerca»
         buildConfigField("String", "TM_KEY", "\"${System.getenv("TICKETMASTER_KEY") ?: ""}\"")
     }

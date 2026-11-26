@@ -212,12 +212,15 @@ object Player {
      * Reproductor por separado, grande o compacto (sin música muestra la última canción
      * o «Nada sonando»).
      */
+    /** ¿El último Completo dibujado mostró el reproductor? (si no, va otra tarjeta en su lugar) */
+    @Volatile var lastShown = false
+
     fun apply(ctx: Context, v: RemoteViews, fonts: Boolean = false, widthPx: Int = 0, preview: Boolean = false, mode: Int = 0,
               sample: Boolean = false, tall: Boolean = false): Boolean {
         v.setViewVisibility(R.id.player, View.GONE)
         v.setViewVisibility(R.id.player_c, View.GONE)
         // En el Completo, sin tarjeta de música su hueco desaparece (las apps suben bajo la hora)
-        if (mode == 0) v.setViewVisibility(R.id.middle, View.GONE)
+        if (mode == 0) { v.setViewVisibility(R.id.middle, View.GONE); lastShown = false }
         if (mode < 0 || (mode == 0 && !Prefs.el(ctx, "player"))) return false
         val c = try { controller(ctx) } catch (e: Exception) { null }
         prog = progressOf(c)
@@ -263,7 +266,7 @@ object Player {
 
         if (if (mode == 0) Prefs.playerLarge(ctx) || tall else mode == 1) {
             v.setViewVisibility(R.id.player, View.VISIBLE)
-            v.setViewVisibility(R.id.middle, View.VISIBLE)
+            v.setViewVisibility(R.id.middle, View.VISIBLE); if (mode == 0) lastShown = true
             // En el widget Reproductor no hay X: el widget se quita desde la pantalla de inicio
             v.setViewVisibility(R.id.player_close, if (mode == 0) View.VISIBLE else View.GONE)
             val src = try {
@@ -298,7 +301,7 @@ object Player {
             }
         } else {
             v.setViewVisibility(R.id.player_c, View.VISIBLE)
-            v.setViewVisibility(R.id.middle, View.VISIBLE)
+            v.setViewVisibility(R.id.middle, View.VISIBLE); if (mode == 0) lastShown = true
             v.setTextViewText(R.id.pc_title, title)
             v.setTextViewText(R.id.pc_artist, artist)
             v.setViewVisibility(R.id.pc_artist, if (artist.isBlank()) View.GONE else View.VISIBLE)
@@ -506,7 +509,7 @@ object Player {
             }
         if (large) {
             v.setViewVisibility(R.id.player, View.VISIBLE)
-            v.setViewVisibility(R.id.middle, View.VISIBLE)
+            v.setViewVisibility(R.id.middle, View.VISIBLE); if (mode == 0) lastShown = true
             v.setViewVisibility(R.id.player_close, View.GONE)
             v.setViewVisibility(R.id.player_eq, View.GONE)
             val src = try {
@@ -532,7 +535,7 @@ object Player {
                 v.setOnClickPendingIntent(id, launch)
         } else {
             v.setViewVisibility(R.id.player_c, View.VISIBLE)
-            v.setViewVisibility(R.id.middle, View.VISIBLE)
+            v.setViewVisibility(R.id.middle, View.VISIBLE); if (mode == 0) lastShown = true
             v.setTextViewText(R.id.pc_title, title)
             v.setTextViewText(R.id.pc_artist, artist)
             v.setViewVisibility(R.id.pc_artist, View.VISIBLE)

@@ -297,6 +297,9 @@ class RockWidget : AppWidgetProvider() {
                 else -> {
                     // Reproductor primero: de él depende cuánto espacio queda.
                     val playing = Player.apply(ctx, v, fonts, W, preview, sample = sample, tall = tallFull(ctx, hDp, (W / ctx.resources.displayMetrics.density).toInt()))
+                    // Sin reproductor y con espacio: el próximo evento o el pronóstico de 3 días en su lugar
+                    v.setViewVisibility(R.id.extra_card, View.GONE)
+                    if (!Player.lastShown) FullExtra.apply(ctx, v, th, W, hDp, preview)
                     if (!preview) Prefs.setLastPlaying(ctx, playing)
                     headerSection(ctx, v, th, W, playing, fonts, preview, hDp = hDp)
                     appsSection(ctx, v, th, W, playing, fonts, hDp)
