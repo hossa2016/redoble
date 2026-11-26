@@ -296,7 +296,7 @@ class RockWidget : AppWidgetProvider() {
                 }
                 else -> {
                     // Reproductor primero: de él depende cuánto espacio queda.
-                    val playing = Player.apply(ctx, v, fonts, W, preview, sample = sample, tall = tallFull(ctx, hDp))
+                    val playing = Player.apply(ctx, v, fonts, W, preview, sample = sample, tall = tallFull(ctx, hDp, (W / ctx.resources.displayMetrics.density).toInt()))
                     if (!preview) Prefs.setLastPlaying(ctx, playing)
                     headerSection(ctx, v, th, W, playing, fonts, preview, hDp = hDp)
                     appsSection(ctx, v, th, W, playing, fonts, hDp)
@@ -351,7 +351,7 @@ class RockWidget : AppWidgetProvider() {
                 try {
                     val v = RemoteViews(ctx.packageName, th.layout)
                     val playing = Player.apply(ctx, v, Prefs.themeFonts(ctx), widthPx(ctx, mgr, id),
-                        tall = tallFull(ctx, Widgets.sizeDp(ctx, mgr, id).second))
+                        tall = Widgets.sizeDp(ctx, mgr, id).let { (w, h) -> tallFull(ctx, h, w) })
                     if (playing != Prefs.lastPlaying(ctx)) { updateAll(ctx); return }
                     mgr.partiallyUpdateAppWidget(id, v)
                 } catch (e: Exception) { }
@@ -376,7 +376,11 @@ class RockWidget : AppWidgetProvider() {
         }
 
         /** Sobra sitio para el reproductor grande (unos 110 dp más que el compacto). */
-        internal fun tallFull(ctx: Context, hDp: Int): Boolean = fullFree(ctx, hDp) >= 115
+        internal fun tallFull(ctx: Context, hDp: Int, wDp: Int = 0): Boolean =
+            fullFree(ctx, hDp) >= 115 ||
+                // Algunos lanzadores (HyperOS) informan un alto menor al real: por la forma (mucho más alto
+                // que ancho) también se sabe que sobra espacio
+                (wDp > 0 && hDp >= 560 && hDp >= wDp * 1.7f)
 
         /** Día, fecha, hora, clima y batería. */
         private fun headerSection(ctx: Context, v: RemoteViews, th: Theme, W: Int, playing: Boolean, fonts: Boolean, preview: Boolean,
@@ -513,8 +517,9 @@ class RockWidget : AppWidgetProvider() {
             }
             // Completo muy alto: la hora crece un poco para llenar el espacio que sobra
             val grow = if (kind == Widgets.FULL && hDp > 0) {
-                val left = fullFree(ctx, hDp) - (if (tallFull(ctx, hDp) && playing) 110 else 0)
-                (1f + left / 300f).coerceIn(1f, 1.3f)
+                val tall = tallFull(ctx, hDp, wDp)
+                val left = maxOf(fullFree(ctx, hDp), if (tall) 160 else 0) - (if (tall && playing) 110 else 0)
+                (1f + left / 300f).coerceIn(1f, if (playing) 1.3f else 1.4f)
             } else 1f
             val ts = (if (solo) soloTs else timeSize(th.family) * (if (playing) 0.875f else 1f) * grow) * sc("hora")
             if (own("hora") != 0) for (id in intArrayOf(R.id.hh, R.id.mm)) v.setTextColor(id, own("hora"))

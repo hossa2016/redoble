@@ -37,6 +37,14 @@ internal fun MainActivity.showReliable() {
     fun line(ok: Boolean, text: String) = box.addView(ui.text((if (ok) "✓  " else "✗  ") + I18n.tr(this, text), ui.cond, 16f,
         if (ok) Ui.OK else Ui.ALERT), LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
     line(true, "Widget redibujado ahora mismo")
+    try {
+        val mgr = android.appwidget.AppWidgetManager.getInstance(this)
+        mgr.getAppWidgetIds(android.content.ComponentName(this, RockWidget::class.java)).firstOrNull()?.let { id ->
+            val (w, h) = Widgets.sizeDp(this, mgr, id)
+            box.addView(ui.text(I18n.tr(this, "Tamaño del Completo: {} dp").replace("{}", "$w × $h"), ui.cond, 14f, Ui.DIM),
+                LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
+        }
+    } catch (e: Exception) { }
     line(bat, if (bat) "Batería: sin restricciones" else "Batería: con restricciones (puede congelarse)")
     box.addView(ui.note("En Xiaomi también activa «Inicio automático». Si el widget se queda en otra hora, Prisma lo repara solo cada media hora.", sp = 14f),
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
