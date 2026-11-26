@@ -524,7 +524,13 @@ class RockWidget : AppWidgetProvider() {
                 val left = maxOf(fullFree(ctx, hDp), if (tall) 160 else 0) - (if (tall && playing) 110 else 0)
                 (1f + left / 300f).coerceIn(1f, if (playing) 1.3f else 1.4f)
             } else 1f
-            val ts = (if (solo) soloTs else timeSize(th.family) * (if (playing) 0.875f else 1f) * grow) * sc("hora")
+            var ts = (if (solo) soloTs else timeSize(th.family) * (if (playing) 0.875f else 1f) * grow) * sc("hora")
+            // Nunca más ancha que su tarjeta: «10:06» se cortaba en «10:0» al crecer
+            if (!solo && grow > 1f) {
+                val need = TextArt.widthOf(ctx, "00:00", S.time, ts, S.tspace)
+                val room = colW - 40 * dens
+                if (need > room) ts = maxOf(ts * room / need, timeSize(th.family) * (if (playing) 0.875f else 1f) * sc("hora"))
+            }
             if (own("hora") != 0) for (id in intArrayOf(R.id.hh, R.id.mm)) v.setTextColor(id, own("hora"))
             // Fecha más pequeña si el widget suelto es angosto
             if (solo && wDp < 200) v.setTextViewTextSize(R.id.date, TypedValue.COMPLEX_UNIT_SP, S.dsize * 0.9f)

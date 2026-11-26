@@ -249,6 +249,10 @@ object TextArt {
         return b
     }
 
+    /** Ancho (px) que ocupa un texto con esa letra y tamaño, como lo dibujaría el widget. */
+    fun widthOf(ctx: Context, text: String, font: Int, sp: Float, spacing: Float = 0f): Float =
+        paint(ctx, font, sp, 0, spacing, false, 0).measureText(text)
+
     private fun paint(ctx: Context, font: Int, sp: Float, color: Int, spacing: Float, shadow: Boolean, glow: Int) =
         TextPaint(TextPaint.ANTI_ALIAS_FLAG or TextPaint.SUBPIXEL_TEXT_FLAG).apply {
             typeface = face(ctx, font)
