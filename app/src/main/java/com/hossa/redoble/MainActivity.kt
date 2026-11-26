@@ -317,7 +317,10 @@ class MainActivity : AppCompatActivity() {
                 col.addView(fold(wallpaperPlate(), "fondo", wallName))
                 col.addView(fold(widgetBgPlate(), "fondoWidget", widgetBgName))
                 col.addView(fold(rulesPlate(), "reglas", Rules.act(this).ifBlank {
-                    if (Prefs.ruleRain(this) || Prefs.ruleNight(this) || Prefs.ruleHeadphones(this)) "Esperando su momento" else "Apagado" }))
+                    if (Prefs.ruleRain(this) || Prefs.ruleNight(this) || Prefs.ruleHeadphones(this) || Prefs.ruleWeekend(this) ||
+                        Prefs.ruleGig(this) || Prefs.ruleCalm(this))
+                        I18n.tr(this, "Ninguna regla ahora") + (if (Prefs.ruleNight(this)) " · " + I18n.tr(this, "De noche a las 8 p. m.") else "")
+                    else "Apagado" }))
                 if (th.usesUserAccent) col.addView(fold(accentPlate(), "acento",
                     Prefs.NAMES[Prefs.accentIndex(this).coerceIn(0, Prefs.NAMES.size - 1)]))
             }

@@ -361,6 +361,7 @@ internal fun MainActivity.headerExtrasPlate(): View {
         if (on && !Extras.hasCalendar(this)) calendarPerm.launch(android.Manifest.permission.READ_CALENDAR)
         else { Prefs.setShowAgenda(this, on); RockWidget.updateAll(this); build() }
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-    card.addView(ui.note("Pide permiso para leer tu calendario.", "Solo se lee en el teléfono; nada sale de él."))
+    card.addView(ui.note(if (Extras.hasCalendar(this)) "Permiso del calendario dado ✓" else "Pide permiso para leer tu calendario.",
+        "Solo se lee en el teléfono; nada sale de él."))
     return card
 }

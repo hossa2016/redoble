@@ -179,7 +179,8 @@ internal fun MainActivity.themeTile(t: Theme, on: Boolean, onPick: () -> Unit): 
         foreground = ui.rect(Color.TRANSPARENT, 12f, if (on) (if (Ui.light) ui.accent else Color.WHITE) else Color.argb(0x24, 255, 255, 255), if (on) 2.5f else 1f)
     }
     frame.addView(img, android.widget.FrameLayout.LayoutParams(tw, thH))
-    frame.addView(ui.text("5:43", ui.condLight, 26f, t.head).apply { gravity = Gravity.CENTER },
+    frame.addView(ui.text(android.text.format.DateFormat.getTimeFormat(this).format(java.util.Date()).replace(Regex("\\s?[aApP]\\.?\\s?[mM]\\.?"), "").trim(),
+        ui.condLight, 26f, t.head).apply { gravity = Gravity.CENTER },
         android.widget.FrameLayout.LayoutParams(tw, thH))
     frame.addView(View(this).apply { background = ui.rect(t.accent(this@themeTile), 3f) },
         android.widget.FrameLayout.LayoutParams(ui.dp(22), ui.dp(4)).apply {

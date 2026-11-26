@@ -478,7 +478,7 @@ internal fun MainActivity.openEditor() {
                 panel.addView(label("Letra"), rowLp())
                 panel.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(strip) }, rowLp(6))
                 if (p == "hora" && cur != "tema" && !(Prefs.themeClock(this) && Prefs.liveUpdates(this)))
-                    panel.addView(ui.note("La hora se ve con esta letra cuando está encendida «Hora y fecha con la letra del tema» (en Estilo › Tema).", sp = 14f), rowLp(6))
+                    panel.addView(ui.note("La hora se ve con esta letra cuando está encendida «La hora y la fecha también» (en Estilo › Tema).", sp = 14f), rowLp(6))
             }
 
             // Color

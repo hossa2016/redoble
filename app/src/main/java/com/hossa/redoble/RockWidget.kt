@@ -358,11 +358,25 @@ class RockWidget : AppWidgetProvider() {
             }
         }
 
-        /** Completo alto (más de ~560 dp, con la letra del teléfono): sobra espacio para el reproductor grande. */
-        internal fun tallFull(ctx: Context, hDp: Int): Boolean {
+        /**
+         * Cuánto alto (dp) le sobra al Completo con el reproductor compacto: se calcula con lo que
+         * de verdad lleva (letra del teléfono, filas de apps, margen del panel), no con un número fijo.
+         */
+        internal fun fullFree(ctx: Context, hDp: Int): Int {
+            if (hDp <= 0) return 0
             val fs = ctx.resources.configuration.fontScale.coerceIn(0.8f, 1.6f)
-            return hDp >= (540 * fs).toInt().coerceAtLeast(540)
+            val th = Themes.widget(ctx)
+            val head = ((24 + timeSize(th.family) * 1.2f + 20 + 56 + (if (Prefs.el(ctx, "bateria")) 28 else 0) + 36) * fs).toInt()
+            val player = if (Prefs.el(ctx, "player")) 76 else 0
+            val n = (0 until 8).count { Prefs.app(ctx, it, 0).isNotBlank() }
+            val rows = if (n == 0) 0 else minOf((n + Prefs.perRow(ctx) - 1) / Prefs.perRow(ctx), if (hDp in 1..329) 1 else 2)
+            val apps = if (rows == 0) 0 else rows * 88 + 24
+            val pad = 12 + 2 * rootPadDp(ctx, hDp)
+            return hDp - head - player - apps - pad
         }
+
+        /** Sobra sitio para el reproductor grande (unos 110 dp más que el compacto). */
+        internal fun tallFull(ctx: Context, hDp: Int): Boolean = fullFree(ctx, hDp) >= 115
 
         /** Día, fecha, hora, clima y batería. */
         private fun headerSection(ctx: Context, v: RemoteViews, th: Theme, W: Int, playing: Boolean, fonts: Boolean, preview: Boolean,
@@ -499,8 +513,8 @@ class RockWidget : AppWidgetProvider() {
             }
             // Completo muy alto: la hora crece un poco para llenar el espacio que sobra
             val grow = if (kind == Widgets.FULL && hDp > 0) {
-                val fsx = ctx.resources.configuration.fontScale.coerceIn(0.8f, 1.6f)
-                (1f + (hDp - 620 * fsx) / 600f).coerceIn(1f, 1.3f)
+                val left = fullFree(ctx, hDp) - (if (tallFull(ctx, hDp) && playing) 110 else 0)
+                (1f + left / 300f).coerceIn(1f, 1.3f)
             } else 1f
             val ts = (if (solo) soloTs else timeSize(th.family) * (if (playing) 0.875f else 1f) * grow) * sc("hora")
             if (own("hora") != 0) for (id in intArrayOf(R.id.hh, R.id.mm)) v.setTextColor(id, own("hora"))

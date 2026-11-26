@@ -117,9 +117,11 @@ internal fun MainActivity.packPlate(): View {
             }, LinearLayout.LayoutParams(0, -2, 1f))
             // Agregar cualquiera desde aquí (antes solo el Completo); los Apps se pueden poner varias veces
             val kindIdx = list.indexOfFirst { it.second == nd }
-            if (on) addView(ui.text("En pantalla", ui.cond, 14f, Ui.OK),
-                LinearLayout.LayoutParams(-2, -2).apply { marginStart = ui.dp(12) })
-            if (!on || kindIdx == 2) addView(ui.textButton(if (on) "+ Otro" else "Agregar").apply {
+            val side = LinearLayout(this@packPlate).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.END or Gravity.CENTER_VERTICAL }
+            addView(side, LinearLayout.LayoutParams(-2, -2).apply { marginStart = ui.dp(12) })
+            if (on) side.addView(ui.text("En pantalla", ui.cond, 14f, Ui.OK).apply { gravity = Gravity.END },
+                LinearLayout.LayoutParams(-2, -2).apply { gravity = Gravity.END })
+            if (!on || kindIdx == 2) side.addView(ui.textButton(if (on) "+ Otro" else "Agregar").apply {
                 contentDescription = I18n.tr(this@packPlate, "Agregar") + " " + I18n.tr(this@packPlate, nd.first)
                 setOnClickListener {
                     val ok = try {
@@ -129,7 +131,7 @@ internal fun MainActivity.packPlate(): View {
                     } catch (e: Exception) { false }
                     if (!ok) showAddWidgetSteps()
                 }
-            }, LinearLayout.LayoutParams(-2, ui.dp(48)).apply { marginStart = ui.dp(8) })
+            }, LinearLayout.LayoutParams(-2, ui.dp(44)))
         }, LinearLayout.LayoutParams(-1, -2))
     }
     if (placed < list.size) card.addView(ui.secondary("Cómo agregar un widget").apply {

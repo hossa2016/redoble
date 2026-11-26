@@ -207,7 +207,9 @@ object Widgets {
         RockWidget.rootBackground(ctx, v, th, minOf(wDp, hDp))
         val fonts = Prefs.themeFonts(ctx)
         val iw = wDp - 2 * pad; val ih = hDp - 2 * pad
-        var g = grid(ctx, id, iw, ih, th.family, cfg)
+        // Las columnas se cuentan con el ancho del widget (si no, un 2×4 quedaba en 1 columna);
+        // el margen del panel solo achica cada casilla
+        var g = grid(ctx, id, wDp, ih, th.family, cfg)
         val group = cfg.group
         val pm = ctx.packageManager
         val dens = ctx.resources.displayMetrics.density
@@ -222,7 +224,7 @@ object Widgets {
         // Pocas apps en un widget grande: se usan solo las filas necesarias, más altas
         if (cfg.auto && apps.isNotEmpty()) {
             val need = (apps.size + g.cols - 1) / g.cols
-            if (need < g.rows) g = grid(ctx, id, iw, ih, th.family, AwCfg(cfg.group, cfg.names, false, g.cols, need))
+            if (need < g.rows) g = grid(ctx, id, wDp, ih, th.family, AwCfg(cfg.group, cfg.names, false, g.cols, need))
         }
         val usedRows = if (apps.isEmpty()) 0 else (apps.size + g.cols - 1) / g.cols
 
