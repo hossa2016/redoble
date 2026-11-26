@@ -47,7 +47,7 @@ class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
             if (codes.length() > 1) {
                 val mn = daily.getJSONArray("temperature_2m_min").getDouble(1).roundToInt()
                 val mx = daily.getJSONArray("temperature_2m_max").getDouble(1).roundToInt()
-                tomorrow = I18n.tr(ctx, "Mañana") + ": ${I18n.tr(ctx, describe(codes.getInt(1))).lowercase()} · $mn°–$mx°"
+                tomorrow = I18n.tr(ctx, "Mañana") + " $mn°–$mx° · ${I18n.tr(ctx, describe(codes.getInt(1))).lowercase()}"
             }
             // Pronóstico de 5 días y sol de hoy (para la app y el protector de pantalla)
             try {

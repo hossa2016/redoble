@@ -310,7 +310,7 @@ class Ui(val ctx: Context, val accent: Int) {
         contentDescription = label
     }
 
-    fun note(short: String, more: String? = null, color: Int = MUTED, sp: Float = 15f): View {
+    fun note(short: String, more: String? = null, color: Int = MUTED, sp: Float = 14f): View {
         // Ayuda en la misma familia que las etiquetas (condensada), una sola voz tipográfica
         val t = text(short, cond, sp, color).apply { setLineSpacing(0f, 1.08f) }
         if (more == null) return t

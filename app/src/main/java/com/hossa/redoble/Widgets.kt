@@ -224,7 +224,13 @@ object Widgets {
         // Pocas apps en un widget grande: se usan solo las filas necesarias, más altas
         if (cfg.auto && apps.isNotEmpty()) {
             val need = (apps.size + g.cols - 1) / g.cols
-            if (need < g.rows) g = grid(ctx, id, wDp, ih, th.family, AwCfg(cfg.group, cfg.names, false, g.cols, need))
+            if (need < g.rows) {
+                g = grid(ctx, id, wDp, ih, th.family, AwCfg(cfg.group, cfg.names, false, g.cols, need))
+                // Arriba, donde el panel es más oscuro (abajo se desvanece)
+                v.setInt(R.id.root, "setGravity", android.view.Gravity.TOP or android.view.Gravity.CENTER_HORIZONTAL)
+                val dn = ctx.resources.displayMetrics.density
+                v.setViewPadding(R.id.root, (pad * dn).toInt(), ((pad + 12) * dn).toInt(), (pad * dn).toInt(), (pad * dn).toInt())
+            }
         }
         val usedRows = if (apps.isEmpty()) 0 else (apps.size + g.cols - 1) / g.cols
 

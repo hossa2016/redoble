@@ -531,7 +531,9 @@ internal fun MainActivity.themePlate(): View {
             RockWidget.updateAll(this); build()
             if (on) showKeepAliveSteps()
         }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
-        card.addView(ui.note(if (Prefs.themeClock(this) && liveOn) "Se dibuja cada minuto." else "Apagado: la hora usa la letra del sistema.",
+        card.addView(ui.note(if (Prefs.themeClock(this) && liveOn) "Se dibuja cada minuto."
+            else if (curFont != "tema") "Apagado: la hora no usa esta letra. Enciéndelo para que todo combine."
+            else "Apagado: la hora usa la letra del sistema.",
             "Prisma Widgets dibuja la hora, el día y la fecha cada minuto con esta letra (enciende la actualización en vivo). " +
             "Si la actualización en vivo se detiene, el widget vuelve solo al reloj del sistema, que nunca se atrasa."))
     }

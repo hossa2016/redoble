@@ -626,7 +626,7 @@ class RockWidget : AppWidgetProvider() {
                 val slot = filled.getOrNull(pos)
                 val pkg = slot?.let { Prefs.app(ctx, it) }
                 if (slot == null || pkg == null) {
-                    v.setViewVisibility(PADS[i], View.INVISIBLE)
+                    v.setViewVisibility(PADS[i], if (filled.size in 1..perRow && pos < perRow) View.GONE else View.INVISIBLE)
                     continue
                 }
                 v.setViewVisibility(PADS[i], View.VISIBLE)
