@@ -253,7 +253,7 @@ object Prefs {
     fun encore(ctx: Context) = p(ctx).getString("encore", "") ?: ""
     fun setEncore(ctx: Context, v: String) = p(ctx).edit().putString("encore", v).apply()
     /** Batería «hasta el 11» al llegar al 100 % cargando. */
-    fun amp11(ctx: Context) = p(ctx).getBoolean("amp11", false)
+    fun amp11(ctx: Context) = true  // «hasta el 11»: un guiño siempre activo
     fun setAmp11(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("amp11", v).apply()
     /** Días distintos en que se abrió la app (para pedir la reseña una sola vez, al tercer día). */
     fun markDayUsed(ctx: Context): Int {
@@ -301,7 +301,9 @@ object Prefs {
     fun tempF(ctx: Context) = p(ctx).getBoolean("tempF", false)
     fun setTempF(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("tempF", v).remove("wxAt").apply()
     /** Clima con frases de la marca («Tormenta afuera: noche de distorsión»). */
-    fun rockVoice(ctx: Context) = p(ctx).getBoolean("rockVoice", false)
+    /** La voz rock del clima es parte del tema Rock (ya no es un interruptor aparte). */
+    fun rockVoice(ctx: Context) = try { Themes.widget(ctx).family == "rock" } catch (e: Exception) { false }
+    fun rockVoiceOld(ctx: Context) = p(ctx).getBoolean("rockVoice", false)
     fun setRockVoice(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean("rockVoice", v).apply()
     /** Pronóstico de los próximos días: "día;código;mín;máx" separados por "|". */
     fun forecast(ctx: Context) = p(ctx).getString("wxForecast", "") ?: ""

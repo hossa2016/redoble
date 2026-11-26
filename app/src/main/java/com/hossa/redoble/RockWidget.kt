@@ -477,7 +477,7 @@ class RockWidget : AppWidgetProvider() {
             v.setTextViewText(R.id.wx_tomorrow, tomorrow)
             // «Mañana…» se leía muy poco sobre fondos claros o sin fondo: más cerca del color principal
             val bare = Prefs.widgetStyle(ctx) != "fade" && Prefs.widgetStyle(ctx) != "solid"
-            val tomInk = ColorUtils.blendARGB(th.dim, th.head, if (bare) 0.85f else 0.45f)
+            val tomInk = ColorUtils.blendARGB(th.dim, th.head, 0.9f)
             v.setTextColor(R.id.wx_tomorrow, tomInk)
             val nowFull = now0(ctx)
             val ws = sp("clima"); val wk = sc("clima"); val wInk = colr("clima", th.head)
@@ -502,7 +502,7 @@ class RockWidget : AppWidgetProvider() {
             }
             twin(v, R.id.wx_tomorrow, R.id.wx_tomorrow_bmp, manana && tomorrow.isNotBlank() && !tomInline, fonts || custom("clima")) {
                 TextArt.render(ctx, tomorrow, if (th.family == "lujo") ws.med else ws.body, S.tomsize * wk, tomInk,
-                    S.lls, caps = th.family == "neon" || th.family == "lujo", shadow = S.shadow || bare, maxWidthPx = colW)
+                    S.lls, caps = th.family == "neon" || th.family == "lujo", shadow = true, maxWidthPx = colW)
             }
             v.setViewVisibility(R.id.batt_row, vis(bateria))
             v.setViewVisibility(R.id.status_row, vis(clima))
@@ -587,8 +587,8 @@ class RockWidget : AppWidgetProvider() {
                 Graphics.appIcon(ctx, pkg, mono = iconColor)?.let { v.setImageViewBitmap(ICONS[i], it) }
                 if (Build.VERSION.SDK_INT >= 31) {
                     val big = th.family == "claro" || th.family == "lujo" || th.family == "cristal"
-                    val s0 = if (Prefs.originalIcons(ctx)) (if (big) 34f else 30f) else (if (big) 22f else 18f)
-                    val s = (if (perRow == 4) s0 * 0.88f else s0) * ak
+                    val s0 = if (Prefs.originalIcons(ctx)) (if (big) 36f else 32f) else (if (big) 30f else 28f)
+                    val s = (if (perRow == 4) s0 * 0.9f else s0) * ak
                     v.setViewLayoutWidth(ICONS[i], s, TypedValue.COMPLEX_UNIT_DIP)
                     v.setViewLayoutHeight(ICONS[i], s, TypedValue.COMPLEX_UNIT_DIP)
                 }

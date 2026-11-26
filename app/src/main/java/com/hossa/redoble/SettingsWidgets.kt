@@ -92,6 +92,7 @@ internal fun MainActivity.packPlate(): View {
         Widgets.has(this, Widgets.APPS) to ("Apps" to "Tus apps, se acomodan al tamaño"),
         Widgets.has(this, Widgets.PLAYER) to ("Reproductor" to "La canción con sus botones"),
         MiniWidget.placed(this) to ("Mini 1×1" to "Día, fecha y batería en un cuadrito"))
+    val providers = listOf(RockWidget::class.java, ClockWidget::class.java, AppsWidget::class.java, PlayerWidget::class.java, MiniWidget::class.java)
     val placed = list.count { it.first }
     card.addView(ui.sectionTitle("Tus widgets"))
     card.addView(ui.note("Ponlos juntos o por separado; todos usan tu tema."))
@@ -107,8 +108,21 @@ internal fun MainActivity.packPlate(): View {
                 addView(ui.text(nd.first, ui.condSemi, 17f, Ui.HEAD))
                 addView(ui.text(nd.second, ui.cond, 14f, Ui.DIM))
             }, LinearLayout.LayoutParams(0, -2, 1f))
-            addView(ui.text(if (on) "En pantalla" else "No agregado", ui.cond, 14f, if (on) Ui.OK else Ui.DIM),
+            // Agregar cualquiera desde aquí (antes solo el Completo); los Apps se pueden poner varias veces
+            val kindIdx = list.indexOfFirst { it.second == nd }
+            if (on && kindIdx != 2) addView(ui.text("En pantalla", ui.cond, 14f, Ui.OK),
                 LinearLayout.LayoutParams(-2, -2).apply { marginStart = ui.dp(12) })
+            else addView(ui.textButton(if (on) "Otro" else "Agregar").apply {
+                contentDescription = I18n.tr(this@packPlate, "Agregar") + " " + I18n.tr(this@packPlate, nd.first)
+                setOnClickListener {
+                    val ok = try {
+                        val mgr = android.appwidget.AppWidgetManager.getInstance(this@packPlate)
+                        mgr.isRequestPinAppWidgetSupported &&
+                            mgr.requestPinAppWidget(android.content.ComponentName(this@packPlate, providers[kindIdx]), null, null)
+                    } catch (e: Exception) { false }
+                    if (!ok) showAddWidgetSteps()
+                }
+            }, LinearLayout.LayoutParams(-2, ui.dp(48)).apply { marginStart = ui.dp(8) })
         }, LinearLayout.LayoutParams(-1, -2))
     }
     if (placed < list.size) card.addView(ui.secondary("Cómo agregar un widget").apply {

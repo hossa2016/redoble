@@ -72,9 +72,7 @@ internal fun MainActivity.playerPlate(): View {
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(14) })
 
     // Dónde va en el widget
-    card.addView(ui.actionRow("Lugar y tamaño", R.drawable.ic_edit, "Se ajusta en el editor visual").apply {
-        setOnClickListener { openEditor() }
-    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+
 
     // Qué música mostrar (con su etiqueta, igual que Posición)
     card.addView(ui.text("Qué música muestra", ui.cond, 15f, Ui.MUTED), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
@@ -83,20 +81,20 @@ internal fun MainActivity.playerPlate(): View {
     }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(4) })
 
     // Color: el del tema o el de la carátula de cada canción
-    card.addView(ui.text("Color del reproductor", ui.cond, 15f, Ui.MUTED), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
-    card.addView(ui.segmented(listOf(true to "Según la carátula", false to "El del tema"), Prefs.coverColor(this)) { on ->
-        Prefs.setCoverColor(this, on); Player.updateAll(this); Widgets.updateKind(this, Widgets.PLAYER); build()
+    // Un solo ajuste de color (antes eran dos que se pisaban)
+    card.addView(ui.text("Color", ui.cond, 15f, Ui.MUTED), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
+    val colorMode = when { !Prefs.coverColor(this) -> 0; Prefs.coverAll(this) -> 2; else -> 1 }
+    card.addView(ui.segmented(listOf(0 to "Del tema", 1 to "Carátula", 2 to "Carátula en todo"), colorMode) { m ->
+        Prefs.setCoverColor(this, m > 0); Prefs.setCoverAll(this, m == 2)
+        Stage.changed(this); RockWidget.updateAll(this); Player.updateAll(this); Widgets.updateKind(this, Widgets.PLAYER); build()
     }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(4) })
+    card.addView(ui.note("«Carátula en todo»: mientras suena, la hora y el clima también toman el color del disco.", sp = 14f))
     // Piel del reproductor
     card.addView(ui.text("Piel del reproductor", ui.cond, 15f, Ui.MUTED), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
     card.addView(ui.segmented(listOf("normal" to "Carátula", "vinilo" to "Vinilo", "casete" to "Casete"), Prefs.playerSkin(this)) { s ->
         Prefs.setPlayerSkin(this, s); Player.updateAll(this); Widgets.updateKind(this, Widgets.PLAYER); build()
     })
-    card.addView(ui.note("Vinilo y Casete muestran cuánto va de la canción; se actualiza cada vez que se redibuja el widget."))
-    card.addView(switchRow("Color de la carátula en todo el widget", Prefs.coverAll(this)) { on ->
-        Prefs.setCoverAll(this, on); Stage.changed(this); RockWidget.updateAll(this)
-    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
-    card.addView(ui.note("Mientras suena, la hora, el clima y los detalles toman el color del disco."))
+    card.addView(ui.note("Vinilo y Casete muestran cuánto va de la canción (se actualiza cada minuto)."))
 
     return card
 }
@@ -220,10 +218,17 @@ internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
         exportDoc.launch("prisma-ajustes-" + java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date()) + ".json")
     }
     link("Restaurar una copia", R.drawable.ic_upload) { importDoc.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
-    link("Usar un setup compartido", R.drawable.ic_key) { askSetupCode() }
+    link("Usar un diseño compartido", R.drawable.ic_key) { askSetupCode() }
     if (ErrorLog.has(this)) link("Enviar informe de errores", R.drawable.ic_info) {
         ui.sheet("Informe de errores", "Prisma guardó en tu teléfono el detalle de algunos cierres. No incluye datos personales. ¿Quieres compartirlo?",
             actions = listOf("Compartir" to { ErrorLog.share(this) }, "Borrar el informe" to { ErrorLog.clear(this); build() }))
+    }
+    // De la misma familia de apps (antes aparecía dentro de Comparte, como un anuncio)
+    packageManager.getLaunchIntentForPackage(Player.DEFAULT_MUSIC_APP)?.let { rp ->
+        link("Descubrir bandas en RockPlay IA") {
+            val deep = Intent(Intent.ACTION_VIEW, Uri.parse("rockplay://descubrir")).setPackage(Player.DEFAULT_MUSIC_APP)
+            try { startActivity(deep) } catch (e: Exception) { startActivity(rp) }
+        }
     }
     link("Ver la guía de inicio", R.drawable.ic_help) { restartOnboarding() }
     link("Política de privacidad") {
@@ -247,7 +252,7 @@ internal fun MainActivity.askSetupCode() {
             ?.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.text?.toString()
         clip?.let { c -> Regex("PRISMA:[A-Za-z0-9_\\-=]+").find(c)?.value?.let { setText(it) } }
     }
-    ui.sheet("Usar un setup compartido", "Cambia tema, fondo, colores y diseño. Tu ciudad y tus fotos no se tocan.", content = field,
+    ui.sheet("Usar un diseño compartido", "Cambia tema, fondo, colores y diseño. Tu ciudad y tus fotos no se tocan.", content = field,
         actions = listOf("Aplicar" to {
             val n = try { Backup.applyCode(this, Regex("PRISMA:[A-Za-z0-9_\\-=]+").find(field.text.toString())?.value ?: field.text.toString()) }
                 catch (e: Exception) { -1 }
@@ -266,7 +271,7 @@ internal fun MainActivity.musicExtrasPlate(): View {
         if (on && Prefs.wallStyle(this) != "anim") toast("Funciona con el fondo «Animado»")
         build()
     })
-    card.addView(ui.note("Escenario Vivo · con música pasa a modo concierto.",
+    card.addView(ui.note("Con música, el fondo pasa a modo concierto.",
         "Con música, el fondo animado pasa a una escena de concierto teñida con el color de la carátula. Al pausar, vuelve a tu escena."))
     if (Prefs.liveStage(this)) card.addView(ui.segmented(listOf("escenario" to "Escenario", "concierto" to "Concierto", "bateria" to "Batería"),
         Prefs.stageScene(this)) { s -> Prefs.setStageScene(this, s); Stage.changed(this); build() },
@@ -275,7 +280,7 @@ internal fun MainActivity.musicExtrasPlate(): View {
     // Temporizador de sueño (Bajar el Telón)
     card.addView(ui.text("Temporizador de sueño", ui.cond, 17f, Ui.HEAD), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(16) })
     val left = SleepTimer.left(this)
-    card.addView(ui.note(if (left > 0) I18n.tr(this, "La música se pausa en unos {} min.").replace("{}", left.toString()) else "Bajar el Telón · pausa la música para dormir."))
+    card.addView(ui.note(if (left > 0) I18n.tr(this, "La música se pausa en unos {} min.").replace("{}", left.toString()) else "Pausa la música para dormir."))
     card.addView(ui.segmented(listOf(15 to "15 min", 30 to "30 min", 45 to "45 min", 0 to "Apagado"), if (left > 0) -1 else 0) { m ->
         if (m == 0) { SleepTimer.cancel(this); toast("Temporizador apagado") }
         else if (!Player.enabled(this)) toast("Primero da el acceso a notificaciones (en Música)")
@@ -287,7 +292,7 @@ internal fun MainActivity.musicExtrasPlate(): View {
     card.addView(switchRow("Historial de escucha", Prefs.tourLog(this)) { on ->
         Prefs.setTourLog(this, on); if (on) TourLog.changed(this); build()
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(16) })
-    card.addView(ui.note("Bitácora de Gira · solo en tu teléfono.",
+    card.addView(ui.note("Se guarda solo en tu teléfono.",
         "Guarda en tu teléfono qué escuchas, para armar tu setlist de la semana y el afiche del año. Nada sale del teléfono."))
     if (Prefs.tourLog(this)) {
         val wk = TourLog.week(this)
@@ -334,17 +339,12 @@ internal fun MainActivity.sharePlate(): View {
                 TourLog.year(this), ui.accent), "afiche"); onUi { ShareArt.share(this, f, "Afiche de la Gira") } }
         }
     }
-    row("Compartir mi setup", R.drawable.ic_share, "Código con tu tema y colores") {
+    row("Compartir mi diseño", R.drawable.ic_share, "Código con tu tema y colores") {
         val code = Backup.shareCode(this)
         startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, I18n.tr(this@sharePlate, "Mi escenario en Prisma Widgets. Para usarlo: Prisma › Más › Usar un setup compartido, y pega este código:\n\n{}").replace("{}", code))
-        }, I18n.tr(this, "Compartir mi setup")))
-    }
-    val rockplay = packageManager.getLaunchIntentForPackage(Player.DEFAULT_MUSIC_APP)
-    if (rockplay != null) row("Descubrir bandas", R.drawable.ic_open, "En RockPlay IA") {
-        val deep = Intent(Intent.ACTION_VIEW, Uri.parse("rockplay://descubrir")).setPackage(Player.DEFAULT_MUSIC_APP)
-        try { startActivity(deep) } catch (e: Exception) { startActivity(rockplay) }
+            putExtra(Intent.EXTRA_TEXT, I18n.tr(this@sharePlate, "Mi escenario en Prisma Widgets. Para usarlo: Prisma › Más › Usar un diseño compartido, y pega este código:\n\n{}").replace("{}", code))
+        }, I18n.tr(this, "Compartir mi diseño")))
     }
     return card
 }

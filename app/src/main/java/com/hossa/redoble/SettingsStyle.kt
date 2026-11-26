@@ -671,7 +671,7 @@ internal fun MainActivity.decodeSampled(uri: Uri, reqW: Int, reqH: Int): Bitmap?
 internal fun MainActivity.rulesPlate(): View {
     val card = ui.plateCard()
     card.addView(ui.sectionTitle("Cambio automático"))
-    card.addView(ui.note("Setlist del Día · cambia solo con el clima, la hora o tus audífonos.",
+    card.addView(ui.note("Cambia solo con el clima, la hora o tus audífonos.",
         "Tus ajustes no se tocan: al pasar el momento, todo vuelve. Si eliges algo a mano mientras una regla actúa, " +
         "manda lo que elegiste hasta el próximo cambio. La noche y los audífonos se revisan solos; la lluvia, con cada dato del clima."))
     fun rule(label: String, key: String, on: Boolean, hint: String) {
@@ -685,7 +685,7 @@ internal fun MainActivity.rulesPlate(): View {
 
     // Encore: fechas especiales
     card.addView(ui.label("FECHAS ESPECIALES"), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(18); bottomMargin = ui.dp(4) })
-    card.addView(ui.note("Encore · ese día el widget lo celebra."))
+    card.addView(ui.note("Ese día el widget lo celebra."))
     Encore.all(this).forEachIndexed { i, (md, text) ->
         card.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL

@@ -183,10 +183,16 @@ internal fun MainActivity.setlistPlate(): View {
     card.addView(ui.segmented(listOf(3 to "3 por fila", 4 to "4 por fila"), Prefs.perRow(this)) { n ->
         Prefs.setPerRow(this, n); RockWidget.updateAll(this); build()
     }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = ui.dp(12) })
+    // Las apps llenas, y después una sola fila «+ Agregar app» (antes, una fila por cada espacio vacío)
+    val free = (0 until used).count { Prefs.app(this, it, group).isBlank() }
+    var addShown = false
     for (i in 0 until used) {
+        val isEmpty = Prefs.app(this, i, group).isBlank()
+        if (isEmpty && addShown) continue
         if (i > 0) card.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0F)) },
             LinearLayout.LayoutParams(-1, ui.dp(1)))
-        card.addView(slotRow(i, group), LinearLayout.LayoutParams(-1, ui.dp(56)))
+        card.addView(slotRow(i, group, if (isEmpty) free else 0), LinearLayout.LayoutParams(-1, ui.dp(56)))
+        if (isEmpty) addShown = true
     }
     if (appsWidget && !extraFilled) card.addView(ui.textButton(if (moreSlots) "Mostrar menos lugares" else "Mostrar ${Prefs.GROUP_SLOTS - 8} lugares más").apply {
         setOnClickListener { moreSlots = !moreSlots; build() }
@@ -220,7 +226,7 @@ internal fun MainActivity.renameSlot(slot: Int, group: Int = 0) {
     field.requestFocus()
 }
 
-internal fun MainActivity.slotRow(i: Int, group: Int = 0): View {
+internal fun MainActivity.slotRow(i: Int, group: Int = 0, free: Int = 0): View {
     val pkg = Prefs.app(this, i, group)
     val empty = pkg.isBlank()
     return LinearLayout(this).apply {
@@ -232,14 +238,14 @@ internal fun MainActivity.slotRow(i: Int, group: Int = 0): View {
         addView(ui.appHolder(pkg, 38, 19).apply {
             (layoutParams as LinearLayout.LayoutParams).marginStart = ui.dp(10)
         })
-        addView(ui.ellipsize(ui.text(if (empty) "Espacio libre" else Prefs.displayName(this@slotRow, i, group), ui.cond, 19f,
-            if (empty) Ui.DIM else Ui.HEAD)),
+        addView(ui.ellipsize(ui.text(if (empty) I18n.tr(this@slotRow, "Agregar app") else Prefs.displayName(this@slotRow, i, group), ui.cond, 19f,
+            if (empty) ui.accent else Ui.HEAD)),
             LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = ui.dp(14) })
         // Una sola acción por fila: vacía, elegir app; con app, una hoja con las opciones
-        if (empty) addView(ui.text("Elegir app", ui.cond, 15f, ui.accent))
+        if (empty && free > 0) addView(ui.text(I18n.tr(this@slotRow, if (free == 1) "1 libre" else "{} libres").replace("{}", free.toString()), ui.cond, 15f, Ui.DIM))
         addView(ui.text("›", ui.condLight, 22f, Ui.DIM).apply { setPadding(ui.dp(8), 0, 0, ui.dp(2)) })
         val name = if (empty) "" else Prefs.displayName(this@slotRow, i, group)
-        contentDescription = if (empty) "Espacio ${i + 1} libre, elegir app" else "$name, espacio ${i + 1}, ver opciones"
+        contentDescription = if (empty) I18n.tr(this@slotRow, "Agregar app") + ", $free" else "$name, espacio ${i + 1}, ver opciones"
         val pick = {
             AppPicker(this@slotRow, ui, i, group) {
                 RockWidget.updateAll(this@slotRow)

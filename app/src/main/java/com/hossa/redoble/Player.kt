@@ -140,12 +140,15 @@ object Player {
             if (Regex("^[A-Za-z0-9_-]{11}$").matches(id)) "https://i.ytimg.com/vi/$id/hqdefault.jpg" else null
         } ?: return null
         artCache.get(uri)?.let { return it }
+        val disk = java.io.File(ctx.cacheDir, "art_" + Integer.toHexString(uri.hashCode()) + ".jpg")
+        if (disk.exists()) android.graphics.BitmapFactory.decodeFile(disk.path)?.let { artCache.put(uri, it); return it }
         if (download && loading.add(uri)) {
             val app = ctx.applicationContext
             Thread {
                 val bmp = try { loadArt(app, uri) } catch (e: Throwable) { null }
                 if (bmp != null) {
                     artCache.put(uri, bmp)
+                    try { disk.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 88, it) } } catch (e: Exception) { }
                     RockWidget.requestUpdate(app, 100, playerOnly = true)
                 }
                 loading.remove(uri)
@@ -210,6 +213,8 @@ object Player {
               sample: Boolean = false): Boolean {
         v.setViewVisibility(R.id.player, View.GONE)
         v.setViewVisibility(R.id.player_c, View.GONE)
+        // En el Completo, sin tarjeta de música su hueco desaparece (las apps suben bajo la hora)
+        if (mode == 0) v.setViewVisibility(R.id.middle, View.GONE)
         if (mode < 0 || (mode == 0 && !Prefs.el(ctx, "player"))) return false
         val c = try { controller(ctx) } catch (e: Exception) { null }
         prog = progressOf(c)
@@ -255,6 +260,7 @@ object Player {
 
         if (if (mode == 0) Prefs.playerLarge(ctx) else mode == 1) {
             v.setViewVisibility(R.id.player, View.VISIBLE)
+            v.setViewVisibility(R.id.middle, View.VISIBLE)
             // En el widget Reproductor no hay X: el widget se quita desde la pantalla de inicio
             v.setViewVisibility(R.id.player_close, if (mode == 0) View.VISIBLE else View.GONE)
             val src = try {
@@ -289,6 +295,7 @@ object Player {
             }
         } else {
             v.setViewVisibility(R.id.player_c, View.VISIBLE)
+            v.setViewVisibility(R.id.middle, View.VISIBLE)
             v.setTextViewText(R.id.pc_title, title)
             v.setTextViewText(R.id.pc_artist, artist)
             v.setViewVisibility(R.id.pc_artist, if (artist.isBlank()) View.GONE else View.VISIBLE)
@@ -491,6 +498,7 @@ object Player {
             }
         if (large) {
             v.setViewVisibility(R.id.player, View.VISIBLE)
+            v.setViewVisibility(R.id.middle, View.VISIBLE)
             v.setViewVisibility(R.id.player_close, View.GONE)
             v.setViewVisibility(R.id.player_eq, View.GONE)
             val src = try {
@@ -516,6 +524,7 @@ object Player {
                 v.setOnClickPendingIntent(id, launch)
         } else {
             v.setViewVisibility(R.id.player_c, View.VISIBLE)
+            v.setViewVisibility(R.id.middle, View.VISIBLE)
             v.setTextViewText(R.id.pc_title, title)
             v.setTextViewText(R.id.pc_artist, artist)
             v.setViewVisibility(R.id.pc_artist, View.VISIBLE)

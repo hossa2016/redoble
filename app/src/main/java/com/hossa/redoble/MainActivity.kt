@@ -290,35 +290,37 @@ class MainActivity : AppCompatActivity() {
                     Prefs.NAMES[Prefs.accentIndex(this).coerceIn(0, Prefs.NAMES.size - 1)]))
             }
             1 -> {
-                // El widget: qué muestra y cómo están los widgets sueltos
+                // Dos grupos: el widget Completo y los demás widgets
+                col.addView(ui.label("WIDGET COMPLETO"), LinearLayout.LayoutParams(-2, -2).apply { marginStart = ui.dp(6); topMargin = ui.dp(4); bottomMargin = ui.dp(6) })
                 if (Widgets.has(this, Widgets.FULL) || !hasWidget) col.addView(fold(designPlate(), "diseno"))
                 col.addView(fold(setlistPlate(), "apps"))
                 col.addView(fold(headerExtrasPlate(), "cabecera", listOfNotNull(
                     "Cartel".takeIf { Prefs.poster(this) }, "Alarma".takeIf { Prefs.showAlarm(this) },
                     "Agenda".takeIf { Prefs.showAgenda(this) }).joinToString(" · ").ifBlank { "Fecha normal" }))
                 col.addView(fold(weatherPlate(), "clima", Prefs.city(this).substringBefore(",").ifBlank { "Agregar ciudad ›" }))
+                col.addView(ui.label("OTROS WIDGETS"), LinearLayout.LayoutParams(-2, -2).apply { marginStart = ui.dp(6); topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
                 val total = listOf(Widgets.has(this, Widgets.FULL), clockW, appsW, playerW, MiniWidget.placed(this)).count { it }
                 col.addView(fold(packPlate(), "w_pack", I18n.tr(this, "{} de 5 en pantalla").replace("{}", total.toString())))
                 if (clockW) col.addView(fold(clockWidgetPlate(), "w_clock", listOfNotNull(
                     "Día".takeIf { Prefs.cw(this, "dia") }, "Clima".takeIf { Prefs.cw(this, "clima") },
                     "Mañana".takeIf { Prefs.cw(this, "manana") }, "Batería".takeIf { Prefs.cw(this, "bateria") }).joinToString(" · ")))
                 if (appsW) col.addView(fold(appsWidgetsPlate(), "w_apps", Widgets.ids(this, Widgets.APPS).size.let { if (it == 1) "1 widget" else "$it widgets" }))
-                if (playerW) col.addView(fold(playerWidgetPlate(), "w_player", if (Prefs.pwIdle(this) == "last") "Sin música: última canción" else "Sin música: nada sonando"))
             }
             2 -> {
                 col.addView(fold(playerPlate(), "reproductor", if (Player.enabled(this)) "Activo" else "Falta dar permiso ›"))
                 col.addView(fold(musicExtrasPlate(), "musica_extras", listOfNotNull(
-                    "Escenario Vivo".takeIf { Prefs.liveStage(this) }, "Temporizador".takeIf { SleepTimer.left(this) > 0 },
+                    "Fondo musical".takeIf { Prefs.liveStage(this) }, "Temporizador".takeIf { SleepTimer.left(this) > 0 },
                     "Historial".takeIf { Prefs.tourLog(this) }).joinToString(" · ").ifBlank { "Apagado" }))
-                col.addView(fold(sharePlate(), "comparte", "Entrada, afiches y setup"))
+                if (playerW) col.addView(fold(playerWidgetPlate(), "w_player", if (Prefs.pwIdle(this) == "last") "Sin música: última canción" else "Sin música: nada sonando"))
+                col.addView(fold(sharePlate(), "comparte", "Entrada, afiches y diseño"))
             }
             else -> {
                 col.addView(fold(appearancePlate(hasWidget), "apariencia",
                     when (Prefs.uiMode(this)) { "system" -> "Sistema"; "light" -> "Claro"; else -> "Oscuro" }))
                 col.addView(fold(performancePlate(), "rendimiento", if (Prefs.liveUpdates(this)) "Actualización en vivo" else "Normal"))
-                col.addView(fold(dreamPlate(), "dream", if (Prefs.dreamBg(this) == "black") "Fondo negro" else "Con tu fondo"))
-                col.addView(fold(funPlate(), "divertidos", listOfNotNull("Voz rock".takeIf { Prefs.rockVoice(this) },
-                    "Hasta el 11".takeIf { Prefs.amp11(this) }).joinToString(" · ").ifBlank { "Apagado" }))
+                // El protector de pantalla solo si el teléfono lo tiene
+                if (Intent(android.provider.Settings.ACTION_DREAM_SETTINGS).resolveActivity(packageManager) != null)
+                    col.addView(fold(dreamPlate(), "dream", if (Prefs.dreamBg(this) == "black") "Fondo negro" else "Con tu fondo"))
             }
         }
 
@@ -547,9 +549,9 @@ class MainActivity : AppCompatActivity() {
         val TAB_OF = mapOf(
             "tema" to 0, "fondo" to 0, "fondoWidget" to 0, "reglas" to 0, "acento" to 0,
             "diseno" to 1, "apps" to 1, "cabecera" to 1, "clima" to 1,
-            "w_pack" to 1, "w_clock" to 1, "w_apps" to 1, "w_player" to 1,
-            "reproductor" to 2, "musica_extras" to 2, "comparte" to 2,
-            "apariencia" to 3, "rendimiento" to 3, "dream" to 3, "divertidos" to 3)
+            "w_pack" to 1, "w_clock" to 1, "w_apps" to 1,
+            "reproductor" to 2, "musica_extras" to 2, "w_player" to 2, "comparte" to 2,
+            "apariencia" to 3, "rendimiento" to 3, "dream" to 3)
     }
     internal var permCelebrated = false
 }

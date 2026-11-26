@@ -247,7 +247,7 @@ object Widgets {
                 val big = th.family == "claro" || th.family == "lujo" || th.family == "cristal"
                 val s0 = if (Prefs.originalIcons(ctx)) (if (big) 34f else 30f) else (if (big) 22f else 18f)
                 // El ícono ocupa una buena parte del círculo (antes se veía perdido)
-                val isz = if (Prefs.originalIcons(ctx)) hs * 0.78f else maxOf(minOf(s0, hs * 0.75f), hs * 0.56f)
+                val isz = if (Prefs.originalIcons(ctx)) hs * 0.8f else hs * 0.62f
                 v.setViewLayoutWidth(ICONS[i], isz, TypedValue.COMPLEX_UNIT_DIP)
                 v.setViewLayoutHeight(ICONS[i], isz, TypedValue.COMPLEX_UNIT_DIP)
             }
