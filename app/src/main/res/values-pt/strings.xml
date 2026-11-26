@@ -12,4 +12,8 @@
     <string name="w_mini_desc">Dia, data e bateria em um quadradinho, com seu tema.</string>
     <string name="w_week">Minha semana</string>
     <string name="w_week_desc">Quanto você ouviu nesta semana e seu artista mais tocado.</string>
+    <string name="w_smart">Pilha inteligente</string>
+    <string name="w_smart_desc">Mostra o que importa agora: música, seu próximo evento ou a hora.</string>
+    <string name="w_agenda">Agenda</string>
+    <string name="w_agenda_desc">Seus eventos de hoje e amanhã.</string>
 </resources>

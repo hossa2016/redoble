@@ -128,6 +128,8 @@ internal fun MainActivity.openEditor() {
     // Partes que de verdad se ven ahora en el widget (para el panel)
     var shown = listOf<String>()
 
+    lateinit var canMove: (String, Boolean) -> Boolean
+    lateinit var doMove: (String, Boolean) -> Unit
     fun drawOverlay() {
         overlay.removeAllViews()
         val wr = widgetRoot ?: return
@@ -179,6 +181,31 @@ internal fun MainActivity.openEditor() {
                 background = android.graphics.drawable.InsetDrawable(face, real.left - b.left, real.top - b.top, b.right - real.right, b.bottom - real.bottom)
                 contentDescription = I18n.tr(this@openEditor, "Editar") + " " + I18n.tr(this@openEditor, names.getValue(p))
                 setOnClickListener { sel = p; drawOverlay(); fillPanel() }
+                // Mantén presionado y desliza arriba o abajo para cambiar el orden
+                var dragging = false; var y0 = 0f
+                setOnLongClickListener {
+                    dragging = true; sel = p; fillPanel()
+                    performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                    alpha = 0.7f; elevation = 8f
+                    say("Desliza para moverlo"); true
+                }
+                setOnTouchListener { v, e ->
+                    when (e.actionMasked) {
+                        android.view.MotionEvent.ACTION_DOWN -> { y0 = e.rawY; false }
+                        android.view.MotionEvent.ACTION_MOVE -> if (dragging) { v.translationY = (e.rawY - y0) / scale; true } else false
+                        android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                            if (!dragging) false else {
+                                dragging = false; v.alpha = 1f; v.translationY = 0f
+                                val dy = (e.rawY - y0) / scale
+                                val steps = Math.round(dy / maxOf(real.height(), minH).toFloat())
+                                if (steps != 0) repeat(kotlin.math.abs(steps)) { if (canMove(p, steps < 0)) doMove(p, steps < 0) }
+                                else drawOverlay()
+                                true
+                            }
+                        }
+                        else -> false
+                    }
+                }
             }, FrameLayout.LayoutParams(b.width(), b.height()).apply { leftMargin = b.left; topMargin = b.top })
             // Nombre de la parte elegida, pegado a su recuadro
             if (on) overlay.addView(ui.text(names.getValue(p), ui.condSemi, 13f / scale, ui.onAccent).apply {
@@ -268,6 +295,9 @@ internal fun MainActivity.openEditor() {
         focusArrow = up
         changed(); fillPanel()
     }
+
+    canMove = { p, up -> moveKind(p, up) != null }
+    doMove = { p, up -> move(p, up) }
 
     fun label(s: String) = ui.text(s, ui.cond, 15f, Ui.DIM).apply { minWidth = ui.dp(64) }
     fun row(vararg views: View) = LinearLayout(this).apply {
@@ -394,6 +424,23 @@ internal fun MainActivity.openEditor() {
                         ui.secondary("−").apply { contentDescription = I18n.tr(this@openEditor, "Más pequeño"); setOnClickListener { step(-0.1f) } },
                         pct,
                         ui.secondary("+").apply { contentDescription = I18n.tr(this@openEditor, "Más grande"); setOnClickListener { step(0.1f) } }), rowLp())
+                    panel.addView(android.widget.SeekBar(this).apply {
+                        max = 16; progress = Math.round((k - 0.7f) / 0.05f)
+                        contentDescription = I18n.tr(this@openEditor, "Tamaño")
+                        progressTintList = android.content.res.ColorStateList.valueOf(ui.accent)
+                        thumbTintList = android.content.res.ColorStateList.valueOf(ui.accent)
+                        minimumHeight = ui.dp(48)
+                        setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+                            override fun onProgressChanged(sb: android.widget.SeekBar, v: Int, fromUser: Boolean) {
+                                pct.text = "${70 + v * 5} %"
+                                sb.stateDescription = "${70 + v * 5} %"
+                            }
+                            override fun onStartTrackingTouch(sb: android.widget.SeekBar) {}
+                            override fun onStopTrackingTouch(sb: android.widget.SeekBar) {
+                                Prefs.setPartScale(this@openEditor, p, 0.7f + sb.progress * 0.05f); changed()
+                            }
+                        })
+                    }, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(4) })
                 }
             }
 

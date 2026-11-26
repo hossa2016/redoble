@@ -77,6 +77,8 @@ class RockWidget : AppWidgetProvider() {
             Widgets.updatePieces(ctx)
             MiniWidget.updateAll(ctx)
             WeekWidget.updateAll(ctx)
+            SmartWidget.updateAll(ctx)
+            AgendaWidget.updateAll(ctx)
             Prefs.setLastDraw(ctx)
         }
 
@@ -189,6 +191,8 @@ class RockWidget : AppWidgetProvider() {
             if (!bitmapClock(ctx)) return
             // La alarma de respaldo se vuelve a armar siempre, aunque la pantalla esté apagada
             armClockCheck(ctx)
+            // La Pila inteligente con la hora de la letra del tema también va al minuto
+            try { if (screenOn(ctx) && SmartWidget.placed(ctx)) SmartWidget.updateAll(ctx) } catch (e: Exception) { }
             if (!(Prefs.el(ctx, "hora") || Widgets.has(ctx, Widgets.CLOCK)) || !screenOn(ctx)) return
             val mgr = AppWidgetManager.getInstance(ctx)
             val th = Themes.widget(ctx)
@@ -237,7 +241,7 @@ class RockWidget : AppWidgetProvider() {
         }
 
         fun update(ctx: Context, mgr: AppWidgetManager, widgetId: Int) {
-            mgr.updateAppWidget(widgetId, buildViews(ctx, widthPx(ctx, mgr, widgetId)))
+            mgr.updateAppWidget(widgetId, buildViews(ctx, widthPx(ctx, mgr, widgetId), hDp = Widgets.sizeDp(ctx, mgr, widgetId).second))
             Prefs.setLastDraw(ctx)
         }
 
@@ -277,8 +281,8 @@ class RockWidget : AppWidgetProvider() {
                     // Reproductor primero: de él depende cuánto espacio queda.
                     val playing = Player.apply(ctx, v, fonts, W, preview, sample = sample)
                     if (!preview) Prefs.setLastPlaying(ctx, playing)
-                    headerSection(ctx, v, th, W, playing, fonts, preview)
-                    appsSection(ctx, v, th, W, playing, fonts)
+                    headerSection(ctx, v, th, W, playing, fonts, preview, hDp = hDp)
+                    appsSection(ctx, v, th, W, playing, fonts, hDp)
                 }
             }
 
@@ -321,6 +325,7 @@ class RockWidget : AppWidgetProvider() {
         @Synchronized
         fun updatePlayer(ctx: Context) {
             Widgets.updateKind(ctx, Widgets.PLAYER)
+            SmartWidget.updateAll(ctx)
             val mgr = AppWidgetManager.getInstance(ctx)
             val ids = mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))
             if (ids.isEmpty()) return
@@ -369,7 +374,8 @@ class RockWidget : AppWidgetProvider() {
             val extra = listOf(Encore.today(ctx)?.let { I18n.tr(ctx, "Hoy") + ": " + it } ?: "",
                 if (Prefs.showAlarm(ctx)) Extras.nextAlarm(ctx) else "",
                 if (Prefs.showAgenda(ctx)) Extras.nextEvent(ctx) else "").filter { it.isNotBlank() }.joinToString(" · ")
-            var manana = (if (solo) Prefs.cw(ctx, "manana") && wDp >= 230 else Prefs.el(ctx, "manana")) || extra.isNotBlank()
+            // Completo bajito (menos de 300 dp): sin la línea de mañana, para que todo quepa
+            var manana = (if (solo) Prefs.cw(ctx, "manana") && wDp >= 230 else Prefs.el(ctx, "manana") && !(hDp in 1..299)) || extra.isNotBlank()
             val poster = Prefs.poster(ctx)
             var bateria = if (solo) Prefs.cw(ctx, "bateria") else Prefs.el(ctx, "bateria")
             // Widget Hora y clima: según el alto se quitan líneas enteras (nunca se cortan).
@@ -528,7 +534,7 @@ class RockWidget : AppWidgetProvider() {
         }
 
         /** Accesos a apps (una o dos filas según la distribución y la música). */
-        private fun appsSection(ctx: Context, v: RemoteViews, th: Theme, W: Int, playing: Boolean, fonts: Boolean) {
+        private fun appsSection(ctx: Context, v: RemoteViews, th: Theme, W: Int, playing: Boolean, fonts: Boolean, hDp: Int = 0) {
             val accent = th.accent(ctx)
             val rock = th.family == "rock"
             val S = TextArt.spec(th.family)
@@ -543,7 +549,8 @@ class RockWidget : AppWidgetProvider() {
             // reproductor. Si el usuario eligió el número a mano, se respeta.
             // Con el reproductor grande tampoco caben dos filas: se cortaban sus botones.
             val auto = Prefs.preset(ctx) == "completo" || Prefs.playerLarge(ctx)
-            val maxApps = if (auto && playing && wanted > perRow) perRow else wanted
+            // Con música o en un Completo bajito (menos de 330 dp), una sola fila
+            val maxApps = if ((auto && playing || hDp in 1..329) && wanted > perRow) perRow else wanted
             val pm = ctx.packageManager
             val showNums = false  // los números 01/02/03 se leían poco y no aportaban
             val numColor = ColorUtils.setAlphaComponent(if (rock) accent else th.accent2, if (rock) 0x99 else 0xCC)

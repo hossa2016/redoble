@@ -26,6 +26,21 @@ object Extras {
         ctx.checkSelfPermission(Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
 
     /** Próximo evento de hoy o mañana: "Reunión 3:00 p. m."; vacío si no hay permiso o eventos. */
+    /** Minutos hasta el próximo evento que no es de todo el día (-1 si no hay en 36 h). */
+    fun minutesToNextEvent(ctx: Context): Int {
+        if (!hasCalendar(ctx)) return -1
+        return try {
+            val now = System.currentTimeMillis()
+            val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().let {
+                android.content.ContentUris.appendId(it, now); android.content.ContentUris.appendId(it, now + 36 * 3_600_000L); it.build() }
+            ctx.contentResolver.query(uri, arrayOf(CalendarContract.Instances.BEGIN, CalendarContract.Instances.ALL_DAY),
+                "${CalendarContract.Instances.BEGIN} >= ?", arrayOf(now.toString()), "${CalendarContract.Instances.BEGIN} ASC")?.use { c ->
+                while (c.moveToNext()) if (c.getInt(1) == 0) return ((c.getLong(0) - now) / 60_000L).toInt()
+                -1
+            } ?: -1
+        } catch (e: Exception) { -1 }
+    }
+
     /** Títulos de los eventos de hoy (para la regla «Concierto hoy»). */
     fun todayTitles(ctx: Context): List<String> {
         if (!hasCalendar(ctx)) return emptyList()

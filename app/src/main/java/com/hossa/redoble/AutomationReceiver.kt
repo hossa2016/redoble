@@ -8,7 +8,7 @@ import android.content.Intent
  * Atajos para Tasker, Automate o MacroDroid (intención de difusión):
  *  · com.hossa.redoble.SCENE  extra "scene" = fogata, cafe, concierto…  (fondo animado)
  *  · com.hossa.redoble.THEME  extra "theme" = 0…n o el nombre del tema
- *  · com.hossa.redoble.TEMPLATE extra "template" = todo, musica, minimo
+ *  · com.hossa.redoble.TEMPLATE extra "template" = completo, musica, minimal
  *  · com.hossa.redoble.REFRESH  (redibuja todos los widgets)
  * Solo cambia el aspecto: no lee ni envía datos.
  */

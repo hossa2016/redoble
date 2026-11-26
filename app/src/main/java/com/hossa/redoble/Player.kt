@@ -92,6 +92,9 @@ object Player {
     fun isPlayingNow(ctx: Context): Boolean = controller(ctx)?.let { isPlaying(it) } ?: false
 
     /** Título y artista de lo que suena ahora (o lo último que sonó). */
+    /** ¿Está sonando algo ahora mismo? (para la Pila inteligente) */
+    fun playingNow(ctx: Context): Boolean = try { controller(ctx)?.let { isPlaying(it) } ?: false } catch (e: Exception) { false }
+
     fun nowTrack(ctx: Context): Pair<String, String>? {
         val c = try { controller(ctx) } catch (e: Exception) { null } ?: return null
         val md = c.metadata ?: return null

@@ -12,4 +12,8 @@
     <string name="w_mini_desc">Day, date and battery in a small square, with your theme.</string>
     <string name="w_week">My week</string>
     <string name="w_week_desc">How much you listened this week and your top artist.</string>
+    <string name="w_smart">Smart stack</string>
+    <string name="w_smart_desc">Shows what matters now: music, your next event or the time.</string>
+    <string name="w_agenda">Agenda</string>
+    <string name="w_agenda_desc">Your events for today and tomorrow.</string>
 </resources>

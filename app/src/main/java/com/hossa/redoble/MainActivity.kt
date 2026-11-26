@@ -278,6 +278,7 @@ class MainActivity : AppCompatActivity() {
         val playerW = Widgets.has(this, Widgets.PLAYER)
         when (tab) {
             0 -> {
+                col.addView(fold(galleryPlate(), "galeria", I18n.tr(this, "{} diseños").replace("{}", Gallery.ALL.size.toString())))
                 val ws = Prefs.wallStyle(this)
                 val wallName = when (ws) {
                     "fade" -> "Desvanecido"; "solid" -> "Fijo"; "photo" -> "Foto"
@@ -302,8 +303,9 @@ class MainActivity : AppCompatActivity() {
                     "Agenda".takeIf { Prefs.showAgenda(this) }).joinToString(" · ").ifBlank { "Fecha normal" }))
                 col.addView(fold(weatherPlate(), "clima", Prefs.city(this).substringBefore(",").ifBlank { "Agregar ciudad ›" }))
                 col.addView(ui.label("OTROS WIDGETS"), LinearLayout.LayoutParams(-2, -2).apply { marginStart = ui.dp(6); topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
-                val total = listOf(Widgets.has(this, Widgets.FULL), clockW, appsW, playerW, MiniWidget.placed(this), WeekWidget.placed(this)).count { it }
-                col.addView(fold(packPlate(), "w_pack", I18n.tr(this, "{} de 6 en pantalla").replace("{}", total.toString())))
+                val total = listOf(Widgets.has(this, Widgets.FULL), clockW, appsW, playerW, MiniWidget.placed(this), WeekWidget.placed(this),
+                    SmartWidget.placed(this), AgendaWidget.placed(this)).count { it }
+                col.addView(fold(packPlate(), "w_pack", I18n.tr(this, "{} de 8 en pantalla").replace("{}", total.toString())))
                 if (clockW) col.addView(fold(clockWidgetPlate(), "w_clock", listOfNotNull(
                     "Día".takeIf { Prefs.cw(this, "dia") }, "Clima".takeIf { Prefs.cw(this, "clima") },
                     "Mañana".takeIf { Prefs.cw(this, "manana") }, "Batería".takeIf { Prefs.cw(this, "bateria") }).joinToString(" · ")))
@@ -554,7 +556,7 @@ class MainActivity : AppCompatActivity() {
         /** En qué pestaña vive cada sección. */
         val TAB_NAMES = listOf(0 to "Estilo", 1 to "Widget", 2 to "Música", 3 to "Más")
         val TAB_OF = mapOf(
-            "tema" to 0, "fondo" to 0, "fondoWidget" to 0, "reglas" to 0, "acento" to 0,
+            "galeria" to 0, "tema" to 0, "fondo" to 0, "fondoWidget" to 0, "reglas" to 0, "acento" to 0,
             "diseno" to 1, "apps" to 1, "cabecera" to 1, "clima" to 1,
             "w_pack" to 1, "w_clock" to 1, "w_apps" to 1,
             "reproductor" to 2, "musica_extras" to 2, "w_player" to 2, "comparte" to 2,

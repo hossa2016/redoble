@@ -106,6 +106,32 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_week_info" />
         </receiver>
+        <receiver
+            android:name=".SmartWidget"
+            android:exported="true"
+            android:label="@string/w_smart">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_smart_info" />
+        </receiver>
+        <receiver
+            android:name=".AgendaWidget"
+            android:exported="true"
+            android:label="@string/w_agenda">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_agenda_info" />
+        </receiver>
+        <service
+            android:name=".AgendaService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
         <!-- Atajos para Tasker/Automate: solo cambian el aspecto (escena, tema, plantilla) -->
         <receiver
             android:name=".AutomationReceiver"

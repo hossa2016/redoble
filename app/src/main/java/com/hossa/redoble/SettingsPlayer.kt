@@ -234,7 +234,7 @@ internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
         ui.sheet("Atajos para Tasker y Automate", "Envía una intención de difusión (broadcast) con estas acciones:\n\n" +
             "· com.hossa.redoble.SCENE  con «scene» = fogata, cafe, concierto, escenario…\n" +
             "· com.hossa.redoble.THEME  con «theme» = número o nombre del tema\n" +
-            "· com.hossa.redoble.TEMPLATE  con «template» = todo, musica o minimo\n" +
+            "· com.hossa.redoble.TEMPLATE  con «template» = completo, musica o minimal\n" +
             "· com.hossa.redoble.REFRESH  para redibujar los widgets\n\nSolo cambian el aspecto; no leen ni envían datos.",
             dismissLabel = "Entendido")
     }
@@ -347,12 +347,33 @@ internal fun MainActivity.sharePlate(): View {
                 TourLog.year(this), ui.accent), "afiche"); onUi { ShareArt.share(this, f, "Afiche de la Gira") } }
         }
     }
-    row("Compartir mi diseño", R.drawable.ic_share, "Código con tu tema y colores") {
+    row("Compartir mi diseño", R.drawable.ic_share, "Código y QR con tu tema y colores") {
         val code = Backup.shareCode(this)
-        startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, I18n.tr(this@sharePlate, "Mi escenario en Prisma Widgets. Para usarlo: Prisma › Más › Usar un diseño compartido, y pega este código:\n\n{}").replace("{}", code))
-        }, I18n.tr(this, "Compartir mi diseño")))
+        val text = I18n.tr(this@sharePlate, "Mi escenario en Prisma Widgets. Para usarlo: Prisma › Más › Usar un diseño compartido, y pega este código:\n\n{}").replace("{}", code)
+        io.execute {
+            // Imagen con el QR (se escanea con la cámara y se pega el texto en Prisma)
+            val f = Gallery.qr(code, 900)?.let { q ->
+                val out = android.graphics.Bitmap.createBitmap(1000, 1180, android.graphics.Bitmap.Config.ARGB_8888)
+                val c = android.graphics.Canvas(out); c.drawColor(android.graphics.Color.WHITE)
+                c.drawBitmap(q, 50f, 50f, null)
+                val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                    color = android.graphics.Color.BLACK; textSize = 56f; textAlign = android.graphics.Paint.Align.CENTER; typeface = ui.condSemi }
+                c.drawText("PRISMA WIDGETS", 500f, 1050f, p)
+                p.textSize = 34f; p.typeface = ui.cond
+                c.drawText(I18n.tr(this@sharePlate, "Escanéalo y pégalo en Más › Usar un diseño compartido"), 500f, 1110f, p)
+                ShareArt.save(this@sharePlate, out, "diseno_qr")
+            }
+            onUi {
+                startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                    if (f != null) {
+                        type = "image/png"
+                        putExtra(Intent.EXTRA_STREAM, androidx.core.content.FileProvider.getUriForFile(this@sharePlate, "$packageName.files", f))
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    } else type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, text)
+                }, I18n.tr(this@sharePlate, "Compartir mi diseño")))
+            }
+        }
     }
     return card
 }
