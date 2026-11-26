@@ -266,6 +266,9 @@ internal fun MainActivity.askSetupCode() {
             val n = try { Backup.applyCode(this, Regex("PRISMA:[A-Za-z0-9_\\-=]+").find(field.text.toString())?.value ?: field.text.toString()) }
                 catch (e: Exception) { -1 }
             if (n < 0) toast("Ese código no es válido") else afterRestore(n)
+        }, "Leer QR de una imagen" to {
+            qrPick.launch(androidx.activity.result.PickVisualMediaRequest(
+                androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly))
         }))
 }
 
@@ -304,6 +307,12 @@ internal fun MainActivity.musicExtrasPlate(): View {
     card.addView(ui.note("Se guarda solo en tu teléfono.",
         "Guarda en tu teléfono qué escuchas, para armar tu setlist de la semana y el afiche del año. Nada sale del teléfono."))
     if (Prefs.tourLog(this)) {
+        card.addView(switchRow("Aviso del afiche cada domingo", Prefs.weeklyPoster(this)) { on ->
+            Prefs.setWeeklyPoster(this, on)
+            if (on && android.os.Build.VERSION.SDK_INT >= 33 &&
+                checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+                notifPerm.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
         val wk = TourLog.week(this)
         // Tarjeta de estadística pequeña (no compite con los títulos)
         card.addView(LinearLayout(this).apply {

@@ -143,6 +143,20 @@ class MainActivity : AppCompatActivity() {
 
     /** Android 13+: permiso para que se vea la notificación del widget en vivo. */
     internal val notifPerm = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    /** Foto o captura con el QR de un diseño compartido. */
+    internal val qrPick = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri == null) return@registerForActivityResult
+        io.execute {
+            val code = Gallery.readQr(this, uri)?.let { Regex("PRISMA:[A-Za-z0-9_\\-=+/]+").find(it)?.value }
+            onUi {
+                if (code == null) toast("No encontré un código de Prisma en esa imagen")
+                else {
+                    val n = try { Backup.applyCode(this, code) } catch (e: Exception) { -1 }
+                    if (n < 0) toast("Ese código no es válido") else afterRestore(n)
+                }
+            }
+        }
+    }
 
     internal fun askNotifications() {
         if (Build.VERSION.SDK_INT >= 33 &&
@@ -206,6 +220,16 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         maybeAskReview()
+        // Enlace prisma://galeria/<id> (desde la galería web): abre ese escenario
+        intent?.data?.takeIf { it.scheme == "prisma" && it.host == "galeria" }?.let { d ->
+            intent.data = null
+            Gallery.ALL.firstOrNull { it.id == d.lastPathSegment }?.let { openLook(it) }
+        }
+        if (intent?.getBooleanExtra("poster", false) == true) {
+            intent.removeExtra("poster")
+            io.execute { val f = ShareArt.save(this, ShareArt.poster(this, "SEMANA ${TourLog.weekNumber()}", "SETLIST DE LA SEMANA",
+                TourLog.week(this), ui.accent), "afiche"); onUi { ShareArt.share(this, f, "Afiche de la semana") } }
+        }
         if (intent?.getBooleanExtra("askCalendar", false) == true) {
             intent.removeExtra("askCalendar")
             if (!Extras.hasCalendar(this)) calendarPerm.launch(android.Manifest.permission.READ_CALENDAR)

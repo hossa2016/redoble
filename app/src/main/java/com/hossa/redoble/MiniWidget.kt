@@ -20,6 +20,10 @@ class MiniWidget : AppWidgetProvider() {
         try { RockWidget.scheduleMidnight(ctx); BatteryMonitor.check(ctx) } catch (e: Exception) { }
     }
 
+    override fun onAppWidgetOptionsChanged(ctx: Context, mgr: AppWidgetManager, id: Int, o: android.os.Bundle) {
+        try { update(ctx, mgr, id) } catch (e: Exception) { }
+    }
+
     companion object {
         fun placed(ctx: Context) = AppWidgetManager.getInstance(ctx).getAppWidgetIds(ComponentName(ctx, MiniWidget::class.java)).isNotEmpty()
 

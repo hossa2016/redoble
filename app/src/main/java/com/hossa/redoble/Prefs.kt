@@ -253,6 +253,10 @@ object Prefs {
     fun ruleWeekend(ctx: Context) = p(ctx).getBoolean("ruleWeekend", false)
     fun ruleGig(ctx: Context) = p(ctx).getBoolean("ruleGig", false)
     fun ruleCalm(ctx: Context) = p(ctx).getBoolean("ruleCalm", false)
+    fun weeklyPoster(ctx: Context) = p(ctx).getBoolean("weeklyPoster", true)
+    fun setWeeklyPoster(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("weeklyPoster", on).apply()
+    fun posterSent(ctx: Context) = p(ctx).getString("posterSent", "") ?: ""
+    fun setPosterSent(ctx: Context, k: String) = p(ctx).edit().putString("posterSent", k).apply()
     /** Atajos para Tasker: apagados hasta que la persona los permita. */
     fun automation(ctx: Context) = p(ctx).getBoolean("automation", false)
     fun setAutomation(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("automation", on).apply()

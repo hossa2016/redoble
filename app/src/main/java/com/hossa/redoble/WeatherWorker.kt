@@ -23,6 +23,7 @@ class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
         val ctx = applicationContext
         // Modo confiable: si el widget lleva más de 30 min sin redibujarse, se arregla solo
         try { if (System.currentTimeMillis() - Prefs.lastDraw(ctx) > 30 * 60_000L) RockWidget.updateAll(ctx) } catch (e: Exception) { }
+        try { WeeklyPoster.maybeNotify(ctx) } catch (e: Exception) { }
         val lat = Prefs.lat(ctx)
         val lon = Prefs.lon(ctx)
         if (lat.isNaN() || lon.isNaN()) return Result.success()

@@ -80,24 +80,40 @@ internal fun MainActivity.galleryPlate(): View {
             }, LinearLayout.LayoutParams(ui.dp(96), ui.dp(150)))
             addView(ui.text(l.name, ui.cond, 15f, Ui.HEAD).apply { gravity = Gravity.CENTER; ui.fitText(this, 15, 12) },
                 LinearLayout.LayoutParams(ui.dp(96), -2).apply { topMargin = ui.dp(6) })
-            setOnClickListener {
-                ui.sheet(l.name, l.desc, actions = listOf("Aplicar" to {
-                    val undo = Gallery.apply(this@galleryPlate, l)
-                    RockWidget.updateAll(this@galleryPlate); Player.updateAll(this@galleryPlate)
-                    build()
-                    val ours = try { android.app.WallpaperManager.getInstance(this@galleryPlate).wallpaperInfo?.packageName == packageName } catch (e: Exception) { true }
-                    ui.sheet("Escenario aplicado", I18n.tr(this@galleryPlate, "Si no te convence, vuelve a como estaba.") +
-                            (if (ours) "" else "\n\n" + I18n.tr(this@galleryPlate, "Para ver el fondo animado, ponlo como fondo de pantalla.")),
-                        actions = (if (ours) emptyList() else listOf("Poner fondo animado" to { launchLiveWallpaper() })) +
-                            listOf("Deshacer" to {
-                                undo()
-                                RockWidget.updateAll(this@galleryPlate); build()
-                            }), dismissLabel = "Me gusta")
-                }))
-            }
+            setOnClickListener { openLook(l) }
         }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = ui.dp(10) })
     }
     card.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(strip) },
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
     return card
 }
+
+/** Abre la hoja de un escenario (desde la galería o desde un enlace prisma://galeria/<id>). */
+internal fun MainActivity.openLook(l: Gallery.Look) {
+    ui.sheet(l.name, l.desc, actions = listOf("Aplicar" to {
+                    val undo = Gallery.apply(this@openLook, l)
+                    RockWidget.updateAll(this@openLook); Player.updateAll(this@openLook)
+                    build()
+                    val ours = try { android.app.WallpaperManager.getInstance(this@openLook).wallpaperInfo?.packageName == packageName } catch (e: Exception) { true }
+                    ui.sheet("Escenario aplicado", I18n.tr(this@openLook, "Si no te convence, vuelve a como estaba.") +
+                            (if (ours) "" else "\n\n" + I18n.tr(this@openLook, "Para ver el fondo animado, ponlo como fondo de pantalla.")),
+                        actions = (if (ours) emptyList() else listOf("Poner fondo animado" to { launchLiveWallpaper() })) +
+                            listOf("Deshacer" to {
+                                undo()
+                                RockWidget.updateAll(this@openLook); build()
+                            }), dismissLabel = "Me gusta")
+                }))
+}
+
+/** Lee un código PRISMA: de una foto o captura con QR (sin cámara ni permisos). */
+fun Gallery.readQr(ctx: android.content.Context, uri: android.net.Uri): String? = try {
+    val src = ctx.contentResolver.openInputStream(uri)?.use { android.graphics.BitmapFactory.decodeStream(it) }
+    src?.let { b0 ->
+        val k = (1600f / maxOf(b0.width, b0.height)).coerceAtMost(1f)
+        val b = if (k < 1f) Bitmap.createScaledBitmap(b0, (b0.width * k).toInt(), (b0.height * k).toInt(), true) else b0
+        val px = IntArray(b.width * b.height); b.getPixels(px, 0, b.width, 0, 0, b.width, b.height)
+        val bin = com.google.zxing.BinaryBitmap(com.google.zxing.common.HybridBinarizer(
+            com.google.zxing.RGBLuminanceSource(b.width, b.height, px)))
+        com.google.zxing.qrcode.QRCodeReader().decode(bin, mapOf(com.google.zxing.DecodeHintType.TRY_HARDER to true)).text
+    }
+} catch (e: Exception) { null }

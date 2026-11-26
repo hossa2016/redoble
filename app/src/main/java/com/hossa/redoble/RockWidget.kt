@@ -17,6 +17,11 @@ import java.util.Calendar
 
 class RockWidget : AppWidgetProvider() {
 
+    /** Al estirarlo o achicarlo se vuelve a armar a su nuevo tamaño (ancho y alto). */
+    override fun onAppWidgetOptionsChanged(ctx: Context, mgr: AppWidgetManager, id: Int, o: android.os.Bundle) {
+        try { update(ctx, mgr, id) } catch (e: Exception) { }
+    }
+
     override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) {
         for (id in ids) {
             try { update(ctx, mgr, id) } catch (e: Exception) { }

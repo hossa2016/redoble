@@ -300,7 +300,8 @@ class Ui(val ctx: Context, val accent: Int) {
         addView(LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12), 0, dp(8), 0)
-            addView(text(label, cond, 17f, HEAD).also { fitText(it, 17, 14) }, LinearLayout.LayoutParams(-1, -2))
+            addView(text(label, cond, 17f, HEAD).also { it.maxLines = 2; it.ellipsize = android.text.TextUtils.TruncateAt.END
+                it.setLineSpacing(0f, 0.92f) }, LinearLayout.LayoutParams(-1, -2))
             if (sub != null) addView(text(sub, cond, 13f, DIM))
         }, LinearLayout.LayoutParams(0, -2, 1f))
         addView(ImageView(ctx).apply {
