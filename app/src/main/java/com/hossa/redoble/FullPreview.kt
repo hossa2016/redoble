@@ -46,7 +46,7 @@ internal fun MainActivity.openFullPreview(animIndex: Int? = null) {
 
     // ---- Fondo ----
     val video = if (anim) VideoSurfaceView(this).apply { scene = scenes[index] } else null
-    val still = if (anim) null else ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP }
+    val still = if (anim) null else ImageView(this).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO; scaleType = ImageView.ScaleType.CENTER_CROP }
     root.addView(video ?: still!!, FrameLayout.LayoutParams(-1, -1))
 
     var rendering = false; var pending = false

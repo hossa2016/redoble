@@ -51,7 +51,7 @@ internal fun MainActivity.previewPlate(): View {
         foreground = ui.rect(Color.TRANSPARENT, 16f, Ui.headA(0x33), 1f)
         contentDescription = "Vista previa del widget"
     }
-    val bg = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageBitmap(lastPreviewBg) }
+    val bg = ImageView(this).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO; scaleType = ImageView.ScaleType.CENTER_CROP; setImageBitmap(lastPreviewBg) }
     frame.addView(bg, FrameLayout.LayoutParams(-1, -1))
     // El widget real, a su tamaño, reducido con escala; siempre por encima del fondo
     val holder = FrameLayout(this).apply {

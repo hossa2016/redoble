@@ -41,13 +41,7 @@ internal fun MainActivity.playerPlate(): View {
     // El botón solo aparece cuando falta el permiso (con permiso basta el punto verde)
     if (!on) {
         val btn = ui.primary("Dar permiso")
-        btn.setOnClickListener {
-            try {
-                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-            } catch (e: Exception) {
-                toast("Busca «Acceso a notificaciones» en Ajustes y activa Prisma Widgets.")
-            }
-        }
+        btn.setOnClickListener { askNotificationAccess(ui) }
         card.addView(btn, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(12) })
     }
 

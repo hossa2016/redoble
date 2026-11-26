@@ -1,6 +1,6 @@
 # Política de privacidad de Prisma Widgets
 
-*Última actualización: 25 de noviembre de 2026*
+*Última actualización: 26 de noviembre de 2026*
 
 Prisma Widgets es un widget para la pantalla de inicio de Android que muestra la hora, el clima, la batería, la música que suena y accesos a tus apps. Esta política explica qué datos usa la app y para qué.
 
@@ -29,12 +29,20 @@ Para mostrar tus accesos directos, la app consulta la lista de apps instaladas e
 ### Fondo de pantalla y fotos
 Si eliges una foto, la app la copia a su almacenamiento privado para crear el fondo. La foto no se sube a ningún lado.
 
+### Colores de tu fondo (opcional)
+Si activas «Color de tu fondo», la app calcula en el teléfono el color principal de tu fondo de pantalla para pintar los acentos. La imagen no se guarda ni se envía.
+
+### Atajos para Tasker y Automate
+La app acepta órdenes de otras apps de automatización solo para cambiar el escenario, el tema o el diseño, o para redibujar los widgets. Estas órdenes no leen ni envían datos.
+
 ### Batería
 La app lee el nivel de batería y si está cargando, solo para mostrarlo en el widget.
 
 ### Agenda y alarma (opcional)
 - **Próxima alarma:** la app lee la hora de tu próxima alarma desde Android para mostrarla en el widget. No pide permisos.
 - **Próximo evento de la agenda:** solo si lo activas, la app pide permiso para leer tu calendario y muestra el título y la hora del próximo evento. Se lee en el teléfono y no se guarda ni se envía.
+- **Widgets «Agenda» y «Pila inteligente»:** si los agregas y das el permiso, muestran los títulos y horas de tus eventos de hoy y mañana. Se leen en el teléfono y no se guardan ni se envían.
+- **Regla «Concierto en tu agenda»:** si la activas, la app busca en los títulos de los eventos de hoy palabras como «concierto» o «festival» para cambiar el fondo. Nada sale del teléfono.
 
 ### Bitácora de Gira (opcional)
 Si la activas, la app guarda **en tu teléfono** los títulos, artistas y minutos de lo que escuchas, para armar tu setlist semanal y el afiche del año. No sale del teléfono, salvo que tú compartas un afiche.
@@ -42,9 +50,9 @@ Si la activas, la app guarda **en tu teléfono** los títulos, artistas y minuto
 ### Video propio (opcional)
 Si eliges un video tuyo como fondo animado, se copia al almacenamiento privado de la app. No se sube a ningún lado.
 
-### Copias de ajustes y setups compartidos
+### Copias de ajustes y diseños compartidos
 - **Copia de ajustes:** se guarda donde tú elijas, en un archivo. Incluye tus ajustes, tu ciudad y la foto del fondo.
-- **Compartir mi setup:** genera un código solo con el tema, colores, fondo animado elegido y diseño, **sin** ciudad, fotos, apps, música ni historial. Al pegar un código, la app lee el portapapeles solo para encontrarlo, y solo cambia esos ajustes de aspecto.
+- **Compartir mi diseño:** genera un código (y una imagen con código QR) solo con el tema, colores, fondo animado elegido y diseño, **sin** ciudad, fotos, apps, música ni historial. Al pegar un código, la app lee el portapapeles solo para encontrarlo, y solo cambia esos ajustes de aspecto.
 - Android también puede incluir los ajustes en su copia de seguridad del teléfono.
 
 ### Informe de errores

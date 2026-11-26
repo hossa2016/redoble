@@ -82,7 +82,7 @@ internal fun MainActivity.suggestedRow(): View {
             gravity = Gravity.CENTER_HORIZONTAL
             setOnClickListener { if (!on) useSuggested(res, name) }
         }
-        val img = ImageView(this).apply {
+        val img = ImageView(this).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO;
             scaleType = ImageView.ScaleType.CENTER_CROP
             setImageBitmap(thumb(res))
             clipToOutline = true
@@ -169,7 +169,7 @@ internal fun MainActivity.animSection(card: LinearLayout) {
 
 /** Miniatura de una escena: imagen, nombre debajo y borde del acento si es la elegida. */
 internal fun MainActivity.sceneTile(s: VideoScenes.Info, on: Boolean, w: Int, h: Int): View {
-    val img = android.widget.ImageView(this).apply {
+    val img = android.widget.ImageView(this).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO;
         scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
         VideoScenes.thumb(s.id)?.let { setImageResource(it) }
         clipToOutline = true
@@ -218,7 +218,7 @@ internal fun MainActivity.photoSection(card: LinearLayout) {
             }
         }
     }
-    val iv = ImageView(this).apply { scaleType = ImageView.ScaleType.FIT_XY }
+    val iv = ImageView(this).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO; scaleType = ImageView.ScaleType.FIT_XY }
     val hasPhoto = photo != null
     if (hasPhoto) {
         preview.background = ui.rect(Color.BLACK, 16f)

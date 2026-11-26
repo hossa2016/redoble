@@ -48,3 +48,12 @@ Texto sugerido para la declaración:
 - Política de privacidad: enlace a `PRIVACY.md` del repositorio.
 - Capturas: Completo, Hora y clima, Reproductor con piel Vinilo, Escenario Vivo, Mini 1×1, entrada de concierto.
 - Idiomas de la ficha: español, inglés y portugués (la app ya está traducida).
+
+## Recursos de la ficha (listos)
+- `docs/store/icon-512.png` — ícono 512×512 para la ficha.
+- `docs/store/feature-1024x500.png` — gráfico de funciones 1024×500.
+- `docs/privacy.html` — política de privacidad como página web. Para tener la dirección
+  `https://hossa2016.github.io/redoble/privacy.html`, en GitHub: Settings › Pages ›
+  «Deploy from a branch» › main › /docs › Save. Mientras tanto sirve
+  `https://github.com/hossa2016/redoble/blob/main/PRIVACY.md`.
+- Cada versión publica también `PrismaWidgets.aab` (el formato que pide Play).

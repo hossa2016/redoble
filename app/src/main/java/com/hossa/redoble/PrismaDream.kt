@@ -53,7 +53,7 @@ class PrismaDream : DreamService() {
                 val bmp = try {
                     Themes.styledWallpaper(this, Themes.current(this), dm.widthPixels / 2, dm.heightPixels / 2)
                 } catch (e: Throwable) { null }
-                if (bmp != null) root.addView(ImageView(this).apply {
+                if (bmp != null) root.addView(ImageView(this).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO;
                     scaleType = ImageView.ScaleType.CENTER_CROP; setImageBitmap(bmp)
                 }, FrameLayout.LayoutParams(-1, -1))
             }

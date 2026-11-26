@@ -66,7 +66,7 @@ internal fun MainActivity.galleryPlate(): View {
                 outlineProvider = object : android.view.ViewOutlineProvider() {
                     override fun getOutline(v: View, o: android.graphics.Outline) { o.setRoundRect(0, 0, v.width, v.height, ui.dp(14).toFloat()) }
                 }
-                VideoScenes.thumb(l.scene)?.let { addView(ImageView(this@galleryPlate).apply {
+                VideoScenes.thumb(l.scene)?.let { addView(ImageView(this@galleryPlate).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO;
                     setImageResource(it); scaleType = ImageView.ScaleType.CENTER_CROP }, FrameLayout.LayoutParams(-1, -1)) }
                 addView(View(this@galleryPlate).apply { background = ui.oval(Prefs.ACCENTS[l.accent.coerceIn(0, Prefs.ACCENTS.size - 1)]) },
                     FrameLayout.LayoutParams(ui.dp(14), ui.dp(14), Gravity.BOTTOM or Gravity.END).apply { setMargins(0, 0, ui.dp(8), ui.dp(8)) })

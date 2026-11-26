@@ -96,7 +96,7 @@ internal fun MainActivity.openEditor() {
     root.addView(stage, LinearLayout.LayoutParams((wPx * scale).toInt(), (hPx * scale).toInt()).apply {
         gravity = Gravity.CENTER_HORIZONTAL; topMargin = ui.dp(4)
     })
-    val bg = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP }
+    val bg = ImageView(this).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO; scaleType = ImageView.ScaleType.CENTER_CROP }
     stage.addView(bg, FrameLayout.LayoutParams(-1, -1))
     io.execute {
         val bmp = try { stillWallpaper(sw / 2, sh / 2) } catch (e: Throwable) { null }

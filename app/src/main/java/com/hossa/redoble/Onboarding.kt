@@ -89,12 +89,7 @@ internal fun MainActivity.onboardingView(): View {
         else -> {
             val on = Player.enabled(this)
             val give = if (on) ui.secondary("Permiso dado ✓") else ui.primary("Dar permiso")
-            give.setOnClickListener {
-                try { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
-                catch (e: Exception) {
-                    toast("Busca «Acceso a notificaciones» en Ajustes y activa Prisma Widgets.")
-                }
-            }
+            give.setOnClickListener { askNotificationAccess(ui) }
             content.addView(give, LinearLayout.LayoutParams(-1, ui.dp(52)))
             // Permiso recién dado: el botón «late» una vez, con vibración
             if (on && !permCelebrated) {
@@ -168,7 +163,7 @@ internal fun MainActivity.themeTile(t: Theme, on: Boolean, onPick: () -> Unit): 
         contentDescription = if (on) "Tema ${t.name}, elegido" else "Tema ${t.name}"
         setOnClickListener { if (!on) onPick() }
     }
-    val img = android.widget.ImageView(this).apply {
+    val img = android.widget.ImageView(this).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO;
         scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
         setImageBitmap(if (t.family == "rock") thumb(R.drawable.fondo_bateria)
             else themeThumbs.getOrPut(t.id) { Themes.wallpaper(t, tw, thH) })

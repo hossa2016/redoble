@@ -367,7 +367,7 @@ class MainActivity : AppCompatActivity() {
         val host = findViewById<android.view.ViewGroup>(android.R.id.content) ?: return
         val sv = scroll ?: return
         host.findViewWithTag<View>("pvPill")?.let { host.removeView(it) }
-        val thumb = android.widget.ImageView(this).apply {
+        val thumb = android.widget.ImageView(this).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO;
             scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
             background = ui.rect(Ui.PLATE_TOP, 10f, Ui.headA(0x33), 1f)
             clipToOutline = true

@@ -292,7 +292,7 @@ class Ui(val ctx: Context, val accent: Int) {
         isClickable = true; isFocusable = true
         addView(FrameLayout(ctx).apply {
             background = rect(ColorUtils.setAlphaComponent(accent, if (light) 0x22 else 0x2E), 12f)
-            addView(ImageView(ctx).apply {
+            addView(ImageView(ctx).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO;
                 setImageResource(icon); imageTintList = ColorStateList.valueOf(accent)
                 scaleType = ImageView.ScaleType.CENTER_INSIDE
             }, FrameLayout.LayoutParams(dp(22), dp(22), Gravity.CENTER))
@@ -399,7 +399,7 @@ class Ui(val ctx: Context, val accent: Int) {
         isClickable = true
         contentDescription = "$label, " + if (open) "abierto, toca para cerrar" else "cerrado, toca para abrir"
         addView(text(label, cond, 16f, HEAD), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-        addView(ImageView(ctx).apply {
+        addView(ImageView(ctx).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO;
             setImageResource(R.drawable.ic_chevron)
             imageTintList = ColorStateList.valueOf(MUTED)
             scaleType = ImageView.ScaleType.CENTER
@@ -467,7 +467,7 @@ class Ui(val ctx: Context, val accent: Int) {
             background = if (pkg.isNullOrBlank()) dashedHolder() else if (highlight) {
                 (iconHolder() as GradientDrawable).apply { setStroke(dp(1.5f), accent) }
             } else iconHolder()
-            val iv = ImageView(ctx)
+            val iv = ImageView(ctx).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO }
             if (pkg.isNullOrBlank()) {
                 addView(text("+", condLight, 22f, MUTED).apply { gravity = Gravity.CENTER },
                     FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))

@@ -18,7 +18,7 @@ internal fun MainActivity.fold(card: View, key: String, summary: String? = null)
         })
     }
     // Flecha dibujada en dp (no en letra): no se corta con letra grande del sistema
-    val chev = android.widget.ImageView(this).apply {
+    val chev = android.widget.ImageView(this).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO;
         setImageResource(R.drawable.ic_chevron)
         imageTintList = android.content.res.ColorStateList.valueOf(Ui.MUTED)
         scaleType = android.widget.ImageView.ScaleType.CENTER

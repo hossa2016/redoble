@@ -9,10 +9,8 @@ Actualizado {}: {}.	Updated {}: {}.	Atualizado {}: {}.
  · Sonando	 · Playing	 · Tocando
  · Última canción	 · Last song	 · Última música
 , elegido	, selected	, selecionado
-1 fila	1 row	1 linha
 1 widget	1 widget	1 widget
 15 min	15 min	15 min
-2 filas	2 rows	2 linhas
 3 por fila	3 per row	3 por linha
 4 por fila	4 per row	4 por linha
 30 min	30 min	30 min
@@ -20,7 +18,6 @@ Actualizado {}: {}.	Updated {}: {}.	Atualizado {}: {}.
 A mano	Manual	Manual
 ADMITE UNO · SOLD OUT	ADMIT ONE · SOLD OUT	ENTRADA ÚNICA · ESGOTADO
 APPS	APPS	APPS
-Abajo	Bottom	Embaixo
 Abrir tu música	Open your music	Abrir sua música
 Activar el protector de pantalla	Turn on the screen saver	Ativar o protetor de tela
 Activarlo en el teléfono	Turn it on in the phone	Ativar no telefone
@@ -30,7 +27,6 @@ Actualización en vivo	Live updates	Atualização ao vivo
 Además del Completo hay Hora y clima, Apps y Reproductor. Agrégalos desde la lista de widgets del teléfono.	Besides Full there are Time & weather, Apps and Player. Add them from your phone's widget list.	Além do Completo há Hora e clima, Apps e Player. Adicione-os pela lista de widgets do telefone.
 Afiche de la Gira {}	{} Tour poster	Pôster da Turnê {}
 Afiche de la semana	Weekly poster	Pôster da semana
-Agenda	Calendar	Agenda
 Agrega el widget	Add the widget	Adicione o widget
 Agregar ciudad ›	Add city ›	Adicionar cidade ›
 Agregar el widget	Add the widget	Adicionar o widget
@@ -51,7 +47,6 @@ Animado	Animated	Animado
 Apagado	Off	Desligado
 Apariencia y ayuda	Appearance and help	Aparência e ajuda
 Aplicando…	Applying…	Aplicando…
-Aplicar	Apply	Aplicar
 Aplicar en	Apply to	Aplicar em
 App	App	App
 Apps	Apps	Apps
@@ -106,7 +101,6 @@ Clima con voz rock	Weather in rock voice	Clima com voz rock
 Clima, batería, música y apps con la letra de cada tema.	Weather, battery, music and apps in each theme's font.	Clima, bateria, música e apps com a fonte de cada tema.
 Color de acento	Accent color	Cor de destaque
 Color de la carátula en todo el widget	Cover color across the widget	Cor da capa em todo o widget
-Color del reproductor	Player color	Cor do player
 Color del sistema (Material You)	System color (Material You)	Cor do sistema (Material You)
 Color original	Original color	Cor original
 Color personalizado	Custom color	Cor personalizada
@@ -116,10 +110,8 @@ Columnas	Columns	Colunas
 Compartir	Share	Compartilhar
 Compartir entrada	Share ticket	Compartilhar ingresso
 Compartir entrada de concierto	Share concert ticket	Compartilhar ingresso de show
-Compartir mi setup	Share my setup	Compartilhar meu setup
 Completo	Full	Completo
 Con colores claros, las letras del widget pasan a oscuras solas.	With light colors, the widget text turns dark automatically.	Com cores claras, o texto do widget fica escuro sozinho.
-Con esto Prisma Widgets dibuja la hora, el día y la fecha cada minuto, y para eso enciende la actualización en vivo. Si HyperOS cierra la app para ahorrar batería, la hora se congela. Si la actualización en vivo se detiene, el widget vuelve solo al reloj del sistema, que nunca se atrasa.	With this, Prisma Widgets draws the time, day and date every minute, using live updates. If live updates stop, the widget switches back to the system clock on its own, which is never late.	Com isso o Prisma Widgets desenha a hora, o dia e a data a cada minuto, usando a atualização ao vivo. Se a atualização ao vivo parar, o widget volta sozinho ao relógio do sistema, que nunca atrasa.
 Con música, el fondo animado pasa a una escena de concierto teñida con el color de la carátula. Al pausar, vuelve a tu escena.	With music, the animated wallpaper switches to a concert scene tinted with the cover color. When you pause, it goes back to your scene.	Com música, o fundo animado passa para uma cena de show tingida com a cor da capa. Ao pausar, volta à sua cena.
 Con nombres	With names	Com nomes
 Con tu fondo	With your wallpaper	Com seu fundo
@@ -134,9 +126,7 @@ Cualquier app	Any app	Qualquer app
 Cuando suena música, el widget muestra la canción con los botones ⏮ ⏯ ⏭. Sin música se oculta.	When music plays, the widget shows the song with the ⏮ ⏯ ⏭ buttons. Without music it hides.	Quando toca música, o widget mostra a música com os botões ⏮ ⏯ ⏭. Sem música, some.
 Cómo agregar un widget	How to add a widget	Como adicionar um widget
 Dar permiso	Grant permission	Dar permissão
-Debajo del clima	Below the weather	Abaixo do clima
 Dejar espacio libre	Leave empty	Deixar vazio
-Del tema	Theme's	Do tema
 Del tema ✓	Theme's ✓	Do tema ✓
 Desliza para ver más colores	Swipe for more colors	Deslize para ver mais cores
 Despejado	Clear	Céu limpo
@@ -148,9 +138,7 @@ Día y fecha	Day and date	Dia e data
 Día, fecha, hora, clima y batería	Day, date, time, weather and battery	Dia, data, hora, clima e bateria
 Día, hora, clima y hasta {} apps.	Day, time, weather and up to {} apps.	Dia, hora, clima e até {} apps.
 EN VIVO	LIVE	AO VIVO
-El del tema	The theme's	O do tema
 El fondo propio de {}.	{}'s own wallpaper.	O fundo próprio de {}.
-Elegir app	Choose app	Escolher app
 Elegir las apps de {}	Choose the apps for {}	Escolher os apps de {}
 Elementos elegidos por ti.	Items you picked.	Itens escolhidos por você.
 Elementos elegidos por ti. Se respeta el número de apps aunque suene música.	Items you picked. The number of apps is kept even when music plays.	Itens escolhidos por você. O número de apps é mantido mesmo com música.
@@ -172,20 +160,16 @@ Escribe tu ciudad para ver el clima en el widget.	Type your city to see the weat
 Ese archivo no es una copia de Prisma	That file isn't a Prisma backup	Esse arquivo não é uma cópia do Prisma
 Ese código no es válido	That code isn't valid	Esse código não é válido
 Esmeralda	Emerald	Esmeralda
-Espacio libre	Empty slot	Espaço livre
-Espacio {} libre, elegir app	Slot {} empty, choose app	Espaço {} livre, escolher app
 Estallido	Burst	Explosão
 Estilo	Style	Estilo
 FILA A · ASIENTO 11	ROW A · SEAT 11	FILA A · ASSENTO 11
 FONDO DEL WIDGET	WIDGET BACKGROUND	FUNDO DO WIDGET
 Falta dar permiso ›	Permission needed ›	Falta permissão ›
 Falta un permiso de Android.	An Android permission is missing.	Falta uma permissão do Android.
-Fecha estilo Cartel de Gira	Tour poster date	Data estilo pôster de turnê
 Fecha normal	Normal date	Data normal
 Fecha, alarma y agenda	Date, alarm and calendar	Data, alarme e agenda
 Fijo	Solid	Fixo
 Filas	Rows	Linhas
-Fogata	Campfire	Fogueira
 Fogata real con chispas por delante y la luz del fuego	Real campfire with sparks in front and firelight	Fogueira real com faíscas na frente e a luz do fogo
 Fondo	Background	Fundo
 Fondo aplicado	Wallpaper applied	Fundo aplicado
@@ -202,23 +186,19 @@ Frío de backstage	Backstage cold	Frio de bastidor
 Fuego intenso con chispas al frente y resplandor cálido	Intense fire with sparks in front and a warm glow	Fogo intenso com faíscas na frente e brilho quente
 Funciona con el fondo «Animado»	Works with the “Animated” wallpaper	Funciona com o fundo “Animado”
 GIRA {}	TOUR {}	TURNÊ {}
-Glaciar	Glacier	Geleira
 Gotas en el vidrio con reflejos de neón y luces flotando	Drops on glass with neon reflections and floating lights	Gotas no vidro com reflexos neon e luzes flutuando
 Gotas en el vidrio y luces de ciudad desenfocadas	Drops on glass and blurred city lights	Gotas no vidro e luzes da cidade desfocadas
 Grupo 2	Group 2	Grupo 2
 Grupo 3	Group 3	Grupo 3
 Guarda en tu teléfono qué escuchas, para armar tu setlist de la semana y el afiche del año. Nada sale del teléfono.	Keeps what you listen to on your phone, to build your weekly setlist and yearly poster. Nothing leaves the phone.	Guarda no telefone o que você ouve, para montar o setlist da semana e o pôster do ano. Nada sai do telefone.
 Guardar	Save	Salvar
-Guardar una copia de mis ajustes	Save a backup of my settings	Salvar uma cópia das configurações
 Hojas verdes con gotas de lluvia	Green leaves with raindrops	Folhas verdes com gotas de chuva
 Hojas y gotas	Leaves and drops	Folhas e gotas
 Hora	Time	Hora
-Hora con la letra del tema	Time in the theme's font	Hora com a fonte do tema
 Hora y clima	Time & weather	Hora e clima
 Hora, clima y música mientras el teléfono carga.	Time, weather and music while the phone charges.	Hora, clima e música enquanto o telefone carrega.
 Hora, clima, batería y hasta {} apps.	Time, weather, battery and up to {} apps.	Hora, clima, bateria e até {} apps.
 Hora, clima, batería y hasta {} apps. Cuando suena música, el reproductor aparece compacto y queda una fila de {} apps para que no se apriete.	Time, weather, battery and up to {} apps. When music plays, the player appears compact with one row of {} apps so nothing gets crowded.	Hora, clima, bateria e até {} apps. Com música, o player aparece compacto com uma linha de {} apps para não apertar.
-Hoy	Today	Hoje
 hoy	today	hoje
 Idioma	Language	Idioma
 Informe de errores	Error report	Relatório de erros
@@ -228,7 +208,6 @@ Jueves	Thursday	Quinta-feira
 La canción con sus botones	The song with its buttons	A música com seus botões
 La foto cubre la pantalla.	The photo fills the screen.	A foto cobre a tela.
 La hora siempre se ve. Si el widget es pequeño, se quitan datos solos.	The time is always shown. If the widget is small, details are removed automatically.	A hora sempre aparece. Se o widget for pequeno, dados somem sozinhos.
-La hora, el día y la fecha usan el reloj del sistema, que nunca se atrasa. Si quieres que también lleven la letra del tema, activa «Hora con la letra del tema».	The time, day and date use the system clock, which is never late. To use the theme's font for them too, turn on “Time in the theme's font”.	A hora, o dia e a data usam o relógio do sistema, que nunca atrasa. Para usar a fonte do tema neles também, ative “Hora com a fonte do tema”.
 La música se pausa en unos {} min.	Music will pause in about {} min.	A música pausa em uns {} min.
 La música se pausa en {} min	Music will pause in {} min	A música pausa em {} min
 La vista previa no se pudo mostrar. Tu widget en la pantalla de inicio no se ve afectado.	The preview couldn't be shown. Your widget on the home screen isn't affected.	A prévia não pôde ser mostrada. Seu widget na tela inicial não foi afetado.
@@ -236,7 +215,6 @@ Las apps que siguen suben un lugar para no dejar huecos.	The following apps move
 Las letras se ajustan solas al color.	The text adjusts to the color automatically.	O texto se ajusta sozinho à cor.
 Letras del tema	Theme fonts	Fontes do tema
 Lima neón	Neon lime	Lima neon
-Listo	Done	Pronto
 Llenar pantalla	Fill screen	Preencher tela
 Llovizna	Drizzle	Garoa
 Llovizna, platillo suave	Drizzle, soft cymbal	Garoa, prato suave
@@ -286,9 +264,7 @@ Niebla	Fog	Neblina
 Niebla de escenario	Stage fog	Névoa de palco
 Nieve	Snow	Neve
 Nieve: balada lenta	Snow: slow ballad	Neve: balada lenta
-Ninguna	None	Nenhuma
 Ninguna elegida	None selected	Nenhuma escolhida
-No agregado	Not added	Não adicionado
 No encontramos esa ciudad. Revisa la ortografía o agrega el departamento.	We couldn't find that city. Check the spelling or add the state or region.	Não encontramos essa cidade. Verifique a grafia ou adicione o estado.
 No lee ni guarda tus mensajes.	It never reads or stores your messages.	Não lê nem guarda suas mensagens.
 No pudimos abrir esa foto	We couldn't open that photo	Não conseguimos abrir essa foto
@@ -333,7 +309,6 @@ Ponerle nombre	Name it	Dar um nome
 Ponlo en tu pantalla de inicio y estíralo para que ocupe el ancho y casi todo el alto.	Put it on your home screen and stretch it to full width and almost full height.	Coloque-o na tela inicial e estique para ocupar a largura e quase toda a altura.
 Por ejemplo: Inicio, Trabajo, Música	For example: Home, Work, Music	Por exemplo: Início, Trabalho, Música
 Posición	Position	Posição
-Posición en el widget	Position on the widget	Posição no widget
 Primero elige una foto	Choose a photo first	Escolha uma foto primeiro
 Prisma guardó en tu teléfono el detalle de algunos cierres. No incluye datos personales. ¿Quieres compartirlo?	Prisma saved details of some crashes on your phone. It includes no personal data. Do you want to share it?	O Prisma salvou no telefone os detalhes de alguns fechamentos. Não inclui dados pessoais. Quer compartilhar?
 Probar agregarlo	Try adding it	Tentar adicionar
@@ -357,18 +332,15 @@ Reproductor grande	Big player	Player grande
 Reproductor grande siempre a la vista, cabecera compacta y {} apps.	Big player always visible, compact header and {} apps.	Player grande sempre à vista, cabeçalho compacto e {} apps.
 Reproductor grande y hasta {} apps.	Big player and up to {} apps.	Player grande e até {} apps.
 Restaurar una copia	Restore a backup	Restaurar uma cópia
-Revisar permiso	Check permission	Verificar permissão
 Rock	Rock	Rock
 Rojo rock	Rock red	Vermelho rock
 SEMANA {}	WEEK {}	SEMANA {}
 SETLIST	SETLIST	SETLIST
 SETLIST DE LA SEMANA	SETLIST OF THE WEEK	SETLIST DA SEMANA
 Saltar	Skip	Pular
-Se acomodan solos al tamaño. Toca uno para cambiar su grupo o su tamaño.	They fit the size automatically. Tap one to change its group or size.	Ajustam-se sozinhos ao tamanho. Toque em um para mudar seu grupo ou tamanho.
 Se dibuja cada minuto con la actualización en vivo.	It's drawn every minute with live updates.	É desenhada a cada minuto com a atualização ao vivo.
 Se ve la foto entera.	The whole photo is shown.	A foto inteira aparece.
 Secciones	Sections	Seções
-Según la carátula	From the cover	Pela capa
 Semana {} · {} min	Week {} · {} min	Semana {} · {} min
 Si la actualización en vivo se detiene, el widget vuelve solo al reloj del sistema, que nunca se atrasa.	If live updates stop, the widget switches back to the system clock, which is never late.	Se a atualização ao vivo parar, o widget volta sozinho ao relógio do sistema, que nunca atrasa.
 Si no aparece una ventana para confirmar, usa los pasos.	If no confirmation window appears, follow the steps.	Se não aparecer uma janela para confirmar, siga os passos.
@@ -403,7 +375,6 @@ Temporizador apagado	Timer off	Temporizador desligado
 Toca Agregar widget y confirma. Si tu teléfono no lo permite desde aquí:	Tap Add widget and confirm. If your phone doesn't allow it from here:	Toque em Adicionar widget e confirme. Se o telefone não permitir daqui:
 Toca Agregar widget. Si tu teléfono no lo permite desde aquí, agrégalo tú en cuatro pasos.	Tap Add widget. If your phone doesn't allow it from here, add it yourself in four steps.	Toque em Adicionar widget. Se o telefone não permitir daqui, adicione você em quatro passos.
 Toca Widgets.	Tap Widgets.	Toque em Widgets.
-Toca para verla en grande	Tap to see it large	Toque para ver em tamanho grande
 Toca un fondo para verlo en grande, desliza para ver los demás y toca Aplicar.	Tap a wallpaper to see it large, swipe to see the others and tap Apply.	Toque em um fundo para vê-lo grande, deslize para ver os outros e toque em Aplicar.
 Toca una app para cambiarla, renombrarla o quitarla.	Tap an app to change, rename or remove it.	Toque em um app para mudar, renomear ou remover.
 Toca uno para verlo en grande y aplicarlo.	Tap one to see it large and apply it.	Toque em um para vê-lo grande e aplicá-lo.
@@ -420,7 +391,6 @@ Tu app de música: {}. Cambiar	Your music app: {}. Change	Seu app de música: {}
 Tu fondo, oscurecido	Your wallpaper, darkened	Seu fundo, escurecido
 Tu foto	Your photo	Sua foto
 Tu teléfono no permite fondos animados	Your phone doesn't support animated wallpapers	Seu telefone não permite fundos animados
-Tu widget de Apps	Your Apps widget	Seu widget de Apps
 Tus apps, se acomodan al tamaño	Your apps, fit to size	Seus apps, ajustados ao tamanho
 Tus widgets	Your widgets	Seus widgets
 Ubicación del clima	Weather location	Local do clima
@@ -428,7 +398,6 @@ Un solo color de fondo.	A single background color.	Uma única cor de fundo.
 Usa el color que Android saca de tu fondo de pantalla.	Uses the color Android takes from your wallpaper.	Usa a cor que o Android tira do seu papel de parede.
 Usar el original	Use the original	Usar o original
 Usar este color	Use this color	Usar esta cor
-Usar un setup compartido	Use a shared setup	Usar um setup compartilhado
 Variable	Variable	Variável
 Ventana con lluvia, neón y el vapor de un café	Rainy window, neon and steam from a coffee	Janela com chuva, neon e o vapor de um café
 Ventana gris	Gray window	Janela cinza
@@ -481,17 +450,11 @@ El escenario cambia solo según el momento. Tus ajustes no se tocan: al pasar el
 Lluvia: Lluvia y café	Rain: Rain and coffee	Chuva: Chuva e café
 Noche: Ámbar y fogata	Night: Amber and campfire	Noite: Âmbar e fogueira
 Audífonos: Música grande	Headphones: Big music	Fones: Música grande
-Cuando el clima dice lluvia, el fondo animado pasa a «Lluvia y café».	When the forecast says rain, the animated wallpaper switches to “Rain and coffee”.	Quando o clima indica chuva, o fundo animado passa para “Chuva e café”.
-De 8 p. m. a 5 a. m., tema Ámbar y fondo Fogata.	From 8 p.m. to 5 a.m., Amber theme and Campfire wallpaper.	Das 20h às 5h, tema Âmbar e fundo Fogueira.
-Con audífonos conectados, el widget Completo muestra el reproductor grande.	With headphones connected, the Full widget shows the big player.	Com fones conectados, o widget Completo mostra o player grande.
-Las reglas se revisan al encender la pantalla.	Rules are checked when the screen turns on.	As regras são verificadas ao ligar a tela.
 FECHAS ESPECIALES	SPECIAL DATES	DATAS ESPECIAIS
 Ese día el widget lo celebra y el fondo pasa a «Concierto».	That day the widget celebrates and the wallpaper switches to “Concert”.	Nesse dia o widget comemora e o fundo passa para “Show”.
 Agregar una fecha	Add a date	Adicionar uma data
 ¿Qué se celebra?	What are we celebrating?	O que se comemora?
 Por ejemplo: Mi primer concierto	For example: My first concert	Por exemplo: Meu primeiro show
-MI VIDEO	MY VIDEO	MEU VÍDEO
-Un clip tuyo (de un concierto, por ejemplo) como fondo animado. Máximo 80 MB; los cortos y en 1080p van mejor.	A clip of yours (from a concert, for example) as the animated wallpaper. Up to 80 MB; short 1080p clips work best.	Um clipe seu (de um show, por exemplo) como fundo animado. Até 80 MB; curtos e em 1080p funcionam melhor.
 Usar un video mío	Use my own video	Usar um vídeo meu
 Cambiar mi video	Change my video	Trocar meu vídeo
 Preparando tu video…	Preparing your video…	Preparando seu vídeo…
@@ -506,14 +469,10 @@ Esperando su momento	Waiting for its moment	Esperando o momento
 Noche	Night	Noite
 Audífonos	Headphones	Fones
 Piel del reproductor	Player skin	Visual do player
-Carátula	Cover	Capa
 Vinilo	Vinyl	Vinil
 Casete	Cassette	Fita cassete
 Vinilo y Casete muestran cuánto va de la canción; se actualiza cada vez que se redibuja el widget.	Vinyl and Cassette show how far the song has played; it updates each time the widget is redrawn.	Vinil e Cassete mostram quanto da música já tocou; atualiza a cada vez que o widget é redesenhado.
-Descubrir bandas en RockPlay IA	Discover bands in RockPlay IA	Descobrir bandas no RockPlay IA
 Taller de Afiches · letra del widget	Poster Workshop · widget font	Oficina de Pôsteres · fonte do widget
-Funciona con «Letras del tema» activado. La hora conserva la letra del tema.	Works with “Theme fonts” on. The time keeps the theme's font.	Funciona com “Fontes do tema” ativado. A hora mantém a fonte do tema.
-Hora y clima con voz rock	Time and weather in rock voice	Hora e clima com voz rock
 {} MINUTOS EN ESCENA	{} MINUTES ON STAGE	{} MINUTOS NO PALCO
 Primero da el acceso a notificaciones (arriba, en esta sección)	First grant notification access (above, in this section)	Primeiro dê o acesso a notificações (acima, nesta seção)
 Es un protector de pantalla: aparece cuando el teléfono está cargando y se apaga la pantalla (o al ponerlo en su base). Muestra tu widget Hora y clima y, si suena música, el reproductor con sus botones. Usa poco brillo y se mueve un poco cada minuto para no marcar la pantalla. La pantalla siempre activa de HyperOS no permite widgets de otras apps; esto es lo más parecido.	It's a screen saver: it appears when the phone is charging and the screen turns off (or when docked). It shows your Time & weather widget and, if music is playing, the player with its buttons. It uses low brightness and shifts a little every minute so the screen doesn't burn in. HyperOS always-on display doesn't allow other apps' widgets; this is the closest thing.	É um protetor de tela: aparece quando o telefone está carregando e a tela apaga (ou na base). Mostra seu widget Hora e clima e, se tocar música, o player com seus botões. Usa pouco brilho e se move um pouco a cada minuto para não marcar a tela. A tela sempre ativa do HyperOS não permite widgets de outros apps; isto é o mais parecido.
@@ -523,9 +482,6 @@ Cartel · Alarma	Poster · Alarm	Pôster · Alarme
 Cartel · Alarma · Agenda	Poster · Alarm · Calendar	Pôster · Alarme · Agenda
 Alarma · Agenda	Alarm · Calendar	Alarme · Agenda
 Cartel · Agenda	Poster · Calendar	Pôster · Agenda
-Volver a ajustes	Back to settings	Voltar às configurações
-Secciones de ajustes	Settings sections	Seções de configurações
-Crear una entrada de concierto con la canción que suena y compartirla	Create a concert ticket with the song that's playing and share it	Criar um ingresso de show com a música que está tocando e compartilhar
 En pausa: manda lo que elegiste	Paused: your choice wins	Em pausa: vale o que você escolheu
 Más	More	Mais
 Extras de música	Music extras	Extras de música
@@ -541,9 +497,7 @@ Entrada de concierto	Concert ticket	Ingresso de show
 Con la canción que suena	With the song that's playing	Com a música que está tocando
 Tu setlist de la semana	Your setlist of the week	Seu setlist da semana
 Tu año en escena	Your year on stage	Seu ano no palco
-Código con tu tema y colores	Code with your theme and colors	Código com seu tema e cores
 Descubrir bandas	Discover bands	Descobrir bandas
-En RockPlay IA	In RockPlay IA	No RockPlay IA
 Afiche de la Gira	Tour poster	Pôster da Turnê
 Rendimiento	Performance	Desempenho
 Detalles divertidos	Fun details	Detalhes divertidos
@@ -568,7 +522,6 @@ Toca uno para ponerle nombre o cambiar su grupo y tamaño.	Tap one to name it or
 Columna	Column	Coluna
 Fila	Row	Linha
 Bloque	Block	Bloco
-{} de 5 en pantalla	{} of 5 on screen	{} de 5 na tela
 Hasta 80 MB · los cortos van mejor	Up to 80 MB · short clips work best	Até 80 MB · curtos funcionam melhor
 En uso	In use	Em uso
 Día	Day	Dia
@@ -577,10 +530,7 @@ Historial	History	Histórico
 Temporizador	Timer	Temporizador
 Entrada, afiches y setup	Ticket, posters and setup	Ingresso, pôsteres e setup
 Normal	Normal	Normal
-Voz rock	Rock voice	Voz rock
-Hasta el 11	Up to 11	Até o 11
 Editar widget	Edit widget	Editar widget
-Restablecer	Reset	Redefinir
 Fecha	Date	Data
 Editar	Edit	Editar
 Toca una parte del widget	Tap a part of the widget	Toque em uma parte do widget
@@ -599,14 +549,12 @@ Color	Color	Cor
 Hueso	Bone	Osso
 Ya está arriba del todo	It's already at the top	Já está no topo
 Ya está abajo del todo	It's already at the bottom	Já está embaixo
-Widget como venía	Widget back to default	Widget como veio
 La hora se ve con esta letra cuando están encendidas «Hora con la letra del tema» y «Actualización en vivo» (en Más › Rendimiento).	The time shows this font when “Time in the theme's font” and “Live updates” are on (in More › Performance).	A hora aparece com esta fonte quando “Hora com a fonte do tema” e “Atualização ao vivo” estão ligadas (em Mais › Desempenho).
 Editar el widget a mano	Edit the widget by hand	Editar o widget à mão
 Toca cada parte: orden, tamaño, letra y color	Tap each part: order, size, font and color	Toque em cada parte: ordem, tamanho, fonte e cor
 Cambia su orden, tamaño, letra y color, u ocúltala. Cada cambio se guarda solo, al instante.	Change its order, size, font and color, or hide it. Every change saves itself, instantly.	Mude ordem, tamanho, fonte e cor, ou oculte. Cada mudança se salva na hora.
 Volver al diseño original	Back to the original design	Voltar ao design original
 ¿Deshacer todos los cambios del editor (orden, tamaños, letras y colores)?	Undo all editor changes (order, sizes, fonts and colors)?	Desfazer todas as mudanças do editor (ordem, tamanhos, fontes e cores)?
-Deshacer	Undo	Desfazer
 Elegir otra parte	Pick another part	Escolher outra parte
 Se movió toda la cabecera: día, hora, clima y batería van juntos	The whole header moved: day, time, weather and battery go together	O cabeçalho inteiro se moveu: dia, hora, clima e bateria vão juntos
 mueve toda la cabecera	moves the whole header	move o cabeçalho inteiro
@@ -625,8 +573,6 @@ Se movió toda la cabecera: día, fecha, hora, clima y batería van juntos	The w
 Plantilla aplicada: se quitaron los cambios del editor	Template applied: editor changes were removed	Modelo aplicado: as mudanças do editor foram removidas
 Ajustar cada parte	Adjust each part	Ajustar cada parte
 Mostrar, ordenar, tamaño, letra y color	Show, order, size, font and color	Mostrar, ordenar, tamanho, fonte e cor
-Lugar y tamaño en el widget	Place and size in the widget	Lugar e tamanho no widget
-Se ajusta en el editor visual	Adjusted in the visual editor	Ajusta-se no editor visual
 Cantidad	Amount	Quantidade
 Ninguna	None	Nenhuma
 1 fila	1 row	1 linha
@@ -637,7 +583,6 @@ Así se ve en tu pantalla	This is how it looks on your screen	Assim aparece na s
 Sin música suena nada: lo de arriba es un ejemplo de cómo se verá.	No music playing: what you see above is an example of how it will look.	Sem música tocando: o de cima é um exemplo de como vai ficar.
 La hora se ve con esta letra cuando está encendida «Hora y fecha con la letra del tema» (en Estilo › Tema).	The time shows this font when “Time and date in the theme's font” is on (in Style › Theme).	A hora aparece com esta fonte quando “Hora e data com a fonte do tema” está ligada (em Estilo › Tema).
 Guardar copia de ajustes	Save a settings backup	Salvar cópia dos ajustes
-Lugar y tamaño	Place and size	Lugar e tamanho
 Hora y fecha con la letra del tema	Time and date in the theme's font	Hora e data com a fonte do tema
 Se dibuja cada minuto.	Drawn every minute.	Desenhada a cada minuto.
 Apagado: tu pantalla de inicio usa la letra del sistema.	Off: your home screen uses the system font.	Desligado: sua tela inicial usa a fonte do sistema.
@@ -692,7 +637,6 @@ Toma el color más vivo de tu fondo (escena, foto o video).	Takes the most vivid
 No pude sacar un color de tu fondo	I couldn't get a color from your background	Não consegui tirar uma cor do seu fundo
 Mi semana	My week	Minha semana
 Cuánto escuchaste y tu artista de la semana	How much you listened and your artist of the week	Quanto você ouviu e seu artista da semana
-{} de 6 en pantalla	{} of 6 on screen	{} de 6 na tela
 MI SEMANA	MY WEEK	MINHA SEMANA
 Más escuchado: {}	Most played: {}	Mais ouvido: {}
 Aún sin música esta semana	No music yet this week	Ainda sem música nesta semana
@@ -738,3 +682,8 @@ Toca para dar permiso al calendario	Tap to allow calendar access	Toque para perm
 Hoy	Today	Hoje
 todo el día	all day	o dia todo
 Desliza para moverlo	Slide to move it	Deslize para mover
+Continuar	Continue	Continuar
+Ahora no	Not now	Agora não
+Antes de dar el permiso	Before you allow it	Antes de permitir
+Android lo llama «Acceso a notificaciones», pero Prisma Widgets solo lo usa para ver la canción que suena: título, artista, carátula y los botones ⏮ ⏯ ⏭.	Android calls it “Notification access”, but Prisma Widgets only uses it to see the song that's playing: title, artist, cover and the ⏮ ⏯ ⏭ buttons.	O Android chama de “Acesso a notificações”, mas o Prisma Widgets só usa para ver a música que toca: título, artista, capa e os botões ⏮ ⏯ ⏭.
+No lee, no guarda y no envía tus notificaciones ni tus mensajes. Puedes quitar el permiso cuando quieras.	It doesn't read, store or send your notifications or messages. You can remove the permission any time.	Não lê, não guarda e não envia suas notificações nem mensagens. Você pode tirar a permissão quando quiser.
