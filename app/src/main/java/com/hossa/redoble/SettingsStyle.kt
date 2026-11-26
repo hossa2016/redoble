@@ -499,7 +499,7 @@ internal fun MainActivity.themePlate(): View {
     val liveOn = Prefs.liveUpdates(this)
     card.addView(ui.text("Letra del widget", ui.cond, 17f, Ui.HEAD), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(16); bottomMargin = ui.dp(6) })
     var chosen: View? = null
-    val cur = if (!fonts) "sistema" else Prefs.workshopFont(this)
+    val curFont = if (!fonts) "sistema" else Prefs.workshopFont(this)
     card.addView(HorizontalScrollView(this).apply {
         isHorizontalScrollBarEnabled = false
         post { chosen?.let { c -> smoothScrollTo((c.left - ui.dp(16)).coerceAtLeast(0), 0) } }
@@ -507,9 +507,9 @@ internal fun MainActivity.themePlate(): View {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, 0, ui.dp(24), 0)
             (listOf("sistema" to 0) + TextArt.WORKSHOP_FONTS).forEach { (name, id) ->
-                addView(ui.option(when (name) { "sistema" -> "Del sistema"; "tema" -> "Del tema"; else -> name }, name == cur).apply {
+                addView(ui.option(when (name) { "sistema" -> "Del sistema"; "tema" -> "Del tema"; else -> name }, name == curFont).apply {
                     if (id != 0) typeface = ui.font(id)
-                    if (name == cur) chosen = this
+                    if (name == curFont) chosen = this
                     setOnClickListener {
                         if (name == "sistema") { Prefs.setThemeFonts(this@themePlate, false); Prefs.setThemeClock(this@themePlate, false) }
                         else { Prefs.setThemeFonts(this@themePlate, true); Prefs.setWorkshopFont(this@themePlate, name) }
@@ -519,10 +519,10 @@ internal fun MainActivity.themePlate(): View {
             }
         })
     })
-    card.addView(ui.note(when (cur) {
+    card.addView(ui.note(when (curFont) {
         "sistema" -> "Todo con la letra de tu teléfono."
         "tema" -> "Clima, batería, música y apps con la letra de cada tema."
-        else -> I18n.tr(this, "Clima, batería, música y apps con {}.").replace("{}", cur)
+        else -> I18n.tr(this, "Clima, batería, música y apps con {}.").replace("{}", curFont)
     }))
     if (fonts) {
         card.addView(switchRow("La hora y la fecha también", Prefs.themeClock(this) && liveOn) { on ->
