@@ -296,7 +296,7 @@ class RockWidget : AppWidgetProvider() {
                 }
                 else -> {
                     // Reproductor primero: de él depende cuánto espacio queda.
-                    val playing = Player.apply(ctx, v, fonts, W, preview, sample = sample)
+                    val playing = Player.apply(ctx, v, fonts, W, preview, sample = sample, tall = tallFull(ctx, hDp))
                     if (!preview) Prefs.setLastPlaying(ctx, playing)
                     headerSection(ctx, v, th, W, playing, fonts, preview, hDp = hDp)
                     appsSection(ctx, v, th, W, playing, fonts, hDp)
@@ -350,11 +350,18 @@ class RockWidget : AppWidgetProvider() {
             for (id in ids) {
                 try {
                     val v = RemoteViews(ctx.packageName, th.layout)
-                    val playing = Player.apply(ctx, v, Prefs.themeFonts(ctx), widthPx(ctx, mgr, id))
+                    val playing = Player.apply(ctx, v, Prefs.themeFonts(ctx), widthPx(ctx, mgr, id),
+                        tall = tallFull(ctx, Widgets.sizeDp(ctx, mgr, id).second))
                     if (playing != Prefs.lastPlaying(ctx)) { updateAll(ctx); return }
                     mgr.partiallyUpdateAppWidget(id, v)
                 } catch (e: Exception) { }
             }
+        }
+
+        /** Completo alto (más de ~560 dp, con la letra del teléfono): sobra espacio para el reproductor grande. */
+        internal fun tallFull(ctx: Context, hDp: Int): Boolean {
+            val fs = ctx.resources.configuration.fontScale.coerceIn(0.8f, 1.6f)
+            return hDp >= (540 * fs).toInt().coerceAtLeast(540)
         }
 
         /** Día, fecha, hora, clima y batería. */
@@ -490,7 +497,12 @@ class RockWidget : AppWidgetProvider() {
                 v.setImageViewBitmap(R.id.clock_bmp, clockBitmap(ctx, th, playing, soloTs, full = ed))
                 if (!preview) armClockCheck(ctx)
             }
-            val ts = (if (solo) soloTs else timeSize(th.family) * (if (playing) 0.875f else 1f)) * sc("hora")
+            // Completo muy alto: la hora crece un poco para llenar el espacio que sobra
+            val grow = if (kind == Widgets.FULL && hDp > 0) {
+                val fsx = ctx.resources.configuration.fontScale.coerceIn(0.8f, 1.6f)
+                (1f + (hDp - 620 * fsx) / 600f).coerceIn(1f, 1.3f)
+            } else 1f
+            val ts = (if (solo) soloTs else timeSize(th.family) * (if (playing) 0.875f else 1f) * grow) * sc("hora")
             if (own("hora") != 0) for (id in intArrayOf(R.id.hh, R.id.mm)) v.setTextColor(id, own("hora"))
             // Fecha más pequeña si el widget suelto es angosto
             if (solo && wDp < 200) v.setTextViewTextSize(R.id.date, TypedValue.COMPLEX_UNIT_SP, S.dsize * 0.9f)
@@ -645,7 +657,15 @@ class RockWidget : AppWidgetProvider() {
         }
 
         /** Solo el fondo (lo usan también las piezas sueltas, como el widget de Apps). */
-        internal fun rootBackground(ctx: Context, v: RemoteViews, th: Theme) {
+        /** Margen interior del panel: 16 dp, menos en widgets angostos (si no, los íconos no caben). */
+        internal fun rootPadDp(ctx: Context, sizeDp: Int): Int = when {
+            Prefs.widgetStyle(ctx) != "fade" && Prefs.widgetStyle(ctx) != "solid" -> 0
+            sizeDp in 1..139 -> 6
+            sizeDp in 140..219 -> 10
+            else -> 16
+        }
+
+        internal fun rootBackground(ctx: Context, v: RemoteViews, th: Theme, sizeDp: Int = 0) {
             when (Prefs.widgetStyle(ctx)) {
                 "fade", "solid" -> {
                     val col = Themes.widgetColor(ctx, th)
@@ -655,7 +675,7 @@ class RockWidget : AppWidgetProvider() {
                         v.setColorStateList(R.id.root, "setBackgroundTintList", android.content.res.ColorStateList.valueOf(col))
                     } else v.setInt(R.id.root, "setBackgroundColor", col)
                     // Margen interior: el contenido no queda pegado al borde del fondo
-                    val pad = (16 * ctx.resources.displayMetrics.density).toInt()
+                    val pad = (rootPadDp(ctx, sizeDp) * ctx.resources.displayMetrics.density).toInt()
                     v.setViewPadding(R.id.root, pad, pad, pad, pad)
                 }
                 else -> v.setInt(R.id.root, "setBackgroundResource", 0)

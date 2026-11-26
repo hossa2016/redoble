@@ -126,16 +126,18 @@ object Widgets {
     fun playerViews(ctx: Context, wDp: Int, hDp: Int): RemoteViews {
         val th = Themes.widget(ctx)
         val v = RemoteViews(ctx.packageName, playerLayout(th.family))
-        RockWidget.rootBackground(ctx, v, th)
+        val pad = RockWidget.rootPadDp(ctx, minOf(wDp, hDp))
+        RockWidget.rootBackground(ctx, v, th, minOf(wDp, hDp))
         val wPx = (wDp * ctx.resources.displayMetrics.density).toInt()
         RockWidget.tintCards(ctx, v, th, intArrayOf(R.id.ws, R.id.wm, R.id.wl))
         val fonts = Prefs.themeFonts(ctx)
         when {
             hDp < 120 -> Player.applyStandalone(ctx, v, 0, wPx, 44, fonts, showText = wDp >= 200)
             hDp < 260 || wDp < 200 -> Player.applyStandalone(ctx, v, 1, wPx,
-                minOf(hDp - 24, (wDp * (if (wDp < 300) 0.34f else 0.42f)).toInt()).coerceIn(56, 140), fonts)
+                minOf(hDp - 24 - 2 * pad, (wDp * (if (wDp < 300) 0.34f else 0.42f)).toInt()).coerceIn(56, 140), fonts,
+                roomDp = hDp - 24 - 2 * pad)
             // Grande: la carátula deja sitio a título, artista y botones (unos 200 dp)
-            else -> Player.applyStandalone(ctx, v, 2, wPx, minOf(wDp - 40, hDp - 210).coerceIn(80, 220), fonts)
+            else -> Player.applyStandalone(ctx, v, 2, wPx, minOf(wDp - 40 - 2 * pad, hDp - 210 - 2 * pad).coerceIn(80, 220), fonts)
         }
         return v
     }
@@ -201,9 +203,11 @@ object Widgets {
     fun appsViews(ctx: Context, id: Int, wDp: Int, hDp: Int, cfg: AwCfg = awCfg(ctx, id)): RemoteViews {
         val th = Themes.widget(ctx)
         val v = RemoteViews(ctx.packageName, appsLayout(th.family))
-        RockWidget.rootBackground(ctx, v, th)
+        val pad = RockWidget.rootPadDp(ctx, minOf(wDp, hDp))
+        RockWidget.rootBackground(ctx, v, th, minOf(wDp, hDp))
         val fonts = Prefs.themeFonts(ctx)
-        val g = grid(ctx, id, wDp, hDp, th.family, cfg)
+        val iw = wDp - 2 * pad; val ih = hDp - 2 * pad
+        var g = grid(ctx, id, iw, ih, th.family, cfg)
         val group = cfg.group
         val pm = ctx.packageManager
         val dens = ctx.resources.displayMetrics.density
@@ -215,10 +219,15 @@ object Widgets {
             val pkg = Prefs.app(ctx, s, group)
             if (pkg.isBlank()) null else pm.getLaunchIntentForPackage(pkg)?.let { Triple(s, pkg, it) }
         }.take(g.cols * g.rows)
+        // Pocas apps en un widget grande: se usan solo las filas necesarias, más altas
+        if (cfg.auto && apps.isNotEmpty()) {
+            val need = (apps.size + g.cols - 1) / g.cols
+            if (need < g.rows) g = grid(ctx, id, iw, ih, th.family, AwCfg(cfg.group, cfg.names, false, g.cols, need))
+        }
         val usedRows = if (apps.isEmpty()) 0 else (apps.size + g.cols - 1) / g.cols
 
         // Casillas de ancho normal: si hay pocas columnas no se estiran, quedan centradas
-        val freeW = wDp - 8
+        val freeW = iw - 8
         val cellMax = if (g.names) 100 else maxOf(g.rowH + 12, 64)
         val cellW = minOf((freeW - 8 * (g.cols - 1)) / g.cols, cellMax)
         val side = ((freeW - cellW * g.cols - 8 * (g.cols - 1)) / 2).coerceAtLeast(0)
@@ -229,7 +238,8 @@ object Widgets {
         val labelSp = TextArt.commonSize(ctx, apps.map { Prefs.displayName(ctx, it.first, group) }, S.label,
             if (g.cols >= 4) S.lsize * 0.86f else S.lsize, S.lls, th.family == "neon" || th.family == "lujo", S.shadow, maxWidthPx = labelMax)
         // Caja del ícono: más pequeña si la fila es bajita
-        val hs = minOf(holderDp(th.family), (g.rowH - if (g.names) 24 else 6).coerceAtLeast(28), (cellW - 8).coerceAtLeast(28))
+        // El cuadro del ícono nunca más ancho que su casilla (antes se veía partido en columnas)
+        val hs = minOf(holderDp(th.family), (g.rowH - if (g.names) 24 else 6).coerceAtLeast(28), (cellW - 4).coerceAtLeast(20))
 
         for (r in 0 until 4) v.setViewVisibility(ROWS[r], if (r < usedRows) View.VISIBLE else View.GONE)
         for (r in 0 until 4) for (c in 0 until 5) {

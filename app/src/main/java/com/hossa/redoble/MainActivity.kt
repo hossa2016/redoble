@@ -309,7 +309,7 @@ class MainActivity : AppCompatActivity() {
                 col.addView(fold(galleryPlate(), "galeria", I18n.tr(this, "{} diseños").replace("{}", Gallery.ALL.size.toString())))
                 val ws = Prefs.wallStyle(this)
                 val wallName = when (ws) {
-                    "fade" -> "Desvanecido"; "solid" -> "Fijo"; "photo" -> "Foto"
+                    "fade" -> "Degradado"; "solid" -> "Color"; "photo" -> "Foto"
                     "anim" -> VideoScenes.find(Prefs.liveScene(this)).name; else -> "Del tema"
                 }
                 val widgetBgName = when (Prefs.widgetStyle(this)) { "fade" -> "Desvanecido"; "solid" -> "Fijo"; else -> "Sin fondo" }

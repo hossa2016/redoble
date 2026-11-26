@@ -114,7 +114,7 @@ internal fun MainActivity.wallpaperPlate(): View {
     val th = Themes.saved(this)
     card.addView(ui.sectionTitle("Fondo de pantalla"))
     val ws = Prefs.wallStyle(this)
-    card.addView(ui.segmented(listOf("orig" to "Tema", "fade" to "Desvanecido", "solid" to "Fijo", "photo" to "Foto", "anim" to "Animado"), ws) {
+    card.addView(ui.segmented(listOf("orig" to "Del tema", "fade" to "Degradado", "solid" to "Color", "photo" to "Foto", "anim" to "Animado"), ws) {
         Prefs.setWallStyle(this, it); RockWidget.updateAll(this); build()
     })
 

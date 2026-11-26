@@ -162,7 +162,7 @@ internal fun MainActivity.setlistPlate(): View {
     // Sin huecos: las apps suben a los primeros lugares (el número de la fila es su posición real)
     if (Prefs.compactApps(this, group, used)) RockWidget.updateAll(this)
     val filled = (0 until used).count { Prefs.app(this, it, group).isNotBlank() }
-    card.addView(ui.sectionTitle("Apps", if (appsWidget) "${Prefs.GROUP_NAMES[group]} · $filled de $used"
+    card.addView(ui.sectionTitle("Apps", if (appsWidget) "${Prefs.GROUP_NAMES[group]} · " + I18n.tr(this, if (filled == 1) "{} app" else "{} apps").replace("{}", filled.toString())
         else "$filled de $used · ${Prefs.perRow(this)} por fila"))
     if (appsWidget) {
         card.addView(ui.segmented(Prefs.GROUP_NAMES.indices.map { it to Prefs.GROUP_NAMES[it] }, group) { appsGroup = it; build() },
@@ -194,7 +194,7 @@ internal fun MainActivity.setlistPlate(): View {
         card.addView(slotRow(i, group, if (isEmpty) free else 0), LinearLayout.LayoutParams(-1, ui.dp(56)))
         if (isEmpty) addShown = true
     }
-    if (appsWidget && !extraFilled) card.addView(ui.textButton(if (moreSlots) "Mostrar menos lugares" else "Mostrar ${Prefs.GROUP_SLOTS - 8} lugares más").apply {
+    if (appsWidget && !extraFilled) card.addView(ui.textButton(if (moreSlots) "Mostrar menos lugares" else I18n.tr(this, "Más lugares para widgets grandes (hasta {})").replace("{}", Prefs.GROUP_SLOTS.toString())).apply {
         setOnClickListener { moreSlots = !moreSlots; build() }
     }, LinearLayout.LayoutParams(-1, ui.dp(48)).apply { topMargin = ui.dp(6) })
     return card

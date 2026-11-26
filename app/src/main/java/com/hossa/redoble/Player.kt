@@ -101,7 +101,7 @@ object Player {
         val title = clean(md.getString(MediaMetadata.METADATA_KEY_TITLE) ?: md.description?.title?.toString() ?: "")
         val artist = clean(md.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
             ?: md.description?.subtitle?.toString() ?: "")
-        return if (title.isBlank()) null else title to artist
+        return if (title.isBlank()) null else Meta.split(title, artist)
     }
 
     /** Carátula de lo que suena (sin descargar). */
@@ -213,7 +213,7 @@ object Player {
      * o «Nada sonando»).
      */
     fun apply(ctx: Context, v: RemoteViews, fonts: Boolean = false, widthPx: Int = 0, preview: Boolean = false, mode: Int = 0,
-              sample: Boolean = false): Boolean {
+              sample: Boolean = false, tall: Boolean = false): Boolean {
         v.setViewVisibility(R.id.player, View.GONE)
         v.setViewVisibility(R.id.player_c, View.GONE)
         // En el Completo, sin tarjeta de música su hueco desaparece (las apps suben bajo la hora)
@@ -222,17 +222,17 @@ object Player {
         val c = try { controller(ctx) } catch (e: Exception) { null }
         prog = progressOf(c)
         val md = c?.metadata
-        val title = clean(md?.getString(MediaMetadata.METADATA_KEY_TITLE)
+        val title0 = clean(md?.getString(MediaMetadata.METADATA_KEY_TITLE)
             ?: md?.description?.title?.toString() ?: "")
-        if (c == null || md == null || title.isBlank()) {
+        if (c == null || md == null || title0.isBlank()) {
             if (mode != 0) idle(ctx, v, fonts, widthPx, mode == 1)
             // Editor visual: sin música se muestra igual, para poder elegirlo y moverlo
             else if (sample) idle(ctx, v, fonts, widthPx, Prefs.playerLarge(ctx))
             return false
         }
-        val artist = clean(md.getString(MediaMetadata.METADATA_KEY_ARTIST)
+        val (title, artist) = Meta.split(title0, clean(md.getString(MediaMetadata.METADATA_KEY_ARTIST)
             ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
-            ?: md.description?.subtitle?.toString() ?: "")
+            ?: md.description?.subtitle?.toString() ?: ""))
         val playing = isPlaying(c)
         val art = artFor(ctx, md, download = !preview)  // la vista previa no descarga nada
         val th = coverTheme(ctx, Themes.widget(ctx), art)
@@ -261,7 +261,7 @@ object Player {
                 TextArt.render(ctx, t, font, sp, col, sp2, caps, S.shadow, if (font == S.title) glow else 0, maxW, translate = false)
             }
 
-        if (if (mode == 0) Prefs.playerLarge(ctx) else mode == 1) {
+        if (if (mode == 0) Prefs.playerLarge(ctx) || tall else mode == 1) {
             v.setViewVisibility(R.id.player, View.VISIBLE)
             v.setViewVisibility(R.id.middle, View.VISIBLE)
             // En el widget Reproductor no hay X: el widget se quita desde la pantalla de inicio
@@ -321,7 +321,8 @@ object Player {
      * (carátula a la izquierda), 2 = grande (carátula arriba). Sin música muestra la
      * última canción o «Nada sonando», y tocarlo abre tu app de música.
      */
-    fun applyStandalone(ctx: Context, v: RemoteViews, variant: Int, wPx: Int, artDp: Int, fonts: Boolean, showText: Boolean = true) {
+    fun applyStandalone(ctx: Context, v: RemoteViews, variant: Int, wPx: Int, artDp: Int, fonts: Boolean, showText: Boolean = true,
+                        roomDp: Int = 0) {
         val S = TextArt.spec(Themes.widget(ctx).family)
         val d = ctx.resources.displayMetrics.density
         v.setViewVisibility(R.id.ws, if (variant == 0) View.VISIBLE else View.GONE)
@@ -343,8 +344,9 @@ object Player {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         }
         if (live) {
-            artist = clean(md!!.getString(MediaMetadata.METADATA_KEY_ARTIST)
-                ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST) ?: md.description?.subtitle?.toString() ?: "")
+            val ta = Meta.split(title, clean(md!!.getString(MediaMetadata.METADATA_KEY_ARTIST)
+                ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST) ?: md.description?.subtitle?.toString() ?: ""))
+            title = ta.first; artist = ta.second
             playing = isPlaying(c!!)
             art = artFor(ctx, md, download = true)
             pkg = c.packageName
@@ -405,13 +407,16 @@ object Player {
                 v.setViewVisibility(R.id.wm_prev, if (tw / d >= 160) View.VISIBLE else View.GONE)
                 v.setViewVisibility(R.id.wm_next, if (tw / d >= 100) View.VISIBLE else View.GONE)
                 val roomyM = tw / d >= 170
-                txt(R.id.wm_src, R.id.wm_src_bmp, src + if (live && roomyM) (if (playing) " · SONANDO" else " · EN PAUSA") else "",
+                // Alto justo: sin la línea de la app y con ⏯ más pequeño, para que nada se corte
+                val fsm = ctx.resources.configuration.fontScale.coerceIn(0.8f, 1.6f)
+                val shortM = roomDp > 0 && roomDp < (66 * fsm + 54).toInt()
+                txt(R.id.wm_src, R.id.wm_src_bmp, if (shortM) "" else src + if (live && roomyM) (if (playing) " · SONANDO" else " · EN PAUSA") else "",
                     S.title, 11f, accent, tw, sp2 = 0.12f)
                 txt(R.id.wm_title, R.id.wm_title_bmp, title, S.semi, 17f, th.head, tw, neonCaps)
                 txt(R.id.wm_artist, R.id.wm_artist_bmp, artist, S.body, 13f, th.dim, tw)
                 v.setImageViewBitmap(R.id.wm_art, artBitmap(ctx, art, th, artDp, false))
                 v.setImageViewBitmap(R.id.wm_prev, iconBitmap(ctx, "prev", iconCol, 22))
-                v.setImageViewBitmap(R.id.wm_play, playBitmap(ctx, playing, th, 46))
+                v.setImageViewBitmap(R.id.wm_play, playBitmap(ctx, playing, th, if (shortM) 38 else 46))
                 v.setImageViewBitmap(R.id.wm_next, iconBitmap(ctx, "next", iconCol, 22))
                 v.setContentDescription(R.id.wm_play, if (playing) "Pausar" else "Reproducir")
                 play?.let { v.setOnClickPendingIntent(R.id.wm_play, it) }

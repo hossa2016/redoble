@@ -29,8 +29,8 @@ object Concerts {
         return out.take(6)
     }
 
-    private fun clean(a: String): String? = a.substringBefore(" - Topic").substringBefore(",").substringBefore(" feat")
-        .replace("\"", "").trim().takeIf { it.length in 2..60 }
+    private fun clean(a: String): String? = Meta.artistKey(a.substringBefore(" - Topic").substringBefore(",").substringBefore(" feat")
+        .replace("\"", "").trim())
 
     fun searchUri(ctx: Context, artist: String): Uri {
         val city = Prefs.city(ctx).substringBefore(",").trim()

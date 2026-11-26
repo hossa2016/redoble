@@ -59,7 +59,7 @@ object Gallery {
 /** Escenarios listos: tarjetas con la escena; al tocar, se ven los detalles y se aplica. */
 internal fun MainActivity.galleryPlate(): View {
     val card = ui.plateCard()
-    card.addView(ui.sectionTitle("Escenarios listos", "Un toque cambia tema, fondo y diseño"))
+    card.addView(ui.sectionTitle("Escenarios listos", "Tema, fondo y diseño en un toque"))
     val strip = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
     Gallery.ALL.forEach { l ->
         strip.addView(LinearLayout(this).apply {
@@ -75,8 +75,10 @@ internal fun MainActivity.galleryPlate(): View {
                 }
                 VideoScenes.thumb(l.scene)?.let { addView(ImageView(this@galleryPlate).apply { importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO;
                     setImageResource(it); scaleType = ImageView.ScaleType.CENTER_CROP }, FrameLayout.LayoutParams(-1, -1)) }
-                addView(View(this@galleryPlate).apply { background = ui.oval(Prefs.ACCENTS[l.accent.coerceIn(0, Prefs.ACCENTS.size - 1)]) },
-                    FrameLayout.LayoutParams(ui.dp(14), ui.dp(14), Gravity.BOTTOM or Gravity.END).apply { setMargins(0, 0, ui.dp(8), ui.dp(8)) })
+                addView(View(this@galleryPlate).apply {
+                    background = android.graphics.drawable.GradientDrawable().apply {
+                        cornerRadius = ui.dp(2).toFloat(); setColor(Prefs.ACCENTS[l.accent.coerceIn(0, Prefs.ACCENTS.size - 1)]) }
+                }, FrameLayout.LayoutParams(ui.dp(28), ui.dp(4), Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply { bottomMargin = ui.dp(10) })
             }, LinearLayout.LayoutParams(ui.dp(96), ui.dp(150)))
             addView(ui.text(l.name, ui.cond, 15f, Ui.HEAD).apply { gravity = Gravity.CENTER; ui.fitText(this, 15, 12) },
                 LinearLayout.LayoutParams(ui.dp(96), -2).apply { topMargin = ui.dp(6) })

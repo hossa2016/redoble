@@ -224,7 +224,7 @@ internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
             try { startActivity(deep) } catch (e: Exception) { startActivity(rp) }
         }
     }
-    link("Atajos para Tasker y Automate", R.drawable.ic_key) {
+    link("Atajos para Tasker y Automate", R.drawable.ic_bolt) {
         val on = Prefs.automation(this)
         ui.sheet("Atajos para Tasker y Automate",
             I18n.tr(this, if (on) "Los atajos están permitidos." else "Los atajos están apagados: otras apps no pueden cambiar tu widget.") + "\n\n" +
@@ -403,8 +403,6 @@ internal fun MainActivity.performancePlate(): View {
         "notificación fija mientras está activa; al encenderla te pedirá el permiso de notificaciones."))
     card.addView(ui.actionRow("Modo confiable", R.drawable.ic_help, Reliable.label(this)).apply { setOnClickListener { showReliable() } },
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
-    card.addView(ui.note("La hora y la fecha con la letra del tema se encienden en Estilo › Tema.", sp = 14f),
-        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
     return card
 }
 

@@ -28,6 +28,10 @@ internal fun MainActivity.appsWidgetsPlate(): View {
     val ids = Widgets.ids(this, Widgets.APPS)
     card.addView(ui.sectionTitle("Widgets de Apps"))
     card.addView(ui.note("Toca uno para ponerle nombre o cambiar su grupo y tamaño."))
+    val baseNames = ids.map { Prefs.awName(this, it) ?: Widgets.shapeName(this, it) }
+    val shownNames = baseNames.mapIndexed { n, b ->
+        if (baseNames.count { it == b } > 1) "$b · ${baseNames.take(n + 1).count { it == b }}" else b
+    }
     ids.forEachIndexed { n, id ->
         if (n > 0) card.addView(View(this).apply { setBackgroundColor(Ui.veil(0x0F)) }, LinearLayout.LayoutParams(-1, ui.dp(1)))
         card.addView(LinearLayout(this).apply {
@@ -37,8 +41,7 @@ internal fun MainActivity.appsWidgetsPlate(): View {
             setPadding(ui.dp(6), 0, ui.dp(6), 0)
             addView(LinearLayout(this@appsWidgetsPlate).apply {
                 orientation = LinearLayout.VERTICAL
-                addView(ui.text(Prefs.awName(this@appsWidgetsPlate, id)
-                    ?: Widgets.shapeName(this@appsWidgetsPlate, id), ui.cond, 18f, Ui.HEAD))
+                addView(ui.text(shownNames[n], ui.cond, 18f, Ui.HEAD))
                 // Hasta dos líneas: el resumen ya no se corta con «…»
                 addView(ui.text(Widgets.appsSummary(this@appsWidgetsPlate, id), ui.cond, 14f, Ui.DIM).apply { maxLines = 2 })
                 // Sus primeras apps, para distinguir una copia de otra
@@ -114,9 +117,9 @@ internal fun MainActivity.packPlate(): View {
             }, LinearLayout.LayoutParams(0, -2, 1f))
             // Agregar cualquiera desde aquí (antes solo el Completo); los Apps se pueden poner varias veces
             val kindIdx = list.indexOfFirst { it.second == nd }
-            if (on && kindIdx != 2) addView(ui.text("En pantalla", ui.cond, 14f, Ui.OK),
+            if (on) addView(ui.text("En pantalla", ui.cond, 14f, Ui.OK),
                 LinearLayout.LayoutParams(-2, -2).apply { marginStart = ui.dp(12) })
-            else addView(ui.textButton(if (on) "Otro" else "Agregar").apply {
+            if (!on || kindIdx == 2) addView(ui.textButton(if (on) "+ Otro" else "Agregar").apply {
                 contentDescription = I18n.tr(this@packPlate, "Agregar") + " " + I18n.tr(this@packPlate, nd.first)
                 setOnClickListener {
                     val ok = try {

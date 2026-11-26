@@ -71,6 +71,14 @@ object TourLog {
         ed.apply()
     }
 
+    /** Artistas del historial sin canales ni radios, y sin la canción pegada al nombre. */
+    private fun cleanArtists(o: JSONObject): Map<String, Double> {
+        val arts = o.optJSONObject("artists") ?: return emptyMap()
+        val out = LinkedHashMap<String, Double>()
+        for (k in arts.keys()) Meta.artistKey(k)?.let { a -> out[a] = (out[a] ?: 0.0) + arts.optDouble(k) }
+        return out
+    }
+
     class Summary(val minutes: Int, val topArtist: String, val topTrack: String, val topTracks: List<String>)
 
     private fun summary(ctx: Context, key: String): Summary {
@@ -78,8 +86,7 @@ object TourLog {
         val tracks = o.optJSONObject("tracks") ?: JSONObject()
         val top = tracks.keys().asSequence().sortedByDescending { tracks.optInt(it) }.take(5)
             .map { it.substringBefore("|") + it.substringAfter("|", "").let { a -> if (a.isBlank()) "" else " · $a" } }.toList()
-        val arts = o.optJSONObject("artists") ?: JSONObject()
-        val topArtist = arts.keys().asSequence().maxByOrNull { arts.optDouble(it) } ?: ""
+        val topArtist = cleanArtists(o).maxByOrNull { it.value }?.key ?: ""
         return Summary(o.optDouble("min", 0.0).toInt(), topArtist, top.firstOrNull() ?: "", top)
     }
 
@@ -87,8 +94,7 @@ object TourLog {
     /** Artistas más escuchados del año ([year]) o de la semana. */
     fun topArtists(ctx: Context, year: Boolean, n: Int = 6): List<String> {
         val o = try { JSONObject(p(ctx).getString(if (year) yearKey() else weekKey(), "{}") ?: "{}") } catch (e: Exception) { JSONObject() }
-        val arts = o.optJSONObject("artists") ?: return emptyList()
-        return arts.keys().asSequence().sortedByDescending { arts.optDouble(it) }.take(n).toList()
+        return cleanArtists(o).entries.sortedByDescending { it.value }.take(n).map { it.key }
     }
     fun year(ctx: Context) = summary(ctx, yearKey())
     fun weekNumber() = Calendar.getInstance().get(Calendar.WEEK_OF_YEAR)
