@@ -230,6 +230,14 @@ internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
             try { startActivity(deep) } catch (e: Exception) { startActivity(rp) }
         }
     }
+    link("Atajos para Tasker y Automate", R.drawable.ic_key) {
+        ui.sheet("Atajos para Tasker y Automate", "Envía una intención de difusión (broadcast) con estas acciones:\n\n" +
+            "· com.hossa.redoble.SCENE  con «scene» = fogata, cafe, concierto, escenario…\n" +
+            "· com.hossa.redoble.THEME  con «theme» = número o nombre del tema\n" +
+            "· com.hossa.redoble.TEMPLATE  con «template» = todo, musica o minimo\n" +
+            "· com.hossa.redoble.REFRESH  para redibujar los widgets\n\nSolo cambian el aspecto; no leen ni envían datos.",
+            dismissLabel = "Entendido")
+    }
     link("Ver la guía de inicio", R.drawable.ic_help) { restartOnboarding() }
     link("Política de privacidad") {
         try {
@@ -362,6 +370,8 @@ internal fun MainActivity.performancePlate(): View {
     card.addView(ui.note("Batería al instante (con una notificación fija).",
         "Mantiene la batería al día y permite la hora con la letra del tema. Android exige mostrar una " +
         "notificación fija mientras está activa; al encenderla te pedirá el permiso de notificaciones."))
+    card.addView(ui.actionRow("Modo confiable", R.drawable.ic_help, Reliable.label(this)).apply { setOnClickListener { showReliable() } },
+        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
     card.addView(ui.note("La hora y la fecha con la letra del tema se encienden en Estilo › Tema.", sp = 14f),
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
     return card

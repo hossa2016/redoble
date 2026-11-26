@@ -95,6 +95,28 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_player_info" />
         </receiver>
+        <receiver
+            android:name=".WeekWidget"
+            android:exported="true"
+            android:label="@string/w_week">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_week_info" />
+        </receiver>
+        <!-- Atajos para Tasker/Automate: solo cambian el aspecto (escena, tema, plantilla) -->
+        <receiver
+            android:name=".AutomationReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.hossa.redoble.SCENE" />
+                <action android:name="com.hossa.redoble.THEME" />
+                <action android:name="com.hossa.redoble.TEMPLATE" />
+                <action android:name="com.hossa.redoble.REFRESH" />
+            </intent-filter>
+        </receiver>
         <!-- Ventanita al poner un widget de Apps (la abre el sistema) -->
         <activity
             android:name=".AppsWidgetConfig"

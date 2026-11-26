@@ -206,6 +206,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         maybeAskReview()
+        intent?.getIntExtra("tab", -1)?.takeIf { it in 0..3 }?.let { t ->
+            intent.removeExtra("tab"); Prefs.setSettingsTab(this, t); openSections.clear(); build()
+        }
         // Desde la ventana del widget de Apps: abrir Apps con ese grupo
         intent?.getIntExtra("appsGroup", -1)?.takeIf { it >= 0 }?.let { g ->
             appsGroup = g
@@ -299,8 +302,8 @@ class MainActivity : AppCompatActivity() {
                     "Agenda".takeIf { Prefs.showAgenda(this) }).joinToString(" · ").ifBlank { "Fecha normal" }))
                 col.addView(fold(weatherPlate(), "clima", Prefs.city(this).substringBefore(",").ifBlank { "Agregar ciudad ›" }))
                 col.addView(ui.label("OTROS WIDGETS"), LinearLayout.LayoutParams(-2, -2).apply { marginStart = ui.dp(6); topMargin = ui.dp(14); bottomMargin = ui.dp(6) })
-                val total = listOf(Widgets.has(this, Widgets.FULL), clockW, appsW, playerW, MiniWidget.placed(this)).count { it }
-                col.addView(fold(packPlate(), "w_pack", I18n.tr(this, "{} de 5 en pantalla").replace("{}", total.toString())))
+                val total = listOf(Widgets.has(this, Widgets.FULL), clockW, appsW, playerW, MiniWidget.placed(this), WeekWidget.placed(this)).count { it }
+                col.addView(fold(packPlate(), "w_pack", I18n.tr(this, "{} de 6 en pantalla").replace("{}", total.toString())))
                 if (clockW) col.addView(fold(clockWidgetPlate(), "w_clock", listOfNotNull(
                     "Día".takeIf { Prefs.cw(this, "dia") }, "Clima".takeIf { Prefs.cw(this, "clima") },
                     "Mañana".takeIf { Prefs.cw(this, "manana") }, "Batería".takeIf { Prefs.cw(this, "bateria") }).joinToString(" · ")))
@@ -499,15 +502,19 @@ class MainActivity : AppCompatActivity() {
             })
             // Estado en un chip pequeño bajo el logo (secundario, no compite con la marca)
             val active = RockWidget.hasWidgets(this@MainActivity)
+            // Modo confiable: el chip dice si el widget está al día; si se congeló, lo avisa y lleva a arreglarlo
+            val stale = active && Reliable.stale(this@MainActivity)
             addView(LinearLayout(this@MainActivity).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                background = ui.rect(Ui.veil(0x0C), 12f, Ui.veil(0x1A), 1f)
-                setPadding(ui.dp(10), ui.dp(3), ui.dp(12), ui.dp(3))
-                addView(ui.dot(if (active) Ui.OK else Ui.DIM), LinearLayout.LayoutParams(ui.dp(7), ui.dp(7)))
-                addView(ui.text(if (active) "Widget activo" else "Widget sin agregar", ui.cond, 14f, Ui.MUTED).apply {
-                    setPadding(ui.dp(6), 0, 0, 0)
-                })
+                background = ui.rect(Ui.veil(0x0C), 12f, if (stale) Ui.ALERT else Ui.veil(0x1A), 1f)
+                setPadding(ui.dp(10), ui.dp(8), ui.dp(12), ui.dp(8))
+                minimumHeight = ui.dp(40)
+                addView(ui.dot(if (stale) Ui.ALERT else if (active) Ui.OK else Ui.DIM), LinearLayout.LayoutParams(ui.dp(7), ui.dp(7)))
+                addView(ui.text(when { stale -> I18n.tr(this@MainActivity, "Widget sin actualizar · toca para arreglar")
+                    active -> Reliable.label(this@MainActivity); else -> I18n.tr(this@MainActivity, "Widget sin agregar") },
+                    ui.cond, 14f, if (stale) Ui.HEAD else Ui.MUTED).apply { setPadding(ui.dp(6), 0, 0, 0) })
+                if (active) { isClickable = true; setOnClickListener { showReliable() } }
             }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(6) })
         }
         return LinearLayout(this).apply {

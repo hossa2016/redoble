@@ -11,4 +11,6 @@
     <string name="wallpaper_desc">Fondo animado que se mueve al inclinar el teléfono</string>
     <string name="w_mini">Mini 1×1</string>
     <string name="w_mini_desc">Día, fecha y batería en un cuadrito, con tu tema.</string>
+    <string name="w_week">Mi semana</string>
+    <string name="w_week_desc">Cuánto escuchaste esta semana y tu artista más tocado.</string>
 </resources>

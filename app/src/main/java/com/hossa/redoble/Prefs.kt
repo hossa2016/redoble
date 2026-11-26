@@ -41,7 +41,8 @@ object Prefs {
     fun accentIndex(ctx: Context) = p(ctx).getInt("accent", 0)
     fun setAccentIndex(ctx: Context, i: Int) = p(ctx).edit().putInt("accent", i).apply()
     fun accent(ctx: Context): Int =
-        if (systemAccent(ctx)) ctx.getColor(android.R.color.system_accent1_300)
+        if (bgAccent(ctx) != 0) bgAccent(ctx)
+        else if (systemAccent(ctx)) ctx.getColor(android.R.color.system_accent1_300)
         else ACCENTS[accentIndex(ctx).coerceIn(0, ACCENTS.size - 1)]
 
     /** 0 = silueta (como ahora, en un solo tono), 1 = color original de cada app */
@@ -249,6 +250,15 @@ object Prefs {
     fun ruleNight(ctx: Context) = p(ctx).getBoolean("ruleNight", false)
     fun ruleHeadphones(ctx: Context) = p(ctx).getBoolean("ruleHeadphones", false)
     fun setRule(ctx: Context, key: String, v: Boolean) = p(ctx).edit().putBoolean(key, v).apply()
+    fun ruleWeekend(ctx: Context) = p(ctx).getBoolean("ruleWeekend", false)
+    fun ruleGig(ctx: Context) = p(ctx).getBoolean("ruleGig", false)
+    fun ruleCalm(ctx: Context) = p(ctx).getBoolean("ruleCalm", false)
+    /** Modo confiable: cuándo se dibujó el widget por última vez. */
+    fun lastDraw(ctx: Context) = p(ctx).getLong("lastDraw", 0L)
+    fun setLastDraw(ctx: Context) = p(ctx).edit().putLong("lastDraw", System.currentTimeMillis()).apply()
+    /** Color de acento tomado del fondo (0 = apagado). */
+    fun bgAccent(ctx: Context) = p(ctx).getInt("bgAccent", 0)
+    fun setBgAccent(ctx: Context, c: Int) = p(ctx).edit().putInt("bgAccent", c).apply()
     /** Encore: fechas especiales "MM-dd;texto|…". */
     fun encore(ctx: Context) = p(ctx).getString("encore", "") ?: ""
     fun setEncore(ctx: Context, v: String) = p(ctx).edit().putString("encore", v).apply()

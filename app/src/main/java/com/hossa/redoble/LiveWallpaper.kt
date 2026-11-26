@@ -265,7 +265,8 @@ class PrismaWallpaper : WallpaperService() {
         private val tick = object : Runnable { override fun run() {
             tilt.smooth()
             try { renderer?.draw(tilt.tx, tilt.ty, (SystemClock.uptimeMillis() - t0) / 1000f) } catch (e: Exception) { }
-            if (visible) gl.postDelayed(this, 33) } }
+            // Regla «Calma» (batería baja o No molestar): menos cuadros por segundo para ahorrar
+            if (visible) gl.postDelayed(this, if (Rules.calm(this@PrismaWallpaper)) 250 else 33) } }
 
         /** Escena que toca ahora: la elegida o, con Escenario Vivo y música sonando, la de concierto. */
         private fun wanted(): String {

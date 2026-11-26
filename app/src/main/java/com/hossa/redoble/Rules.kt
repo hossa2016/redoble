@@ -59,9 +59,36 @@ object Rules {
     /** Escena que pide una regla (o null). */
     private fun rawScene(ctx: Context): String? = when {
         Encore.today(ctx) != null -> "concierto"
+        Prefs.ruleGig(ctx) && gigToday(ctx) -> "concierto"
         Prefs.ruleRain(ctx) && isRain(ctx) -> "cafe"
         Prefs.ruleNight(ctx) && isNight() -> "fogata"
+        Prefs.ruleWeekend(ctx) && isWeekend() -> "escenario"
         else -> null
+    }
+
+    fun isWeekend(): Boolean { val d = Calendar.getInstance().get(Calendar.DAY_OF_WEEK); return d == Calendar.SATURDAY || d == Calendar.SUNDAY }
+
+    /** ¿Hay un concierto o festival en tu agenda hoy? (necesita el permiso del calendario) */
+    @Volatile private var gigAt = 0L
+    @Volatile private var gigVal = false
+    fun gigToday(ctx: Context): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - gigAt < 15 * 60_000L) return gigVal
+        gigAt = now
+        gigVal = try { Extras.hasCalendar(ctx) && Extras.todayTitles(ctx).any { t ->
+            Regex("concierto|concert|festival|show|gig|toque|recital", RegexOption.IGNORE_CASE).containsMatchIn(t) } } catch (e: Exception) { false }
+        return gigVal
+    }
+
+    /** Calma: batería baja (sin cargar) o «No molestar»: el fondo animado va más lento para ahorrar. */
+    fun calm(ctx: Context): Boolean {
+        if (!Prefs.ruleCalm(ctx)) return false
+        val low = BatteryMonitor.level(ctx) in 0..19 && !BatteryMonitor.isCharging(ctx)
+        val dnd = try {
+            (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).currentInterruptionFilter >
+                android.app.NotificationManager.INTERRUPTION_FILTER_ALL
+        } catch (e: Exception) { false }
+        return low || dnd
     }
 
     /** Tema que pide una regla (o null). */
@@ -78,6 +105,9 @@ object Rules {
         if (Prefs.ruleNight(ctx) && isNight()) parts += I18n.tr(ctx, "Noche")
         if (Prefs.ruleRain(ctx) && isRain(ctx)) parts += I18n.tr(ctx, "Lluvia")
         if (musicLayout(ctx)) parts += I18n.tr(ctx, "Audífonos")
+        if (Prefs.ruleGig(ctx) && gigToday(ctx)) parts += I18n.tr(ctx, "Concierto hoy")
+        if (Prefs.ruleWeekend(ctx) && isWeekend() && !isNight()) parts += I18n.tr(ctx, "Fin de semana")
+        if (calm(ctx)) parts += I18n.tr(ctx, "Calma")
         return parts.joinToString(" · ")
     }
 

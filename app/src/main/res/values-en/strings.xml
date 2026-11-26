@@ -10,4 +10,6 @@
     <string name="wallpaper_desc">Animated wallpaper that moves when you tilt the phone</string>
     <string name="w_mini">Mini 1×1</string>
     <string name="w_mini_desc">Day, date and battery in a small square, with your theme.</string>
+    <string name="w_week">My week</string>
+    <string name="w_week_desc">How much you listened this week and your top artist.</string>
 </resources>

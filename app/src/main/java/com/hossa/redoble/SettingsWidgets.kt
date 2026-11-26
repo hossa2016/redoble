@@ -91,8 +91,10 @@ internal fun MainActivity.packPlate(): View {
         Widgets.has(this, Widgets.CLOCK) to ("Hora y clima" to "Día, fecha, hora, clima y batería"),
         Widgets.has(this, Widgets.APPS) to ("Apps" to "Tus apps, se acomodan al tamaño"),
         Widgets.has(this, Widgets.PLAYER) to ("Reproductor" to "La canción con sus botones"),
-        MiniWidget.placed(this) to ("Mini 1×1" to "Día, fecha y batería en un cuadrito"))
-    val providers = listOf(RockWidget::class.java, ClockWidget::class.java, AppsWidget::class.java, PlayerWidget::class.java, MiniWidget::class.java)
+        MiniWidget.placed(this) to ("Mini 1×1" to "Día, fecha y batería en un cuadrito"),
+        WeekWidget.placed(this) to ("Mi semana" to "Cuánto escuchaste y tu artista de la semana"))
+    val providers = listOf(RockWidget::class.java, ClockWidget::class.java, AppsWidget::class.java, PlayerWidget::class.java,
+        MiniWidget::class.java, WeekWidget::class.java)
     val placed = list.count { it.first }
     card.addView(ui.sectionTitle("Tus widgets"))
     card.addView(ui.note("Ponlos juntos o por separado; todos usan tu tema."))

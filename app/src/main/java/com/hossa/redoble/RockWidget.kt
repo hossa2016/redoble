@@ -76,6 +76,8 @@ class RockWidget : AppWidgetProvider() {
             }
             Widgets.updatePieces(ctx)
             MiniWidget.updateAll(ctx)
+            WeekWidget.updateAll(ctx)
+            Prefs.setLastDraw(ctx)
         }
 
         private val mainH = android.os.Handler(android.os.Looper.getMainLooper())
@@ -236,6 +238,7 @@ class RockWidget : AppWidgetProvider() {
 
         fun update(ctx: Context, mgr: AppWidgetManager, widgetId: Int) {
             mgr.updateAppWidget(widgetId, buildViews(ctx, widthPx(ctx, mgr, widgetId)))
+            Prefs.setLastDraw(ctx)
         }
 
         /**

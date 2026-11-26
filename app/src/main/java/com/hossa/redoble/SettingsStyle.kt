@@ -371,8 +371,25 @@ internal fun MainActivity.accentPlate(): View {
     }, LinearLayout.LayoutParams(-1, -2))
     // Llevar el color elegido a la vista
     scroller.post { scroller.scrollTo((ui.dp(88) * sel - scroller.width / 2 + ui.dp(44)).coerceAtLeast(0), 0) }
+    card.addView(switchRow("Color de tu fondo", Prefs.bgAccent(this) != 0) { on ->
+        if (!on) { Prefs.setBgAccent(this, 0); RockWidget.updateAll(this); build(); return@switchRow }
+        io.execute {
+            val bmp = try { stillWallpaper(160, 320) } catch (e: Throwable) { null }
+            val c = bmp?.let { b ->
+                val p = androidx.palette.graphics.Palette.from(b).generate()
+                (p.vibrantSwatch ?: p.lightVibrantSwatch ?: p.dominantSwatch)?.rgb
+            } ?: 0
+            onUi {
+                if (c == 0) toast("No pude sacar un color de tu fondo")
+                else { Prefs.setBgAccent(this, c or 0xFF000000.toInt()); Prefs.setSystemAccent(this, false); RockWidget.updateAll(this) }
+                build()
+            }
+        }
+    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
+    card.addView(ui.note("Toma el color más vivo de tu fondo (escena, foto o video)."))
     if (android.os.Build.VERSION.SDK_INT >= 31) {
         card.addView(switchRow("Color del sistema (Material You)", Prefs.systemAccent(this)) { on ->
+            if (on) Prefs.setBgAccent(this, 0)
             Prefs.setSystemAccent(this, on); RockWidget.updateAll(this); build()
         }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
         card.addView(ui.note("Usa el color que Android saca de tu fondo de pantalla."))
@@ -682,6 +699,11 @@ internal fun MainActivity.rulesPlate(): View {
     rule("Con lluvia", "ruleRain", Prefs.ruleRain(this), "Fondo «Lluvia y café».")
     rule("De noche", "ruleNight", Prefs.ruleNight(this), "8 p. m. a 5 a. m.: tema Ámbar y fondo Fogata.")
     rule("Con audífonos", "ruleHeadphones", Prefs.ruleHeadphones(this), "Reproductor grande en el widget Completo.")
+    rule("Fin de semana", "ruleWeekend", Prefs.ruleWeekend(this), "Sábado y domingo: fondo Escenario.")
+    rule("Concierto en tu agenda", "ruleGig", Prefs.ruleGig(this),
+        if (Extras.hasCalendar(this)) "Si hoy hay un concierto o festival en tu calendario: fondo Concierto."
+        else "Necesita leer tu calendario: enciende «Próximo evento de la agenda» en Widget.")
+    rule("Calma", "ruleCalm", Prefs.ruleCalm(this), "Con batería baja o «No molestar», el fondo animado va más lento para ahorrar.")
 
     // Encore: fechas especiales
     card.addView(ui.label("FECHAS ESPECIALES"), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(18); bottomMargin = ui.dp(4) })

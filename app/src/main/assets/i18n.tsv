@@ -667,3 +667,35 @@ Agregar app	Add app	Adicionar app
 {} libres	{} free	{} livres
 Agregar	Add	Adicionar
 Otro	Another	Outro
+Widget sin actualizar · toca para arreglar	Widget not updating · tap to fix	Widget sem atualizar · toque para arrumar
+Widget al día	Widget up to date	Widget em dia
+Widget al día · hace {} min	Widget up to date · {} min ago	Widget em dia · há {} min
+Widget redibujado ahora mismo	Widget redrawn just now	Widget redesenhado agora
+Batería: sin restricciones	Battery: unrestricted	Bateria: sem restrições
+Batería: con restricciones (puede congelarse)	Battery: restricted (it may freeze)	Bateria: com restrições (pode congelar)
+En Xiaomi también activa «Inicio automático». Si el widget se queda en otra hora, Prisma lo repara solo cada media hora.	On Xiaomi also turn on “Autostart”. If the widget gets stuck, Prisma fixes it by itself every half hour.	No Xiaomi ative também “Início automático”. Se o widget travar, o Prisma o conserta sozinho a cada meia hora.
+Modo confiable	Reliable mode	Modo confiável
+Batería sin restricciones	Unrestricted battery	Bateria sem restrições
+Inicio automático y pasos	Autostart and steps	Início automático e passos
+Listo	Done	Pronto
+Atajos para Tasker y Automate	Shortcuts for Tasker and Automate	Atalhos para Tasker e Automate
+Fin de semana	Weekend	Fim de semana
+Sábado y domingo: fondo Escenario.	Saturday and Sunday: Stage background.	Sábado e domingo: fundo Palco.
+Concierto en tu agenda	Concert in your calendar	Show na sua agenda
+Si hoy hay un concierto o festival en tu calendario: fondo Concierto.	If there's a concert or festival in your calendar today: Concert background.	Se hoje houver um show ou festival na agenda: fundo Show.
+Necesita leer tu calendario: enciende «Próximo evento de la agenda» en Widget.	It needs to read your calendar: turn on “Next calendar event” in Widget.	Precisa ler sua agenda: ative “Próximo evento da agenda” em Widget.
+Calma	Calm	Calma
+Con batería baja o «No molestar», el fondo animado va más lento para ahorrar.	With low battery or “Do not disturb”, the animated background slows down to save power.	Com bateria baixa ou “Não perturbe”, o fundo animado fica mais lento para economizar.
+Concierto hoy	Concert today	Show hoje
+Color de tu fondo	Your background's color	Cor do seu fundo
+Toma el color más vivo de tu fondo (escena, foto o video).	Takes the most vivid color from your background (scene, photo or video).	Pega a cor mais viva do seu fundo (cena, foto ou vídeo).
+No pude sacar un color de tu fondo	I couldn't get a color from your background	Não consegui tirar uma cor do seu fundo
+Mi semana	My week	Minha semana
+Cuánto escuchaste y tu artista de la semana	How much you listened and your artist of the week	Quanto você ouviu e seu artista da semana
+{} de 6 en pantalla	{} of 6 on screen	{} de 6 na tela
+MI SEMANA	MY WEEK	MINHA SEMANA
+Más escuchado: {}	Most played: {}	Mais ouvido: {}
+Aún sin música esta semana	No music yet this week	Ainda sem música nesta semana
+Toca para encender el historial de escucha	Tap to turn on listening history	Toque para ligar o histórico de escuta
+Enciende el historial de escucha en Música	Turn on listening history in Music	Ligue o histórico de escuta em Música
+Semana	Week	Semana
