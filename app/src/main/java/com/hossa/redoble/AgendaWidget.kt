@@ -46,9 +46,10 @@ class AgendaWidget : AppWidgetProvider() {
             v.setEmptyView(R.id.agenda_list, R.id.agenda_empty)
             // Tocar un evento lo abre en tu calendario; sin permiso, abre Prisma
             v.setPendingIntentTemplate(R.id.agenda_list, PendingIntent.getActivity(ctx, 330,
-                Intent(Intent.ACTION_VIEW).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                Intent(ctx, OpenEventActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
             val app = PendingIntent.getActivity(ctx, 331, Intent(ctx, MainActivity::class.java).putExtra("tab", 1)
+                .putExtra("askCalendar", !Extras.hasCalendar(ctx))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
             v.setOnClickPendingIntent(R.id.agenda_head, app)
             v.setOnClickPendingIntent(R.id.agenda_empty, app)
@@ -89,17 +90,30 @@ class AgendaService : RemoteViewsService() {
                 "${CalendarContract.Instances.END} >= ?", arrayOf(now.toString()), "${CalendarContract.Instances.BEGIN} ASC")?.use { c ->
                 while (c.moveToNext() && out.size < 20) {
                     val t = c.getString(1)?.trim().orEmpty()
-                    if (t.isNotEmpty()) out += Ev(c.getLong(0), t, c.getLong(2), c.getInt(3) == 1)
+                    val ev = Ev(c.getLong(0), t, c.getLong(2), c.getInt(3) == 1)
+                    if (t.isNotEmpty() && dayOf(ev) in 0..1) out += ev
                 }
             }
             return out
+        }
+
+        /** 0 = hoy, 1 = mañana (los de todo el día se guardan a las 00:00 UTC). */
+        private fun dayOf(e: Ev): Int {
+            val f = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US)
+            if (e.allDay) f.timeZone = java.util.TimeZone.getTimeZone("UTC")
+            val d = f.format(java.util.Date(e.begin))
+            val today = java.util.Calendar.getInstance()
+            val loc = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US)
+            if (d <= loc.format(today.time)) return 0
+            today.add(java.util.Calendar.DAY_OF_YEAR, 1)
+            return if (d == loc.format(today.time)) 1 else 2
         }
 
         override fun getViewAt(position: Int): RemoteViews {
             val e = items.getOrNull(position) ?: return RemoteViews(ctx.packageName, R.layout.widget_agenda_item)
             val th = Themes.widget(ctx)
             val v = RemoteViews(ctx.packageName, R.layout.widget_agenda_item)
-            val today = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US).let { it.format(java.util.Date()) == it.format(java.util.Date(e.begin)) }
+            val today = dayOf(e) == 0
             val day = I18n.tr(ctx, if (today) "Hoy" else "Mañana")
             val time = if (e.allDay) I18n.tr(ctx, "todo el día")
                 else android.text.format.DateFormat.getTimeFormat(ctx).format(java.util.Date(e.begin))

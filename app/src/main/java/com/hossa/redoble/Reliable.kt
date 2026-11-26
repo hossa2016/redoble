@@ -24,7 +24,8 @@ object Reliable {
         return when {
             m < 0 -> I18n.tr(ctx, "Widget activo")
             m < 2 -> I18n.tr(ctx, "Widget al día")
-            else -> I18n.tr(ctx, "Widget al día · hace {} min").replace("{}", m.toString())
+            m < 60 -> I18n.tr(ctx, "Widget al día · hace {} min").replace("{}", m.toString())
+            else -> I18n.tr(ctx, "Widget al día · hace {} h").replace("{}", (m / 60).toString())
         }
     }
 }

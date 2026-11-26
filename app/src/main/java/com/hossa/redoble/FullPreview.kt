@@ -76,7 +76,7 @@ internal fun MainActivity.openFullPreview(animIndex: Int? = null) {
     fun refreshWidget() {
         val app = applicationContext
         io.execute {
-            val rv = try { RockWidget.buildViews(app, wPx, preview = true) } catch (e: Throwable) { null }
+            val rv = try { RockWidget.buildViews(app, wPx, preview = true, hDp = RockWidget.fullHeightDp(app)) } catch (e: Throwable) { null }
             onUi {
                 try {
                     rv?.let {

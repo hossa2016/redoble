@@ -58,7 +58,7 @@ class SmartWidget : AppWidgetProvider() {
 
         private fun eventViews(ctx: Context, w: Int, h: Int): RemoteViews {
             val v = RemoteViews(ctx.packageName, R.layout.widget_week)
-            val txt = Extras.nextEvent(ctx)
+            val txt = Extras.nextTimedEvent(ctx)
             v.setImageViewBitmap(R.id.week_img, draw(ctx, w, h, txt))
             v.setContentDescription(R.id.week_img, I18n.tr(ctx, "Próximo evento") + ": " + txt)
             val open = PendingIntent.getActivity(ctx, 320, Intent(Intent.ACTION_VIEW,

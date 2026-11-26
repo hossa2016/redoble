@@ -253,6 +253,9 @@ object Prefs {
     fun ruleWeekend(ctx: Context) = p(ctx).getBoolean("ruleWeekend", false)
     fun ruleGig(ctx: Context) = p(ctx).getBoolean("ruleGig", false)
     fun ruleCalm(ctx: Context) = p(ctx).getBoolean("ruleCalm", false)
+    /** Atajos para Tasker: apagados hasta que la persona los permita. */
+    fun automation(ctx: Context) = p(ctx).getBoolean("automation", false)
+    fun setAutomation(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("automation", on).apply()
     /** Modo confiable: cuándo se dibujó el widget por última vez. */
     fun lastDraw(ctx: Context) = p(ctx).getLong("lastDraw", 0L)
     fun setLastDraw(ctx: Context) = p(ctx).edit().putLong("lastDraw", System.currentTimeMillis()).apply()

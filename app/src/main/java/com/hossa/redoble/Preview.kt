@@ -143,7 +143,7 @@ internal fun MainActivity.updatePreview() {
                 // El Reproductor suelto tiene sus propias plantillas (las mismas del widget real)
                 kind == Widgets.PLAYER -> Widgets.playerViews(appCtx, wDp, hDp)
                 kind == Widgets.CLOCK -> RockWidget.buildViews(appCtx, wPx, preview = true, kind = kind, hDp = hDp)
-                else -> RockWidget.buildViews(appCtx, p.wPx, preview = true)
+                else -> RockWidget.buildViews(appCtx, p.wPx, preview = true, hDp = RockWidget.fullHeightDp(appCtx))
             }
         } catch (e: Throwable) { err = e; null }
         onUi {

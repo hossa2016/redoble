@@ -76,12 +76,22 @@ object Rules {
         if (now - gigAt < 15 * 60_000L) return gigVal
         gigAt = now
         gigVal = try { Extras.hasCalendar(ctx) && Extras.todayTitles(ctx).any { t ->
-            Regex("concierto|concert|festival|show|gig|toque|recital", RegexOption.IGNORE_CASE).containsMatchIn(t) } } catch (e: Exception) { false }
+            Regex("\\b(concierto|concert|festival|gig|recital)\\b", RegexOption.IGNORE_CASE).containsMatchIn(t) } } catch (e: Exception) { false }
         return gigVal
     }
 
     /** Calma: batería baja (sin cargar) o «No molestar»: el fondo animado va más lento para ahorrar. */
+    @Volatile private var calmAt = 0L
+    @Volatile private var calmVal = false
+    /** Se guarda 45 s: el fondo animado lo consulta en cada cuadro. */
     fun calm(ctx: Context): Boolean {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - calmAt < 45_000L && calmAt != 0L) return calmVal
+        calmVal = calmNow(ctx); calmAt = now
+        return calmVal
+    }
+
+    private fun calmNow(ctx: Context): Boolean {
         if (!Prefs.ruleCalm(ctx)) return false
         val low = BatteryMonitor.level(ctx) in 0..19 && !BatteryMonitor.isCharging(ctx)
         val dnd = try {

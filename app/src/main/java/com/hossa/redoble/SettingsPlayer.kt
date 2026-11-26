@@ -225,12 +225,19 @@ internal fun MainActivity.appearancePlate(hasWidget: Boolean): View {
         }
     }
     link("Atajos para Tasker y Automate", R.drawable.ic_key) {
-        ui.sheet("Atajos para Tasker y Automate", "Envía una intención de difusión (broadcast) con estas acciones:\n\n" +
-            "· com.hossa.redoble.SCENE  con «scene» = fogata, cafe, concierto, escenario…\n" +
-            "· com.hossa.redoble.THEME  con «theme» = número o nombre del tema\n" +
-            "· com.hossa.redoble.TEMPLATE  con «template» = completo, musica o minimal\n" +
-            "· com.hossa.redoble.REFRESH  para redibujar los widgets\n\nSolo cambian el aspecto; no leen ni envían datos.",
-            dismissLabel = "Entendido")
+        val on = Prefs.automation(this)
+        ui.sheet("Atajos para Tasker y Automate",
+            I18n.tr(this, if (on) "Los atajos están permitidos." else "Los atajos están apagados: otras apps no pueden cambiar tu widget.") + "\n\n" +
+            I18n.tr(this, "Envía una intención de difusión (broadcast) con estas acciones:") + "\n\n" +
+            "· com.hossa.redoble.SCENE  ‹scene› = fogata, cafe, concierto…\n" +
+            "· com.hossa.redoble.THEME  ‹theme› = 0…6\n" +
+            "· com.hossa.redoble.TEMPLATE  ‹template› = completo, musica, minimal\n" +
+            "· com.hossa.redoble.REFRESH\n\n" +
+            I18n.tr(this, "Solo cambian el aspecto; no leen ni envían datos."),
+            actions = listOf((if (on) "Apagar atajos" else "Permitir atajos") to {
+                Prefs.setAutomation(this, !on)
+                toast(I18n.tr(this, if (on) "Atajos apagados" else "Atajos permitidos"))
+            }), dismissLabel = "Cerrar")
     }
     link("Ver la guía de inicio", R.drawable.ic_help) { restartOnboarding() }
     link("Política de privacidad") {
@@ -332,7 +339,7 @@ internal fun MainActivity.sharePlate(): View {
         }
     }
     if (Prefs.tourLog(this)) {
-        row("Afiche de la semana", R.drawable.ic_image, "Tu setlist de la semana") {
+        row("Afiche de la semana", R.drawable.ic_image, "Lo que más escuchaste esta semana") {
             io.execute { val f = ShareArt.save(this, ShareArt.poster(this, "SEMANA ${TourLog.weekNumber()}", "SETLIST DE LA SEMANA",
                 TourLog.week(this), ui.accent), "afiche"); onUi { ShareArt.share(this, f, "Afiche de la semana") } }
         }
@@ -392,16 +399,3 @@ internal fun MainActivity.performancePlate(): View {
     return card
 }
 
-/** Detalles divertidos: pequeños guiños del widget. */
-internal fun MainActivity.funPlate(): View {
-    val card = ui.plateCard()
-    card.addView(ui.sectionTitle("Detalles divertidos"))
-    card.addView(switchRow("Clima con voz rock", Prefs.rockVoice(this)) { on ->
-        Prefs.setRockVoice(this, on); WeatherWorker.runNow(this, force = true)
-    })
-    card.addView(ui.note("Por ejemplo: «Tormenta: noche de distorsión»."))
-    card.addView(switchRow("Batería «hasta el 11»", Prefs.amp11(this)) { v -> Prefs.setAmp11(this, v); RockWidget.updateAll(this) },
-        LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
-    card.addView(ui.note("Al llegar al 100 % cargando, el widget lo celebra."))
-    return card
-}

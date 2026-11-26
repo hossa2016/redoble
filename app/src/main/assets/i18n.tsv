@@ -97,7 +97,6 @@ Ciudad, por ejemplo Medellín	City, for example Medellín	Cidade, por exemplo Me
 Claro	Light	Claro
 Claros	Light	Claros
 Clima actual	Current weather	Clima atual
-Clima con voz rock	Weather in rock voice	Clima com voz rock
 Clima, batería, música y apps con la letra de cada tema.	Weather, battery, music and apps in each theme's font.	Clima, bateria, música e apps com a fonte de cada tema.
 Color de acento	Accent color	Cor de destaque
 Color de la carátula en todo el widget	Cover color across the widget	Cor da capa em todo o widget
@@ -109,7 +108,6 @@ Color {}	Color {}	Cor {}
 Columnas	Columns	Colunas
 Compartir	Share	Compartilhar
 Compartir entrada	Share ticket	Compartilhar ingresso
-Compartir entrada de concierto	Share concert ticket	Compartilhar ingresso de show
 Completo	Full	Completo
 Con colores claros, las letras del widget pasan a oscuras solas.	With light colors, the widget text turns dark automatically.	Com cores claras, o texto do widget fica escuro sozinho.
 Con música, el fondo animado pasa a una escena de concierto teñida con el color de la carátula. Al pausar, vuelve a tu escena.	With music, the animated wallpaper switches to a concert scene tinted with the cover color. When you pause, it goes back to your scene.	Com música, o fundo animado passa para uma cena de show tingida com a cor da capa. Ao pausar, volta à sua cena.
@@ -181,7 +179,6 @@ Fondos	Wallpapers	Fundos
 Foto	Photo	Foto
 Foto completa	Whole photo	Foto inteira
 Foto del celular	Phone photo	Foto do celular
-Frases como «Tormenta afuera: noche de distorsión».	Phrases like “Storm outside: a night of distortion”.	Frases como “Tempestade lá fora: noite de distorção”.
 Frío de backstage	Backstage cold	Frio de bastidor
 Fuego intenso con chispas al frente y resplandor cálido	Intense fire with sparks in front and a warm glow	Fogo intenso com faíscas na frente e brilho quente
 Funciona con el fondo «Animado»	Works with the “Animated” wallpaper	Funciona com o fundo “Animado”
@@ -239,7 +236,7 @@ Mar	Tue	Ter
 Martes	Tuesday	Terça-feira
 Mañana	Tomorrow	Amanhã
 mañana	tomorrow	amanhã
-Mi escenario en Prisma Widgets. Para usarlo: Prisma › Más › Usar un setup compartido, y pega este código:\n\n{}	My stage in Prisma Widgets. To use it: Prisma › App › Use a shared setup, and paste this code:\n\n{}	Meu palco no Prisma Widgets. Para usar: Prisma › App › Usar um setup compartilhado, e cole este código:\n\n{}
+Mi escenario en Prisma Widgets. Para usarlo: Prisma › Más › Usar un diseño compartido, y pega este código:\n\n{}	My look in Prisma Widgets. To use it: Prisma › More › Use a shared design, and paste this code:\n\n{}	Meu visual no Prisma Widgets. Para usar: Prisma › Mais › Usar um design compartilhado, e cole este código:\n\n{}
 Mientras suena, la hora, el clima y los detalles toman el color del disco.	While music plays, the time, weather and details take the record's color.	Enquanto toca, a hora, o clima e os detalhes ganham a cor do disco.
 Mis apps	My apps	Meus apps
 Mié	Wed	Qua
@@ -446,10 +443,6 @@ cerrado, toca para abrir	closed, tap to open	fechado, toque para abrir
 app	app	app
 apps	apps	apps
 Setlist del Día	Setlist of the Day	Setlist do Dia
-El escenario cambia solo según el momento. Tus ajustes no se tocan: al pasar el momento, todo vuelve.	The stage changes by itself with the moment. Your settings aren't touched: when the moment passes, everything goes back.	O palco muda sozinho conforme o momento. Suas configurações não mudam: quando o momento passa, tudo volta.
-Lluvia: Lluvia y café	Rain: Rain and coffee	Chuva: Chuva e café
-Noche: Ámbar y fogata	Night: Amber and campfire	Noite: Âmbar e fogueira
-Audífonos: Música grande	Headphones: Big music	Fones: Música grande
 FECHAS ESPECIALES	SPECIAL DATES	DATAS ESPECIAIS
 Ese día el widget lo celebra y el fondo pasa a «Concierto».	That day the widget celebrates and the wallpaper switches to “Concert”.	Nesse dia o widget comemora e o fundo passa para “Show”.
 Agregar una fecha	Add a date	Adicionar uma data
@@ -462,7 +455,6 @@ Ese video es muy grande o no se pudo abrir (máximo 80 MB)	That video is too big
 Fondo aplicado: Mi video	Wallpaper applied: My video	Fundo aplicado: Meu vídeo
 Mi video	My video	Meu vídeo
 Batería «hasta el 11»	Battery “up to 11”	Bateria “até o 11”
-Al llegar al 100 % cargando, el widget lo celebra.	When it reaches 100% while charging, the widget celebrates.	Ao chegar a 100% carregando, o widget comemora.
 ¡hasta el 11!	up to 11!	até o 11!
 BATERÍA	BATTERY	BATERIA
 Esperando su momento	Waiting for its moment	Esperando o momento
@@ -486,35 +478,27 @@ En pausa: manda lo que elegiste	Paused: your choice wins	Em pausa: vale o que vo
 Más	More	Mais
 Extras de música	Music extras	Extras de música
 Fondo que sigue la música	Wallpaper that follows the music	Fundo que segue a música
-Escenario Vivo · con música pasa a modo concierto.	Live Stage · with music it switches to concert mode.	Palco Vivo · com música entra em modo show.
 Temporizador de sueño	Sleep timer	Temporizador de sono
-Bajar el Telón · pausa la música para dormir.	Curtain call · pauses the music for sleeping.	Fechar as cortinas · pausa a música para dormir.
 Primero da el acceso a notificaciones (en Música)	First grant notification access (in Music)	Primeiro dê o acesso a notificações (em Música)
 Historial de escucha	Listening history	Histórico de escuta
-Bitácora de Gira · solo en tu teléfono.	Tour diary · only on your phone.	Diário de Turnê · só no seu telefone.
 Comparte y descubre	Share and discover	Compartilhe e descubra
 Entrada de concierto	Concert ticket	Ingresso de show
 Con la canción que suena	With the song that's playing	Com a música que está tocando
-Tu setlist de la semana	Your setlist of the week	Seu setlist da semana
 Tu año en escena	Your year on stage	Seu ano no palco
 Descubrir bandas	Discover bands	Descobrir bandas
 Afiche de la Gira	Tour poster	Pôster da Turnê
 Rendimiento	Performance	Desempenho
-Detalles divertidos	Fun details	Detalhes divertidos
-Por ejemplo: «Tormenta: noche de distorsión».	For example: “Storm: a night of distortion”.	Por exemplo: “Tempestade: noite de distorção”.
 Letra del widget	Widget font	Fonte do widget
 Taller de Afiches	Poster Workshop	Oficina de Pôsteres
 Letras del tema activadas	Theme fonts turned on	Fontes do tema ativadas
 La hora conserva la letra del tema.	The time keeps the theme's font.	A hora mantém a fonte do tema.
 Cambio automático	Automatic changes	Mudança automática
-Setlist del Día · cambia solo con el clima, la hora o tus audífonos.	Setlist of the Day · changes by itself with the weather, the time or your headphones.	Setlist do Dia · muda sozinho com o clima, a hora ou seus fones.
 Con lluvia	When it rains	Com chuva
 Fondo «Lluvia y café».	“Rain and coffee” wallpaper.	Fundo “Chuva e café”.
 De noche	At night	À noite
 8 p. m. a 5 a. m.: tema Ámbar y fondo Fogata.	8 p.m. to 5 a.m.: Amber theme and Campfire wallpaper.	20h às 5h: tema Âmbar e fundo Fogueira.
 Con audífonos	With headphones	Com fones
 Reproductor grande en el widget Completo.	Big player on the Full widget.	Player grande no widget Completo.
-Encore · ese día el widget lo celebra.	Encore · that day the widget celebrates.	Encore · nesse dia o widget comemora.
 Fecha estilo cartel	Poster-style date	Data estilo pôster
 Si suena en las próximas 24 horas.	If it rings in the next 24 hours.	Se tocar nas próximas 24 horas.
 Pide permiso para leer tu calendario.	Asks for permission to read your calendar.	Pede permissão para ler sua agenda.
@@ -570,7 +554,6 @@ Las apps no se ven porque elegiste 0 apps (Widget › Apps).	Apps aren't shown b
 puesto {} de {}	position {} of {}	posição {} de {}
 bloque {} de {}	block {} of {}	bloco {} de {}
 Se movió toda la cabecera: día, fecha, hora, clima y batería van juntos	The whole header moved: day, date, time, weather and battery go together	O cabeçalho inteiro se moveu: dia, data, hora, clima e bateria vão juntos
-Plantilla aplicada: se quitaron los cambios del editor	Template applied: editor changes were removed	Modelo aplicado: as mudanças do editor foram removidas
 Ajustar cada parte	Adjust each part	Ajustar cada parte
 Mostrar, ordenar, tamaño, letra y color	Show, order, size, font and color	Mostrar, ordenar, tamanho, fonte e cor
 Cantidad	Amount	Quantidade
@@ -687,3 +670,17 @@ Ahora no	Not now	Agora não
 Antes de dar el permiso	Before you allow it	Antes de permitir
 Android lo llama «Acceso a notificaciones», pero Prisma Widgets solo lo usa para ver la canción que suena: título, artista, carátula y los botones ⏮ ⏯ ⏭.	Android calls it “Notification access”, but Prisma Widgets only uses it to see the song that's playing: title, artist, cover and the ⏮ ⏯ ⏭ buttons.	O Android chama de “Acesso a notificações”, mas o Prisma Widgets só usa para ver a música que toca: título, artista, capa e os botões ⏮ ⏯ ⏭.
 No lee, no guarda y no envía tus notificaciones ni tus mensajes. Puedes quitar el permiso cuando quieras.	It doesn't read, store or send your notifications or messages. You can remove the permission any time.	Não lê, não guarda e não envia suas notificações nem mensagens. Você pode tirar a permissão quando quiser.
+Mini 1×1	Mini 1×1	Mini 1×1
+Día, fecha y batería en un cuadrito	Day, date and battery in a small square	Dia, data e bateria num quadradinho
+Lo que más escuchaste esta semana	What you played most this week	O que você mais ouviu esta semana
+Widget al día · hace {} h	Widget up to date · {} h ago	Widget em dia · há {} h
+Los atajos están permitidos.	Shortcuts are allowed.	Os atalhos estão permitidos.
+Los atajos están apagados: otras apps no pueden cambiar tu widget.	Shortcuts are off: other apps can't change your widget.	Os atalhos estão desligados: outros apps não podem mudar seu widget.
+Envía una intención de difusión (broadcast) con estas acciones:	Send a broadcast intent with these actions:	Envie uma intenção de difusão (broadcast) com estas ações:
+Solo cambian el aspecto; no leen ni envían datos.	They only change the look; they don't read or send data.	Só mudam o visual; não leem nem enviam dados.
+Apagar atajos	Turn off shortcuts	Desligar atalhos
+Permitir atajos	Allow shortcuts	Permitir atalhos
+Atajos apagados	Shortcuts off	Atalhos desligados
+Atajos permitidos	Shortcuts allowed	Atalhos permitidos
+Para ver el fondo animado, ponlo como fondo de pantalla.	To see the animated background, set it as your wallpaper.	Para ver o fundo animado, defina-o como papel de parede.
+Poner fondo animado	Set animated background	Definir fundo animado

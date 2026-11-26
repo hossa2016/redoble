@@ -65,21 +65,32 @@ class RockWidget : AppWidgetProvider() {
 
         /** ¿Hay algún widget de Prisma puesto (el Completo o una de las piezas)? */
         fun hasWidgets(ctx: Context): Boolean =
-            intArrayOf(Widgets.FULL, Widgets.CLOCK, Widgets.APPS, Widgets.PLAYER).any { Widgets.has(ctx, it) }
+            intArrayOf(Widgets.FULL, Widgets.CLOCK, Widgets.APPS, Widgets.PLAYER).any { Widgets.has(ctx, it) } ||
+                listOf(MiniWidget::class.java, WeekWidget::class.java, SmartWidget::class.java, AgendaWidget::class.java).any {
+                    try { AppWidgetManager.getInstance(ctx).getAppWidgetIds(ComponentName(ctx, it)).isNotEmpty() } catch (e: Exception) { false }
+                }
+
+        /** Alto real (dp) del primer widget Completo, para que las vistas previas sean fieles. */
+        fun fullHeightDp(ctx: Context): Int = try {
+            val mgr = AppWidgetManager.getInstance(ctx)
+            mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java)).firstOrNull()?.let { Widgets.sizeDp(ctx, mgr, it).second } ?: 0
+        } catch (e: Exception) { 0 }
 
         /** Redibuja todo. Sincronizado: lo llaman el hilo principal y WorkManager. */
         @Synchronized
         fun updateAll(ctx: Context) {
             val mgr = AppWidgetManager.getInstance(ctx)
+            var ok = false; var any = false
             for (id in mgr.getAppWidgetIds(ComponentName(ctx, RockWidget::class.java))) {
-                try { update(ctx, mgr, id) } catch (e: Exception) { }
+                any = true
+                try { update(ctx, mgr, id); ok = true } catch (e: Exception) { }
             }
             Widgets.updatePieces(ctx)
             MiniWidget.updateAll(ctx)
             WeekWidget.updateAll(ctx)
             SmartWidget.updateAll(ctx)
             AgendaWidget.updateAll(ctx)
-            Prefs.setLastDraw(ctx)
+            if (ok || !any) Prefs.setLastDraw(ctx)
         }
 
         private val mainH = android.os.Handler(android.os.Looper.getMainLooper())
@@ -192,8 +203,9 @@ class RockWidget : AppWidgetProvider() {
             // La alarma de respaldo se vuelve a armar siempre, aunque la pantalla esté apagada
             armClockCheck(ctx)
             // La Pila inteligente con la hora de la letra del tema también va al minuto
-            try { if (screenOn(ctx) && SmartWidget.placed(ctx)) SmartWidget.updateAll(ctx) } catch (e: Exception) { }
+            try { if (screenOn(ctx) && SmartWidget.placed(ctx) && SmartWidget.mode(ctx) == "clock") SmartWidget.updateAll(ctx) } catch (e: Exception) { }
             if (!(Prefs.el(ctx, "hora") || Widgets.has(ctx, Widgets.CLOCK)) || !screenOn(ctx)) return
+            Prefs.setLastDraw(ctx)
             val mgr = AppWidgetManager.getInstance(ctx)
             val th = Themes.widget(ctx)
             val playing = Prefs.lastPlaying(ctx)

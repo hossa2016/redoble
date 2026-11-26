@@ -226,7 +226,7 @@ internal fun MainActivity.openEditor() {
 
     refresh = {
         io.execute {
-            val rv = try { RockWidget.buildViews(app, wPx, preview = true, sample = true) } catch (e: Throwable) { null }
+            val rv = try { RockWidget.buildViews(app, wPx, preview = true, sample = true, hDp = RockWidget.fullHeightDp(app)) } catch (e: Throwable) { null }
             onUi {
                 try {
                     rv?.let {
@@ -434,9 +434,13 @@ internal fun MainActivity.openEditor() {
                             override fun onProgressChanged(sb: android.widget.SeekBar, v: Int, fromUser: Boolean) {
                                 pct.text = "${70 + v * 5} %"
                                 sb.stateDescription = "${70 + v * 5} %"
+                                // Con TalkBack o teclado no hay «soltar»: se guarda al momento
+                                if (fromUser && !dragSize) { Prefs.setPartScale(this@openEditor, p, 0.7f + v * 0.05f); changed() }
                             }
-                            override fun onStartTrackingTouch(sb: android.widget.SeekBar) {}
+                            var dragSize = false
+                            override fun onStartTrackingTouch(sb: android.widget.SeekBar) { dragSize = true }
                             override fun onStopTrackingTouch(sb: android.widget.SeekBar) {
+                                dragSize = false
                                 Prefs.setPartScale(this@openEditor, p, 0.7f + sb.progress * 0.05f); changed()
                             }
                         })

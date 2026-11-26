@@ -206,6 +206,10 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         maybeAskReview()
+        if (intent?.getBooleanExtra("askCalendar", false) == true) {
+            intent.removeExtra("askCalendar")
+            if (!Extras.hasCalendar(this)) calendarPerm.launch(android.Manifest.permission.READ_CALENDAR)
+        }
         intent?.getIntExtra("tab", -1)?.takeIf { it in 0..3 }?.let { t ->
             intent.removeExtra("tab"); Prefs.setSettingsTab(this, t); openSections.clear(); build()
         }

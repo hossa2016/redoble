@@ -28,9 +28,16 @@ object Gallery {
         Look("cafe", "Café y lluvia", "Ventana con café humeante, apps a la mano.", 1, "cafe", "completo", 8, "casete"),
     )
 
-    /** Aplica un escenario y devuelve el código para deshacerlo. */
-    fun apply(ctx: android.content.Context, l: Look): String {
-        val undo = Backup.shareCode(ctx)
+    /** Aplica un escenario y devuelve cómo deshacerlo (todo lo que toca, aunque estuviera de fábrica). */
+    fun apply(ctx: android.content.Context, l: Look): () -> Unit {
+        val code = Backup.shareCode(ctx)
+        val ws = Prefs.wallStyle(ctx); val sc = Prefs.liveScene(ctx); val ac = Prefs.accentIndex(ctx)
+        val bg = Prefs.bgAccent(ctx); val sk = Prefs.playerSkin(ctx)
+        val undo = {
+            try { Backup.applyCode(ctx, code) } catch (e: Exception) { }
+            Prefs.setWallStyle(ctx, ws); Prefs.setLiveScene(ctx, sc); Prefs.setAccentIndex(ctx, ac)
+            Prefs.setBgAccent(ctx, bg); Prefs.setPlayerSkin(ctx, sk)
+        }
         Prefs.applyPreset(ctx, l.preset)
         Prefs.setTheme(ctx, l.theme.coerceIn(0, Themes.ALL.size - 1))
         Prefs.setWallStyle(ctx, "anim"); Prefs.setLiveScene(ctx, l.scene)
@@ -78,11 +85,14 @@ internal fun MainActivity.galleryPlate(): View {
                     val undo = Gallery.apply(this@galleryPlate, l)
                     RockWidget.updateAll(this@galleryPlate); Player.updateAll(this@galleryPlate)
                     build()
-                    ui.sheet("Escenario aplicado", "Si no te convence, vuelve a como estaba.",
-                        actions = listOf("Deshacer" to {
-                            try { Backup.applyCode(this@galleryPlate, undo) } catch (e: Exception) { }
-                            RockWidget.updateAll(this@galleryPlate); build()
-                        }), dismissLabel = "Me gusta")
+                    val ours = try { android.app.WallpaperManager.getInstance(this@galleryPlate).wallpaperInfo?.packageName == packageName } catch (e: Exception) { true }
+                    ui.sheet("Escenario aplicado", I18n.tr(this@galleryPlate, "Si no te convence, vuelve a como estaba.") +
+                            (if (ours) "" else "\n\n" + I18n.tr(this@galleryPlate, "Para ver el fondo animado, ponlo como fondo de pantalla.")),
+                        actions = (if (ours) emptyList() else listOf("Poner fondo animado" to { launchLiveWallpaper() })) +
+                            listOf("Deshacer" to {
+                                undo()
+                                RockWidget.updateAll(this@galleryPlate); build()
+                            }), dismissLabel = "Me gusta")
                 }))
             }
         }, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = ui.dp(10) })

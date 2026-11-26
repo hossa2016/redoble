@@ -41,6 +41,26 @@ object Extras {
         } catch (e: Exception) { -1 }
     }
 
+    /** Próximo evento con hora (no de todo el día) que aún no empieza: "Reunión · 3:00 pm". */
+    fun nextTimedEvent(ctx: Context): String {
+        if (!hasCalendar(ctx)) return ""
+        return try {
+            val now = System.currentTimeMillis()
+            val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().let {
+                android.content.ContentUris.appendId(it, now); android.content.ContentUris.appendId(it, now + 36 * 3_600_000L); it.build() }
+            ctx.contentResolver.query(uri, arrayOf(CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN, CalendarContract.Instances.ALL_DAY),
+                "${CalendarContract.Instances.BEGIN} >= ?", arrayOf(now.toString()), "${CalendarContract.Instances.BEGIN} ASC")?.use { c ->
+                while (c.moveToNext()) {
+                    if (c.getInt(2) == 1) continue
+                    val title = c.getString(0)?.trim().orEmpty().ifEmpty { I18n.tr(ctx, "Próximo evento") }
+                    val b = c.getLong(1)
+                    return "${title.take(22)} · " + (if (sameDay(b, now)) "" else I18n.tr(ctx, "mañana") + " ") + time(ctx, b)
+                }
+                ""
+            } ?: ""
+        } catch (e: Exception) { "" }
+    }
+
     /** Títulos de los eventos de hoy (para la regla «Concierto hoy»). */
     fun todayTitles(ctx: Context): List<String> {
         if (!hasCalendar(ctx)) return emptyList()
