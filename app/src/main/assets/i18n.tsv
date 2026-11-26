@@ -37,7 +37,6 @@ Ajustar foto	Adjust photo	Ajustar foto
 Ajustes restaurados	Settings restored	Configurações restauradas
 Al aplicar eliges inicio, bloqueo o ambas.	When applying you choose home, lock or both.	Ao aplicar você escolhe início, bloqueio ou ambas.
 Al aplicar se abrirá la confirmación de Android.	Android will ask you to confirm when applying.	Ao aplicar, o Android pedirá confirmação.
-Al tocar uno lo ves a pantalla completa, donde puedes deslizar para ver los demás y aplicarlo. Se mueve solo con la pantalla encendida y en el inicio; al abrir una app o bloquear el teléfono se pausa para no gastar batería.	Tap one to see it full screen, swipe to see the others and apply it. It only moves with the screen on and on the home screen; it pauses when you open an app or lock the phone, to save battery.	Toque em um para vê-lo em tela cheia, deslize para ver os outros e aplique. Só se move com a tela ligada e na tela inicial; pausa ao abrir um app ou bloquear o telefone, para economizar bateria.
 Alarma	Alarm	Alarme
 Algo nublado	Partly cloudy	Parcialmente nublado
 Amanecer {} · Atardecer {}	Sunrise {} · Sunset {}	Nascer do sol {} · Pôr do sol {}
@@ -684,3 +683,22 @@ Atajos apagados	Shortcuts off	Atalhos desligados
 Atajos permitidos	Shortcuts allowed	Atalhos permitidos
 Para ver el fondo animado, ponlo como fondo de pantalla.	To see the animated background, set it as your wallpaper.	Para ver o fundo animado, defina-o como papel de parede.
 Poner fondo animado	Set animated background	Definir fundo animado
+Descargando el video…	Downloading the video…	Baixando o vídeo…
+Descargando el video… {} %	Downloading the video… {} %	Baixando o vídeo… {} %
+Sin internet: el video se descarga cuando haya conexión	No internet: the video will download when you're online	Sem internet: o vídeo baixa quando houver conexão
+Descargar todos los fondos	Download all backgrounds	Baixar todos os fundos
+{} por bajar · {} MB · para usarlos sin internet	{} to download · {} MB · to use them offline	{} para baixar · {} MB · para usar sem internet
+Descargando {} fondos…	Downloading {} backgrounds…	Baixando {} fundos…
+Fondos descargados	Backgrounds downloaded	Fundos baixados
+Algunos no se pudieron bajar: revisa tu internet	Some couldn't be downloaded: check your internet	Alguns não puderam ser baixados: verifique a internet
+se descarga al elegirlo	downloads when you choose it	baixa ao escolher
+Se está descargando «{}»: el fondo cambia solo al terminar	Downloading “{}”: the background changes when it's done	Baixando “{}”: o fundo muda ao terminar
+Al tocar uno lo ves a pantalla completa, donde puedes deslizar para ver los demás y aplicarlo. Los que tienen ↓ se descargan la primera vez (1 a 3 MB) y quedan guardados. Se mueve solo con la pantalla encendida y en el inicio; al abrir una app o bloquear el teléfono se pausa para no gastar batería.	Tap one to see it full screen, where you can swipe through the others and apply it. Those with ↓ download the first time (1 to 3 MB) and stay saved. It only moves with the screen on and on the home screen; opening an app or locking the phone pauses it to save battery.	Toque um para vê-lo em tela cheia, onde você pode deslizar para ver os outros e aplicá-lo. Os que têm ↓ baixam na primeira vez (1 a 3 MB) e ficam salvos. Só se move com a tela ligada e na tela inicial; ao abrir um app ou bloquear o celular ele pausa para economizar bateria.
+Conciertos cerca	Concerts nearby	Shows perto
+Tus artistas en tu ciudad	Your artists in your city	Seus artistas na sua cidade
+Activa el historial de escucha (arriba) o pon música: aquí salen tus artistas.	Turn on listening history (above) or play music: your artists show up here.	Ative o histórico de escuta (acima) ou toque música: seus artistas aparecem aqui.
+Escribe tu ciudad en Clima para buscar cerca de ti.	Enter your city in Weather to search near you.	Escreva sua cidade em Clima para buscar perto de você.
+Tus artistas más escuchados. Toca uno para ver sus fechas en {}.	Your most played artists. Tap one to see their dates in {}.	Seus artistas mais ouvidos. Toque em um para ver as datas em {}.
+Buscar fechas	Find dates	Buscar datas
+Buscar conciertos de {}	Find concerts by {}	Buscar shows de {}
+concierto	concert	show

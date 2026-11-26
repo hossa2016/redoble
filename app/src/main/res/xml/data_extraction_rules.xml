@@ -8,5 +8,7 @@
     <device-transfer>
         <include domain="sharedpref" path="redoble.xml" />
         <include domain="file" path="fondo.jpg" />
+        <!-- Al pasar a un teléfono nuevo (cable o Wi-Fi directo) también viajan los fondos descargados -->
+        <include domain="file" path="videos/" />
     </device-transfer>
 </data-extraction-rules>

@@ -154,6 +154,23 @@ internal fun MainActivity.animSection(card: LinearLayout) {
         grid.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(10) })
     }
     card.addView(grid, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(6) })
+    // Descargar de una vez los fondos que no vienen dentro de la app (para tenerlos sin internet)
+    val missing = VideoStore.missing(this)
+    if (missing.isNotEmpty()) {
+        val mb = Math.round(missing.sumOf { VideoStore.sizeMb(it) }).toInt().coerceAtLeast(1)
+        val row = ui.actionRow("Descargar todos los fondos", R.drawable.ic_video,
+            I18n.tr(this, "{} por bajar · {} MB · para usarlos sin internet").replaceFirst("{}", missing.size.toString()).replaceFirst("{}", mb.toString()))
+        row.setOnClickListener {
+            row.isEnabled = false
+            var left = missing.size; var fails = 0
+            toast(I18n.tr(this, "Descargando {} fondos…").replace("{}", missing.size.toString()))
+            missing.forEach { s -> VideoStore.fetch(this, s, done = { ok -> onUi {
+                left--; if (!ok) fails++
+                if (left == 0) { toast(if (fails == 0) "Fondos descargados" else "Algunos no se pudieron bajar: revisa tu internet"); build() }
+            } }) }
+        }
+        card.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
+    }
     // Mi video: un clip propio como fondo animado (va con los demás fondos)
     val hasOwn = java.io.File(filesDir, "video_propio.mp4").exists()
     card.addView(ui.actionRow(if (hasOwn) "Cambiar mi video" else "Usar un video mío", R.drawable.ic_video,
@@ -163,6 +180,7 @@ internal fun MainActivity.animSection(card: LinearLayout) {
     }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(12) })
     card.addView(ui.note("Toca uno para verlo en grande y aplicarlo.",
         "Al tocar uno lo ves a pantalla completa, donde puedes deslizar para ver los demás y aplicarlo. " +
+        "Los que tienen ↓ se descargan la primera vez (1 a 3 MB) y quedan guardados. " +
         "Se mueve solo con la pantalla encendida y en el inicio; al abrir una app o bloquear el teléfono se pausa para no gastar batería."),
         LinearLayout.LayoutParams(-1, -2).apply { topMargin = ui.dp(8) })
 }
@@ -180,6 +198,10 @@ internal fun MainActivity.sceneTile(s: VideoScenes.Info, on: Boolean, w: Int, h:
     val frame = FrameLayout(this).apply {
         addView(img, FrameLayout.LayoutParams(-1, -1))
         foreground = ui.rect(Color.TRANSPARENT, 12f, if (on) ui.accent else Ui.headA(0x24), if (on) 2.5f else 1f)
+        if (!on && !VideoStore.ready(this@sceneTile, s)) addView(ui.text("↓", ui.condSemi, 13f, Color.WHITE).apply {
+            gravity = Gravity.CENTER
+            background = ui.oval(Color.argb(0xB3, 0, 0, 0))
+        }, FrameLayout.LayoutParams(ui.dp(22), ui.dp(22), Gravity.TOP or Gravity.END).apply { topMargin = ui.dp(6); marginEnd = ui.dp(6) })
         if (on) addView(ui.text("✓", ui.condSemi, 13f, ui.onAccent).apply {
             gravity = Gravity.CENTER
             background = ui.oval(ui.accent)
@@ -195,7 +217,8 @@ internal fun MainActivity.sceneTile(s: VideoScenes.Info, on: Boolean, w: Int, h:
         }, LinearLayout.LayoutParams(-1, ui.dp(26)))
         isClickable = true
         foreground = ui.rowBg()
-        contentDescription = "${s.name}: ${s.desc}" + if (on) ", elegido" else ""
+        contentDescription = "${s.name}: ${s.desc}" + (if (on) ", elegido" else "") +
+            (if (!VideoStore.ready(this@sceneTile, s)) ", " + I18n.tr(this@sceneTile, "se descarga al elegirlo") else "")
         // Tocar: verla a pantalla completa (ahí se aplica)
         setOnClickListener { openFullPreview(VideoScenes.ALL.indexOf(s)) }
     }

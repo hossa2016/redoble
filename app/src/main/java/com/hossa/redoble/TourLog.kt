@@ -84,6 +84,12 @@ object TourLog {
     }
 
     fun week(ctx: Context) = summary(ctx, weekKey())
+    /** Artistas más escuchados del año ([year]) o de la semana. */
+    fun topArtists(ctx: Context, year: Boolean, n: Int = 6): List<String> {
+        val o = try { JSONObject(p(ctx).getString(if (year) yearKey() else weekKey(), "{}") ?: "{}") } catch (e: Exception) { JSONObject() }
+        val arts = o.optJSONObject("artists") ?: return emptyList()
+        return arts.keys().asSequence().sortedByDescending { arts.optDouble(it) }.take(n).toList()
+    }
     fun year(ctx: Context) = summary(ctx, yearKey())
     fun weekNumber() = Calendar.getInstance().get(Calendar.WEEK_OF_YEAR)
     fun yearNumber() = Calendar.getInstance().get(Calendar.YEAR)

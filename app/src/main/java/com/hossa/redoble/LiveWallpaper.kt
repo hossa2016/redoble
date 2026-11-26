@@ -34,32 +34,32 @@ import kotlin.math.sin
 
 /** Escenas de video real. [over]: capa delantera opcional (se mezcla en modo "pantalla"). */
 object VideoScenes {
-    class Info(val id: String, val name: String, val desc: String, val base: Int, val over: Int? = null, val fire: Boolean = false)
+    class Info(val id: String, val name: String, val desc: String, val base: String, val over: String? = null, val fire: Boolean = false)
     val ALL = listOf(
-        Info("fogata", "Fogata", "Fogata real con chispas por delante y la luz del fuego", R.raw.vid_fogata, R.raw.vid_chispas, true),
-        Info("brasero", "Brasero", "Fuego intenso con chispas al frente y resplandor cálido", R.raw.vid_brasero, R.raw.vid_chispas, true),
-        Info("chispas", "Chispas", "Brasas volando en la oscuridad", R.raw.vid_chispas, null, true),
-        Info("ciudad", "Lluvia y ciudad", "Gotas en el vidrio y luces de ciudad desenfocadas", R.raw.vid_ciudad),
-        Info("cafe", "Lluvia y café", "Ventana con lluvia, neón y el vapor de un café", R.raw.vid_cafe),
-        Info("ventana", "Ventana gris", "Lluvia fuerte resbalando por el vidrio", R.raw.vid_ventana),
-        Info("bateria", "Batería", "Tambores entre humo y luz de fuego, con chispas", R.raw.vid_bateria, R.raw.vid_chispas, true),
-        Info("concierto", "Concierto", "Luces rojas y lluvia de papelitos sobre el público", R.raw.vid_concierto),
-        Info("neon", "Neón y lluvia", "Gotas en el vidrio con reflejos de neón y luces flotando", R.raw.vid_neon, R.raw.vid_luces),
-        Info("cristal", "Cristal líquido", "Vidrio iridiscente que fluye con reflejos de arcoíris", R.raw.vid_cristal),
-        Info("oro", "Polvo de oro", "Partículas doradas que suben sobre negro", R.raw.vid_oro),
-        Info("luces", "Luces flotantes", "Puntos de luz azul y ámbar flotando en la oscuridad", R.raw.vid_luces),
-        Info("aurora", "Aurora boreal", "Aurora verde y magenta sobre los pinos, con copos al frente", R.raw.vid_aurora, R.raw.vid_copos),
-        Info("nieve", "Nieve", "Copos cayendo sobre un claro del bosque", R.raw.vid_nieve),
-        Info("hojas", "Hojas y gotas", "Hojas verdes con gotas de lluvia", R.raw.vid_hojas),
-        Info("estallido", "Estallido", "Cristal líquido que estalla y cambia de color", R.raw.vid_estallido),
-        Info("ambar", "Vidrio ámbar", "Vidrio quebrado con luces cálidas y brasas al frente", R.raw.vid_ambar, R.raw.vid_brasas, true),
-        Info("escenario", "Escenario", "Reflectores sobre el público en un concierto de noche", R.raw.vid_escenario),
-        Info("ondas", "Ondas de luz", "Ondas de luz turquesa con polvo brillante al frente", R.raw.vid_ondas, R.raw.vid_copos),
-        Info("agua", "Agua", "Superficie del mar moviéndose en calma", R.raw.vid_agua),
-        Info("brasas", "Brasas", "Chispas naranjas saltando en la oscuridad", R.raw.vid_brasas, null, true),
+        Info("fogata", "Fogata", "Fogata real con chispas por delante y la luz del fuego", "vid_fogata", "vid_chispas", true),
+        Info("brasero", "Brasero", "Fuego intenso con chispas al frente y resplandor cálido", "vid_brasero", "vid_chispas", true),
+        Info("chispas", "Chispas", "Brasas volando en la oscuridad", "vid_chispas", null, true),
+        Info("ciudad", "Lluvia y ciudad", "Gotas en el vidrio y luces de ciudad desenfocadas", "vid_ciudad"),
+        Info("cafe", "Lluvia y café", "Ventana con lluvia, neón y el vapor de un café", "vid_cafe"),
+        Info("ventana", "Ventana gris", "Lluvia fuerte resbalando por el vidrio", "vid_ventana"),
+        Info("bateria", "Batería", "Tambores entre humo y luz de fuego, con chispas", "vid_bateria", "vid_chispas", true),
+        Info("concierto", "Concierto", "Luces rojas y lluvia de papelitos sobre el público", "vid_concierto"),
+        Info("neon", "Neón y lluvia", "Gotas en el vidrio con reflejos de neón y luces flotando", "vid_neon", "vid_luces"),
+        Info("cristal", "Cristal líquido", "Vidrio iridiscente que fluye con reflejos de arcoíris", "vid_cristal"),
+        Info("oro", "Polvo de oro", "Partículas doradas que suben sobre negro", "vid_oro"),
+        Info("luces", "Luces flotantes", "Puntos de luz azul y ámbar flotando en la oscuridad", "vid_luces"),
+        Info("aurora", "Aurora boreal", "Aurora verde y magenta sobre los pinos, con copos al frente", "vid_aurora", "vid_copos"),
+        Info("nieve", "Nieve", "Copos cayendo sobre un claro del bosque", "vid_nieve"),
+        Info("hojas", "Hojas y gotas", "Hojas verdes con gotas de lluvia", "vid_hojas"),
+        Info("estallido", "Estallido", "Cristal líquido que estalla y cambia de color", "vid_estallido"),
+        Info("ambar", "Vidrio ámbar", "Vidrio quebrado con luces cálidas y brasas al frente", "vid_ambar", "vid_brasas", true),
+        Info("escenario", "Escenario", "Reflectores sobre el público en un concierto de noche", "vid_escenario"),
+        Info("ondas", "Ondas de luz", "Ondas de luz turquesa con polvo brillante al frente", "vid_ondas", "vid_copos"),
+        Info("agua", "Agua", "Superficie del mar moviéndose en calma", "vid_agua"),
+        Info("brasas", "Brasas", "Chispas naranjas saltando en la oscuridad", "vid_brasas", null, true),
     )
     /** Escena con un video propio del usuario (guardado en la app). */
-    val PROPIO = Info("propio", "Mi video", "Tu propio clip como fondo animado", 0)
+    val PROPIO = Info("propio", "Mi video", "Tu propio clip como fondo animado", "propio")
     fun find(id: String) = if (id == "propio") PROPIO else ALL.firstOrNull { it.id == id } ?: ALL[0]
     /** Miniatura (un cuadro del video, con su capa delantera) para elegir la escena. */
     private val THUMBS = mapOf(
@@ -154,7 +154,7 @@ private class VideoRenderer(private val ctx: Context, private val scene: VideoSc
         addLayer(scene.base); scene.over?.let { addLayer(it) }
     }
 
-    private fun addLayer(res: Int) {
+    private fun addLayer(name: String) {
         val t = IntArray(1); GLES20.glGenTextures(1, t, 0)
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, t[0])
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
@@ -171,8 +171,8 @@ private class VideoRenderer(private val ctx: Context, private val scene: VideoSc
                 repeatMode = androidx.media3.common.Player.REPEAT_MODE_ONE
                 val own = java.io.File(ctx.filesDir, "video_propio.mp4")
                 setMediaItem(androidx.media3.common.MediaItem.fromUri(
-                    if (res == 0 && own.exists()) android.net.Uri.fromFile(own)
-                    else android.net.Uri.parse("android.resource://${ctx.packageName}/${if (res == 0) R.raw.vid_fogata else res}")))
+                    if (name == "propio" && own.exists()) android.net.Uri.fromFile(own)
+                    else VideoStore.uri(ctx, name) ?: VideoStore.uri(ctx, "vid_fogata")!!))
                 prepare()
             }
         } catch (e: Exception) { return }
@@ -271,7 +271,11 @@ class PrismaWallpaper : WallpaperService() {
         /** Escena que toca ahora: la elegida o, con Escenario Vivo y música sonando, la de concierto. */
         private fun wanted(): String {
             val c = this@PrismaWallpaper
-            return if (Prefs.liveStage(c) && Stage.playing) Prefs.stageScene(c) else Rules.scene(c) ?: Prefs.liveScene(c)
+            val id = if (Prefs.liveStage(c) && Stage.playing) Prefs.stageScene(c) else Rules.scene(c) ?: Prefs.liveScene(c)
+            val s = VideoScenes.find(id)
+            if (id == "propio" || VideoStore.ready(c, s)) return id
+            VideoStore.fetch(c, s)   // al terminar, onStage cambia la escena sola
+            return "fogata"
         }
         private fun applyTint() {
             val c = this@PrismaWallpaper
@@ -287,7 +291,7 @@ class PrismaWallpaper : WallpaperService() {
             }
         }
 
-        override fun onCreate(surfaceHolder: SurfaceHolder) { super.onCreate(surfaceHolder); Stage.listen(onStage) }
+        override fun onCreate(surfaceHolder: SurfaceHolder) { super.onCreate(surfaceHolder); Stage.listen(onStage); VideoStore.listen(onStage) }
 
         private fun build(holder: SurfaceHolder) {
             renderer?.release(); renderer = null
@@ -346,7 +350,7 @@ class PrismaWallpaper : WallpaperService() {
             try { latch.await(1, java.util.concurrent.TimeUnit.SECONDS) } catch (e: Exception) { }
             super.onSurfaceDestroyed(holder)
         }
-        override fun onDestroy() { Stage.unlisten(onStage); gl.post { renderer?.release(); renderer = null; thread.quitSafely() }; super.onDestroy() }
+        override fun onDestroy() { Stage.unlisten(onStage); VideoStore.unlisten(onStage); gl.post { renderer?.release(); renderer = null; thread.quitSafely() }; super.onDestroy() }
     }
 }
 
@@ -376,10 +380,35 @@ class VideoPreview(ctx: Context) : FrameLayout(ctx), TextureView.SurfaceTextureL
         tv.surfaceTextureListener = this
     }
 
+    /** Aviso «Descargando… 40 %» sobre la vista previa de una escena que aún no está en el teléfono. */
+    private val status = android.widget.TextView(ctx).apply {
+        setTextColor(Color.WHITE); textSize = 15f; gravity = android.view.Gravity.CENTER
+        setShadowLayer(8f, 0f, 2f, Color.BLACK); visibility = View.GONE
+    }
+    private val cover = android.widget.ImageView(ctx).apply {
+        scaleType = android.widget.ImageView.ScaleType.CENTER_CROP; visibility = View.GONE
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+    }
+    init { addView(cover, 1, LayoutParams(-1, -1)); addView(status, LayoutParams(-1, -2, android.view.Gravity.CENTER)) }
+
     private fun restart() {
         mp?.release(); mp = null
         val st = tv.surfaceTexture ?: return
-        val p = MediaPlayer.create(context, scene.base) ?: return
+        val s = scene
+        if (s.id != "propio" && !VideoStore.ready(context, s)) {
+            VideoScenes.thumb(s.id)?.let { cover.setImageResource(it); cover.visibility = View.VISIBLE }
+            status.visibility = View.VISIBLE
+            status.text = I18n.tr(context, "Descargando el video…")
+            VideoStore.fetch(context, s, progress = { p -> post { if (scene === s) status.text = I18n.tr(context, "Descargando el video… {} %").replace("{}", p.toString()) } },
+                done = { ok -> post {
+                    if (scene !== s) return@post
+                    if (ok) restart() else status.text = I18n.tr(context, "Sin internet: el video se descarga cuando haya conexión")
+                } })
+            return
+        }
+        cover.visibility = View.GONE; status.visibility = View.GONE
+        val uri = if (s.id == "propio") android.net.Uri.fromFile(java.io.File(context.filesDir, "video_propio.mp4")) else VideoStore.uri(context, s.base) ?: return
+        val p = try { MediaPlayer.create(context, uri) } catch (e: Exception) { null } ?: return
         p.setSurface(Surface(st)); p.isLooping = true; p.setVolume(0f, 0f); p.start(); mp = p
     }
 

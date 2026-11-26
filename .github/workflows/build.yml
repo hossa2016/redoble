@@ -33,6 +33,7 @@ jobs:
           PRISMA_KEYSTORE_PASSWORD: ${{ secrets.PRISMA_KEYSTORE_PASSWORD }}
           PRISMA_KEY_ALIAS: ${{ secrets.PRISMA_KEY_ALIAS }}
           PRISMA_KEY_PASSWORD: ${{ secrets.PRISMA_KEY_PASSWORD }}
+          TICKETMASTER_KEY: ${{ secrets.TICKETMASTER_KEY }}
         run: |
           if [ -z "$PRISMA_KEYSTORE_PASSWORD" ]; then unset PRISMA_KEYSTORE_PASSWORD PRISMA_KEY_ALIAS PRISMA_KEY_PASSWORD; fi
           set -o pipefail

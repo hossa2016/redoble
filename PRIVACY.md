@@ -35,6 +35,12 @@ Si activas «Color de tu fondo», la app calcula en el teléfono el color princi
 ### Atajos para Tasker y Automate
 La app acepta órdenes de otras apps de automatización solo para cambiar el escenario, el tema o el diseño, o para redibujar los widgets. Estas órdenes no leen ni envían datos.
 
+### Fondos animados que se descargan
+Algunos videos de fondo no vienen dentro de la app: se descargan la primera vez que los eliges, desde el repositorio público del proyecto en GitHub (raw.githubusercontent.com) o su copia en jsDelivr (cdn.jsdelivr.net). Solo se pide el archivo del video; como en cualquier descarga, esos servidores ven la dirección IP del teléfono. Los videos quedan guardados en la app.
+
+### Conciertos cerca
+La app muestra tus artistas más escuchados (del historial, que vive en tu teléfono). Al tocar uno, se abre una búsqueda web con el nombre del artista y tu ciudad. Si la versión incluye la búsqueda de Ticketmaster, la app le envía a Ticketmaster solo el nombre del artista y las coordenadas de la ciudad que escribiste para el clima.
+
 ### Batería
 La app lee el nivel de batería y si está cargando, solo para mostrarlo en el widget.
 

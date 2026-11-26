@@ -322,6 +322,7 @@ class MainActivity : AppCompatActivity() {
                     "Historial".takeIf { Prefs.tourLog(this) }).joinToString(" · ").ifBlank { "Apagado" }))
                 if (playerW) col.addView(fold(playerWidgetPlate(), "w_player", if (Prefs.pwIdle(this) == "last") "Sin música: última canción" else "Sin música: nada sonando"))
                 col.addView(fold(sharePlate(), "comparte", "Entrada, afiches y diseño"))
+                col.addView(fold(concertsPlate(), "conciertos", "Tus artistas en tu ciudad"))
             }
             else -> {
                 col.addView(fold(appearancePlate(hasWidget), "apariencia",
@@ -563,7 +564,7 @@ class MainActivity : AppCompatActivity() {
             "galeria" to 0, "tema" to 0, "fondo" to 0, "fondoWidget" to 0, "reglas" to 0, "acento" to 0,
             "diseno" to 1, "apps" to 1, "cabecera" to 1, "clima" to 1,
             "w_pack" to 1, "w_clock" to 1, "w_apps" to 1,
-            "reproductor" to 2, "musica_extras" to 2, "w_player" to 2, "comparte" to 2,
+            "reproductor" to 2, "musica_extras" to 2, "w_player" to 2, "comparte" to 2, "conciertos" to 2,
             "apariencia" to 3, "rendimiento" to 3, "dream" to 3)
     }
     internal var permCelebrated = false

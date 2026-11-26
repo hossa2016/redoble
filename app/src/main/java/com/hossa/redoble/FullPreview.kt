@@ -142,7 +142,11 @@ internal fun MainActivity.openFullPreview(animIndex: Int? = null) {
         Prefs.setLiveScene(this, s.id); Prefs.setWallStyle(this, "anim")
         RockWidget.updateAll(this)
         close()
-        if (ourLive) toast("Fondo aplicado: ${s.name}") else launchLiveWallpaper()
+        if (!VideoStore.ready(this, s)) {
+            VideoStore.fetch(this, s)
+            toast(I18n.tr(this, "Se está descargando «{}»: el fondo cambia solo al terminar").replace("{}", I18n.tr(this, s.name)))
+        }
+        if (ourLive) { if (VideoStore.ready(this, s)) toast("Fondo aplicado: ${s.name}") } else launchLiveWallpaper()
     }
 
     fun applyStill() {
