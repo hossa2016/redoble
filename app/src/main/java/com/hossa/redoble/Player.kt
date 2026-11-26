@@ -509,7 +509,7 @@ object Player {
             }
         if (large) {
             v.setViewVisibility(R.id.player, View.VISIBLE)
-            v.setViewVisibility(R.id.middle, View.VISIBLE)
+            v.setViewVisibility(R.id.middle, View.VISIBLE); lastShown = true
             v.setViewVisibility(R.id.player_close, View.GONE)
             v.setViewVisibility(R.id.player_eq, View.GONE)
             val src = try {
@@ -535,7 +535,7 @@ object Player {
                 v.setOnClickPendingIntent(id, launch)
         } else {
             v.setViewVisibility(R.id.player_c, View.VISIBLE)
-            v.setViewVisibility(R.id.middle, View.VISIBLE)
+            v.setViewVisibility(R.id.middle, View.VISIBLE); lastShown = true
             v.setTextViewText(R.id.pc_title, title)
             v.setTextViewText(R.id.pc_artist, artist)
             v.setViewVisibility(R.id.pc_artist, View.VISIBLE)
